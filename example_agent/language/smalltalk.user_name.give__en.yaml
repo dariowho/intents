@@ -1,0 +1,10 @@
+examples:
+  - My name is $user_name{Dario}
+  - Hi, I'm $user_name{Dario}
+  - Hi there, my name is $user_name{Dario}
+
+responses:
+  default:
+    - text:
+      - Hi $user_name, I'm Bot
+      - Nice to meet you $user_name!

@@ -1,0 +1,15 @@
+examples:
+  - Hi
+  - Hello
+  - Hi there
+  - Hey
+  - Heyyy
+  - Hello there
+  - Greetings
+
+responses:
+  default:
+    - text:
+      - Greetings, human :)
+      - Hi human!
+      - Hello there, human!
