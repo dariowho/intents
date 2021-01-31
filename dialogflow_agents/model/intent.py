@@ -15,21 +15,22 @@ class IntentMetadata:
     intent_webhook_enabled: bool = False
     slot_filling_webhook_enabled: bool = False
 
-@dataclass
-class Intent:
+class IntentMetaclass(type):
+    # @property
+    # def metadata(cls) -> IntentMetadata:
+    #     if not cls.metadata:
+    #         raise ValueError(f"Intent {cls} has no metadata. You need to register it with @agent.intent before using it")
+    #     return cls.metadata
+    metadata: IntentMetadata = None
+
+
+class Intent(metaclass=IntentMetaclass):
     """
     Represents a predicted intent. This is also used as a base class for the
     intent classes that model a Dialogflow Agent in Python code.
 
     TODO: check parameter names: no underscore, no reserved names
     """
-
-    _metadata = None
-    @property
-    def metadata(self) -> IntentMetadata:
-        if not self._metadata:
-            raise ValueError(f"Intent {self.__class__} has no name. You need to register it with @agent.intent to use it")
-        return self._metadata
 
     _confidence = None
     @property

@@ -2,7 +2,7 @@ import re
 from typing import List, Dict
 from dataclasses import dataclass
 
-from dialogflow_agents.intent import Intent, IntentMetadata
+from dialogflow_agents.model.intent import Intent, IntentMetadata
 
 class Agent:
 
@@ -54,7 +54,7 @@ class Agent:
         if conflicting_intent := cls._intents_by_event.get(event_name):
             raise ValueError(f"Intent name {name} is ambiguous and clashes with {conflicting_intent} ('{conflicting_intent.metadata.name}')")
 
-        intent_metadata = IntentMetadata(
+        intentmetadata = IntentMetadata(
             name=name,
             input_contexts=[], # TODO: model
             output_contexts=[], # TODO: model
@@ -64,7 +64,7 @@ class Agent:
 
         def _result_decorator(decorated_cls):
             result = dataclass(decorated_cls)
-            decorated_cls._metadata = intent_metadata
+            decorated_cls.metadata = intentmetadata
             cls.intents.append(result)
             cls._intents_by_name[name] = result
             cls._intents_by_event[event_name] = result

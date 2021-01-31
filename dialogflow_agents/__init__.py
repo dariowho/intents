@@ -10,6 +10,6 @@ class SessionEntity:
         self._session = session
         return self
 
-from dialogflow_agents.intent import Intent
-from dialogflow_agents.context import Context
-from dialogflow_agents.agent.model import Agent
+from dialogflow_agents.model.intent import Intent
+from dialogflow_agents.model.context import Context
+from dialogflow_agents.model.agent import Agent
