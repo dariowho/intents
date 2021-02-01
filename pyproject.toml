@@ -8,10 +8,13 @@ license = "Apache-2.0"
 [tool.poetry.dependencies]
 python = "^3.8"
 pyyaml = "^5.4.1"
+google-cloud-dialogflow = "^2.0.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.6.0"
 ipython = "^7.19.0"
+notebook = "^6.2.0"
+ipykernel = "^5.4.3"
 
 [build-system]
 requires = ["poetry>=0.12"]

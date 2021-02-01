@@ -18,12 +18,12 @@ class Agent:
     @classmethod
     def intent(cls, name: str):
         """
-        This is a decorator for intents that:
+        Returns a decorator for Intent subclasses that:
 
         1. Turns the Intent subclass into a `dataclass`
         1. Registers the intent in the Agent object
         1. Attach metadata to the decorated Intent class
-        1. Load and attach language data (examples and responses)
+        1. Check language data (examples and responses)
 
         .. code-block::python
 
@@ -31,7 +31,7 @@ class Agent:
 
             agent = Agent(...)
 
-            @agent.intent
+            @agent.intent('my_test_intent_name')
             class my_test_intent(Intent):
                 a_parameter: str
                 another_parameter: str
@@ -54,7 +54,7 @@ class Agent:
         if conflicting_intent := cls._intents_by_event.get(event_name):
             raise ValueError(f"Intent name {name} is ambiguous and clashes with {conflicting_intent} ('{conflicting_intent.metadata.name}')")
 
-        intentmetadata = IntentMetadata(
+        intent_metadata = IntentMetadata(
             name=name,
             input_contexts=[], # TODO: model
             output_contexts=[], # TODO: model
@@ -64,10 +64,12 @@ class Agent:
 
         def _result_decorator(decorated_cls):
             result = dataclass(decorated_cls)
-            decorated_cls.metadata = intentmetadata
+            decorated_cls.metadata = intent_metadata
             cls.intents.append(result)
             cls._intents_by_name[name] = result
             cls._intents_by_event[event_name] = result
+            from dialogflow_agents import language
+            language.intent_language_data(cls, result) # Checks that language data is existing and consistent
             return result
 
         return _result_decorator
@@ -111,14 +113,15 @@ class Agent:
         >>> df_result.confidence
         1.0
         """
-        return test_intent({
-            'confidence': 1.0,
-            'parameters': {
-                'a_parameter': 'foo',
-                'another_parameter': 42
-            },
-            'contexts': []
-        })
+        return None
+        # return test_intent({
+        #     'confidence': 1.0,
+        #     'parameters': {
+        #         'a_parameter': 'foo',
+        #         'another_parameter': 42
+        #     },
+        #     'contexts': []
+        # })
 
     def save_session(self):
         """
@@ -160,13 +163,13 @@ def _is_valid_intent_name(candidate_name):
 # Example code
 #
 
-class TestAgent(Agent):
-    pass
+# class TestAgent(Agent):
+#     pass
 
-@TestAgent.intent('test.intent')
-class test_intent(Intent):
-    a_parameter: str
-    another_parameter: int
+# @TestAgent.intent('test.intent')
+# class test_intent(Intent):
+#     a_parameter: str
+#     another_parameter: int
 
-agent = TestAgent(None, 'fake-session-id')
-agent.predict("predict a mock intent please")
+# agent = TestAgent(None, 'fake-session-id')
+# agent.predict("predict a mock intent please")

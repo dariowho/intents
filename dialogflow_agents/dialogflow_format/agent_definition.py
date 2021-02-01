@@ -122,8 +122,11 @@ class Intent:
 # intents/<INTENT_NAME>_usersays.json
 #
 
+class UsersaysChunk:
+    pass
+
 @dataclass
-class UsersaysEntityChunk:
+class UsersaysEntityChunk(UsersaysChunk):
     text: str
     meta: str
     alias: str
@@ -131,7 +134,7 @@ class UsersaysEntityChunk:
 
 
 @dataclass
-class UsersaysTextChunk:
+class UsersaysTextChunk(UsersaysChunk):
     text: str
     userDefined: bool
 
