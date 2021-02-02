@@ -3,6 +3,7 @@ from typing import List, Dict
 from dataclasses import dataclass
 
 from dialogflow_agents.model.intent import Intent, IntentMetadata
+from dialogflow_agents.model.entity import StringParameter
 
 class Agent:
 
@@ -64,6 +65,10 @@ class Agent:
 
         def _result_decorator(decorated_cls):
             result = dataclass(decorated_cls)
+            for field in result.__dataclass_fields__.values():
+                # TODO: support List
+                if not issubclass(field.type, StringParameter):
+                    raise ValueError(f"Invalid type '{field.type}' for parameter '{field.name}' in Intent '{name}': must be an Entity. Try 'sys.any()' from 'dialogflow_agents.system_entities' if you are unsure.")
             decorated_cls.metadata = intent_metadata
             cls.intents.append(result)
             cls._intents_by_name[name] = result

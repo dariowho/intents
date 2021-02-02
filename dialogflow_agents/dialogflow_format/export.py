@@ -5,6 +5,7 @@ import os
 import json
 import shutil
 import logging
+import dataclasses
 from uuid import uuid1
 from typing import List
 from dataclasses import asdict
@@ -48,9 +49,10 @@ def export(agent_cls: type, output_path: str) -> None:
 def render_intent(intent: IntentMetaclass, responses: List[language.ResponseUtterance]):
     response = df.Response(
         affectedContexts=[],
-        parameters=[],
-        messages=[],
-        action=intent.metadata.action
+        parameters=render_parameters(intent),
+        messages=render_responses(intent, responses),
+        # action=intent.metadata.action
+        action='a_stub_action'
     )
 
     return df.Intent(
@@ -61,6 +63,34 @@ def render_intent(intent: IntentMetaclass, responses: List[language.ResponseUtte
         webhookForSlotFilling=intent.metadata.slot_filling_webhook_enabled,
         events=intent.metadata.events
     )
+
+def render_parameters(intent: IntentMetaclass):
+    result = []
+    for field in intent.__dataclass_fields__.values():
+        required = isinstance(field.default, dataclasses._MISSING_TYPE)
+        value = f"${field.name}"
+        # Could reference a context
+        if field.type.df_parameter_value:
+            value = field.type.df_parameter_value
+        result.append(df.Parameter(
+            id=str(uuid1()),
+            name=field.name,
+            required=required,
+            dataType=f'@{field.type.df_entity.name}',
+            value=value,
+            defaultValue=field.default if not required else '',
+            isList=False
+            # TODO: support prompts
+        ))
+    return result
+
+def render_responses(intent: IntentMetaclass, responses: List[language.ResponseUtterance]):
+    # TODO: unstub
+    return [
+        df.ResponseMessage(
+            speech=["STUB RESPONSE!"]
+        )
+    ]
 
 def render_intent_usersays(agent_cls: type, intent: IntentMetaclass, examples: List[language.ExampleUtterance]):
     result = []

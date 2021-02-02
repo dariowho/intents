@@ -48,7 +48,7 @@ class ExampleUtterance(str):
             if (parameter_name := m_groups['parameter_name']) not in self._intent.__dataclass_fields__:
                 raise ValueError(f"Example '{self}' references parameter ${parameter_name}, but intent {self._intent.metadata.name} does not define such parameter.")
  
-            meta = '@TYPE-FROM-INTENT-DEFINITION'
+            meta = f'@{self._intent.__dataclass_fields__[parameter_name].type.df_entity.name}'
             result.append(df.UsersaysEntityChunk(
                 text=m_groups['parameter_value'],
                 alias=m_groups['parameter_name'],
