@@ -17,10 +17,13 @@ import dialogflow_agents.dialogflow_format.agent_definition as df
 
 logger = logging.getLogger(__name__)
 
-def export(agent_cls: type, output_path: str) -> None:
+def export(agent: Agent, output_path: str) -> None:
     """
     Export the given agent to the given path
     """
+    assert isinstance(agent, Agent)
+    agent_cls = agent.__class__
+    output_path = os.path.join(output_path, agent.name)
     intents_path = os.path.join(output_path, 'intents')
     entities_path = os.path.join(output_path, 'entities')
 
@@ -35,24 +38,46 @@ def export(agent_cls: type, output_path: str) -> None:
     os.makedirs(intents_path)
     os.makedirs(entities_path)
 
+    with open(os.path.join(output_path, 'agent.json'), 'w') as f:
+        json.dump(asdict(render_agent(agent)), f, indent=2)
+
+    with open(os.path.join(output_path, 'package.json'), 'w') as f:
+        json.dump({"version": "1.0.0"}, f, indent=2)
+
     for intent in agent_cls.intents:
         # TODO: handle multiple languages
         examples, responses = language.intent_language_data(agent_cls, intent)
         rendered_intent = render_intent(intent, responses)
         with open(os.path.join(intents_path, f"{intent.metadata.name}.json"), "w") as f:
-            json.dump(asdict(rendered_intent), f, indent=4)
+            json.dump(asdict(rendered_intent), f, indent=2)
         rendered_intent_usersays = render_intent_usersays(agent_cls, intent, examples)
         with open(os.path.join(intents_path, f"{intent.metadata.name}_usersays_en.json"), "w") as f:
             usersays_data = [asdict(x) for x in rendered_intent_usersays]
-            json.dump(usersays_data, f, indent=4)
+            json.dump(usersays_data, f, indent=2)
+
+def render_agent(agent: Agent):
+    google_assistant = df.AgentGoogleAssistant(
+        project=agent.gcp_project_id,
+        oAuthLinking=df.AgentGoogleAssistantOauthLinking()
+        # TODO: include Google Assistant configuration
+    )
+
+    webhook = df.AgentWebhook(
+        # TODO: include Webhook configuration
+    )
+
+    return df.Agent(
+        displayName=agent.name,
+        webhook=webhook,
+        googleAssistant=google_assistant
+    )
 
 def render_intent(intent: IntentMetaclass, responses: List[language.ResponseUtterance]):
     response = df.Response(
         affectedContexts=[],
         parameters=render_parameters(intent),
         messages=render_responses(intent, responses),
-        # action=intent.metadata.action
-        action='a_stub_action'
+        action=intent.metadata.action
     )
 
     return df.Intent(
@@ -61,7 +86,7 @@ def render_intent(intent: IntentMetaclass, responses: List[language.ResponseUtte
         responses=[response],
         webhookUsed=intent.metadata.intent_webhook_enabled,
         webhookForSlotFilling=intent.metadata.slot_filling_webhook_enabled,
-        events=intent.metadata.events
+        events=[df.Event(e) for e in intent.metadata.events]
     )
 
 def render_parameters(intent: IntentMetaclass):
@@ -101,5 +126,6 @@ def render_intent_usersays(agent_cls: type, intent: IntentMetaclass, examples: L
         ))
     return result
 
-from example_agent import ExampleAgent
-export(ExampleAgent, '/home/dario/lavoro/dialogflow-agents/TMP_EXPORT')
+# from example_agent import ExampleAgent
+# agent = ExampleAgent('/home/dario/lavoro/dialogflow-agents/_tmp_agents/learning-dialogflow-5827a2d16c34.json')
+# export(agent, '/home/dario/lavoro/dialogflow-agents/TMP_EXPORT')

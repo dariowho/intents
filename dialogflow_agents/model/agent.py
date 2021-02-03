@@ -1,9 +1,13 @@
 import re
-from typing import List, Dict
+from uuid import uuid1
+from typing import List, Dict, Union
 from dataclasses import dataclass
+
+import google.auth.credentials
 
 from dialogflow_agents.model.intent import Intent, IntentMetadata
 from dialogflow_agents.model.entity import StringParameter
+from dialogflow_agents.dialogflow_helpers.auth import resolve_credentials
 
 class Agent:
 
@@ -11,10 +15,14 @@ class Agent:
     _intents_by_name: Dict[str, Intent] = {}
     _intents_by_event: Dict[str, Intent] = {}
 
-    _session = None
+    _credentials: google.auth.credentials.Credentials = None
+    _session: str = None
 
-    def __init__(self, google_credentials: str, session: str):
-        self._session = None
+    def __init__(self, google_credentials: Union[str, google.auth.credentials.Credentials], session: str=None):
+        if not session:
+            session = f"py-{str(uuid1())}"
+        self._credentials = resolve_credentials(google_credentials)
+        self._session = session
 
     @classmethod
     def intent(cls, name: str):
@@ -78,6 +86,14 @@ class Agent:
             return result
 
         return _result_decorator
+
+    @property
+    def gcp_project_id(self):
+        return self._credentials.project_id
+
+    @property
+    def name(self):
+        return f"py-{self.gcp_project_id}"
 
     def predict(self, message: str) -> Intent:
         """

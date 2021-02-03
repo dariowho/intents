@@ -1,6 +1,8 @@
 # Tmp things
 tmp_*
 TMP_*
+_tmp_*
+_TMP_*
 
 # Byte-compiled / optimized / DLL files
 __pycache__/

@@ -24,9 +24,72 @@ files:
 """
 
 from dataclasses import dataclass, field
-from typing import List, Union
+from typing import List, Union, Dict
 
 LANG = "en"
+
+#
+# agent.json
+#
+
+@dataclass
+class AgentGoogleAssistantOauthLinking:
+    required: bool = False
+    providerId: str = ""
+    authorizationUrl: str = ""
+    tokenUrl: str = ""
+    scopes: str = ""
+    privacyPolicyUrl: str = ""
+    grantType: str = "AUTH_CODE_GRANT"
+
+@dataclass
+class AgentGoogleAssistant:
+    project: str
+    oAuthLinking: AgentGoogleAssistantOauthLinking
+    googleAssistantCompatible: bool = False
+    welcomeIntentSignInRequired: bool = False
+    startIntents: List = field(default_factory=list)
+    systemIntents: List = field(default_factory=list)
+    endIntentIds: List = field(default_factory=list)
+    voiceType: str = "MALE_1"
+    capabilities: List = field(default_factory=list)
+    env: str = ""
+    protocolVersion: str = "V2"
+    autoPreviewEnabled: bool = False
+    isDeviceAgent: bool = False
+
+@dataclass
+class AgentWebhook:
+    url: str = ""
+    username: str = ""
+    headers: Dict[str, str] = field(default_factory=dict)
+    available: bool = False
+    cloudFunctionsEnabled: bool = False
+    cloudFunctionsInitialized: bool = False
+
+@dataclass
+class Agent:
+    displayName: str
+    webhook: AgentWebhook
+    googleAssistant: AgentGoogleAssistant
+    description: str = ""
+    language: str = "en"
+    shortDescription: str = ""
+    examples: str = ""
+    linkToDocs: str = ""
+    disableInteractionLogs: bool = False
+    disableStackdriverLogs: bool = True
+    defaultTimezone: str = "Europe/Rome" # TODO: check
+    isPrivate: bool = True
+    mlMinConfidence: float = 0.3
+    supportedLanguages: List[str] = field(default_factory=list)
+    onePlatformApiVersion: str = "v2" # TODO: check
+    secondaryKey: str = "" # TODO: check
+    analyzeQueryTextSentiment: bool = False
+    enabledKnowledgeBaseNames: List = field(default_factory=list)
+    knowledgeServiceConfidenceAdjustment: float = -0.4
+    dialogBuilderMode: bool = False
+    baseActionPackagesUrl: str = ""
 
 #
 # entities/<ENTITY_NAME>.json
@@ -101,6 +164,9 @@ class Response:
     resetContexts: bool = False
     action: str = ""
 
+@dataclass
+class Event:
+    name: str
 
 @dataclass
 class Intent:
@@ -113,7 +179,7 @@ class Intent:
     webhookUsed: bool = True
     webhookForSlotFilling: bool = True
     fallbackIntent: bool = False
-    events: List[str] = field(default_factory=list)
+    events: List[Event] = field(default_factory=list)
     conditionalResponses: List = field(default_factory=list)
     condition: str = ""
     conditionalFollowupEvents: List = field(default_factory=list)
