@@ -30,7 +30,7 @@ poetry build
 
 Check out the included `example_agent/` to explore Dialogflow Agents approach to
 Agent definition. In short, that is a full Agent defined as a set of Python
-classes (Intents and Entities) and YAML files (language-specific resources).
+classes (Intents and Entities) and YAML files (language resources).
 Building the Dialogflow ZIP is as simple as this:
 
 ```py
@@ -40,7 +40,7 @@ export(agent, '/any/path/ExampleAgent.zip')
 ```
 
 ExampleAgent.zip can be loaded into an existing Dialogflow project by using the
-standard "Settings > Export and Import > Restore from ZIP" feature. Also via
+standard *"Settings > Export and Import > Restore from ZIP"* feature. Also via
 API, if you know how to use it.
 
 Then, we want to be able to operate with the uploaded Agent with a
@@ -55,7 +55,7 @@ agent.predict("My name is Guido")
 Profiding a human-friendly result:
 
 ```
-user_name_give(user_name='Dario')
+user_name_give(user_name='Guido')
 ```
 
 ## Documentation
