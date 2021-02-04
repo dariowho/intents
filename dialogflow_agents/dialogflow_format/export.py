@@ -5,6 +5,7 @@ import os
 import json
 import shutil
 import logging
+import tempfile
 import dataclasses
 from uuid import uuid1
 from typing import List
@@ -23,37 +24,42 @@ def export(agent: Agent, output_path: str) -> None:
     """
     assert isinstance(agent, Agent)
     agent_cls = agent.__class__
-    output_path = os.path.join(output_path, agent.name)
-    intents_path = os.path.join(output_path, 'intents')
-    entities_path = os.path.join(output_path, 'entities')
 
-    if os.path.isdir(intents_path):
-        logger.warning(f"Removing existing intents folder: {intents_path}")
-        shutil.rmtree(intents_path)
+    output_dir = os.path.join(tempfile.gettempdir(), 'dialogflow-agents-export', agent.name)
+    intents_dir = os.path.join(output_dir, 'intents')
+    entities_dir = os.path.join(output_dir, 'entities')
 
-    if os.path.isdir(entities_path):
-        logger.warning(f"Removing existing entities folder: {entities_path}")
-        shutil.rmtree(entities_path)
+    if os.path.isdir(intents_dir):
+        logger.warning(f"Removing existing intents folder: {intents_dir}")
+        shutil.rmtree(intents_dir)
 
-    os.makedirs(intents_path)
-    os.makedirs(entities_path)
+    if os.path.isdir(entities_dir):
+        logger.warning(f"Removing existing entities folder: {entities_dir}")
+        shutil.rmtree(entities_dir)
 
-    with open(os.path.join(output_path, 'agent.json'), 'w') as f:
+    os.makedirs(intents_dir)
+    os.makedirs(entities_dir)
+
+    with open(os.path.join(output_dir, 'agent.json'), 'w') as f:
         json.dump(asdict(render_agent(agent)), f, indent=2)
 
-    with open(os.path.join(output_path, 'package.json'), 'w') as f:
+    with open(os.path.join(output_dir, 'package.json'), 'w') as f:
         json.dump({"version": "1.0.0"}, f, indent=2)
 
     for intent in agent_cls.intents:
         # TODO: handle multiple languages
         examples, responses = language.intent_language_data(agent_cls, intent)
         rendered_intent = render_intent(intent, responses)
-        with open(os.path.join(intents_path, f"{intent.metadata.name}.json"), "w") as f:
+        with open(os.path.join(intents_dir, f"{intent.metadata.name}.json"), "w") as f:
             json.dump(asdict(rendered_intent), f, indent=2)
         rendered_intent_usersays = render_intent_usersays(agent_cls, intent, examples)
-        with open(os.path.join(intents_path, f"{intent.metadata.name}_usersays_en.json"), "w") as f:
+        with open(os.path.join(intents_dir, f"{intent.metadata.name}_usersays_en.json"), "w") as f:
             usersays_data = [asdict(x) for x in rendered_intent_usersays]
             json.dump(usersays_data, f, indent=2)
+
+    if output_path.endswith('.zip'):
+        output_path = output_path[:-4]
+    shutil.make_archive(output_path, 'zip', output_dir)
 
 def render_agent(agent: Agent):
     google_assistant = df.AgentGoogleAssistant(
@@ -128,4 +134,4 @@ def render_intent_usersays(agent_cls: type, intent: IntentMetaclass, examples: L
 
 # from example_agent import ExampleAgent
 # agent = ExampleAgent('/home/dario/lavoro/dialogflow-agents/_tmp_agents/learning-dialogflow-5827a2d16c34.json')
-# export(agent, '/home/dario/lavoro/dialogflow-agents/TMP_EXPORT')
+# export(agent, '/home/dario/lavoro/dialogflow-agents/TMP_AGENT.zip')
