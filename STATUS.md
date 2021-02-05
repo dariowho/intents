@@ -6,12 +6,12 @@ Dialogflow Agents.
 | Feature                          | State  | Note |
 |----------------------------------|--------|------|
 | Entity declaration               | ❌     |      |
-| Intent declaration               | ✅     |      |
+| Intent declaration               | ✔     |      |
 | Input/Output Context             | ❌     |      |
-| Examples Utterances              | ✅     |      |
-| Example Utterances with Entities | ✅     |      |
+| Examples Utterances              | ✔     |      |
+| Example Utterances with Entities | ✔     |      |
 | Action                           | ❌     |      |
-| Parameters with System Entities  | ✅     |      |
+| Parameters with System Entities  | ✔     |      |
 | Parameters with Custom Entities  | ❌     |      |
 | List Parameters                  | ❌     |      |
 | Required Parameters with prompts | ❌     |      |
@@ -25,7 +25,7 @@ Dialogflow Agents.
 
 | Feature                                | State  | Note |
 |----------------------------------------|--------|------|
-| Export Agent to ZIP                    | ✅     |      |
+| Export Agent to ZIP                    | ✔      |      |
 | Upload Agent to existing Cloud project | ❌     |      |
 | Sync Language changes from Cloud       | ❌     |      |
 | Upload agent to a new Cloud project    | ❌     |      |
