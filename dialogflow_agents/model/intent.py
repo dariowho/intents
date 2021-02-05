@@ -32,6 +32,8 @@ class Intent(metaclass=IntentMetaclass):
     TODO: check parameter names: no underscore, no reserved names
     """
 
+    metadata: IntentMetadata = None
+
     _confidence = None
     @property
     def confidence(self):
@@ -55,8 +57,7 @@ class Intent(metaclass=IntentMetaclass):
             raise ValueError(f"Found parameters in Dialogflow Response, but class {cls} doesn't take any: {df_response}")
         
         # TODO: assert intent name matches intent class
-        # TODO: use real df response structure
         result._confidence = df_response['queryResult']['intentDetectionConfidence']
-        result._contexts = df_response['outputContexts']
+        result._contexts = df_response.get('outputContexts', {})
 
         return result

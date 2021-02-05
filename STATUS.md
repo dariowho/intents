@@ -34,8 +34,8 @@ Dialogflow Agents.
 
 | Feature                       | State  | Note |
 |-------------------------------|--------|------|
-| Predict Intent                | ❌     |      |
-| Trigger Intent                | ❌     |      |
+| Predict Intent                | ✔      |      |
+| Trigger Intent                | ✔      |      |
 | Webhook Fulfillment interface | ❌     |      |
 | Contexts Persistence          | ❌     |      |
 | Offline Intent Triggers       | ❌     |      |
