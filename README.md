@@ -31,11 +31,14 @@ poetry build
 Check out the included `example_agent/` to explore Dialogflow Agents approach to
 Agent definition. In short, that is a full Agent defined as a set of Python
 classes (Intents and Entities) and YAML files (language resources).
+
+### Export Agent
+
 A Dialogflow-compatible Agent ZIP can be built as follows:
 
 ```py
 from example_agent import ExampleAgent
-agent = ExampleAgent('/path/to/google_application_credentials.json')
+agent = ExampleAgent('/path/to/service_account.json')
 export(agent, '/any/path/ExampleAgent.zip')
 ```
 
@@ -43,27 +46,30 @@ export(agent, '/any/path/ExampleAgent.zip')
 standard *"Settings > Export and Import > Restore from ZIP"* feature. Also via
 API, if you know how to use it.
 
-Then, we want to be able to operate with the uploaded Agent with a
-human-friendly Python API:
+### Predict Intent
+
+Uploaded Agents can be accessed with a human-friendly API:
 
 ```py
 from example_agent import ExampleAgent
 
-agent = ExampleAgent('/path/to/google_application_credentials.json', session='a-new-session')
+agent = ExampleAgent('/path/to/service_account.json')
 agent.predict("My name is Guido")
 
-# Result: user_name_give(user_name='Guido')
+# > user_name_give(user_name='Guido')
 ```
 
-Providing a human-friendly result:
+### Trigger Intent
+
+Same goes for triggering intents:
 
 ```py
 from example_agent.intents import smalltalk
 
-agent = ExampleAgent('/path/to/google_application_credentials.json', session='a-new-session')
+agent = ExampleAgent('/path/to/service_account.json')
 agent.trigger(smalltalk.agent_name_give(agent_name='Ugo'))
 
-# Result: agent_name_give(user_name='Ugo')
+# > agent_name_give(user_name='Ugo')
 ```
 
 ## Documentation
