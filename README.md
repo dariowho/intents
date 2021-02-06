@@ -13,7 +13,7 @@ completion status.
 |-------------------|--------|-------------------------------------------------------------------------------------|
 | [Agent Definition](STATUS.md#agent-definition)  | 🟡     | Can define basic Intents, with examples, parameters and responses                   |
 | [Cloud Sync](STATUS.md#cloud-sync)        | 🟡     | Can export Agent to a valid Dialogflow ZIP. Cannot yet manage Google Cloud Projects |
-| [Prediction client](STATUS.md#prediction-client) | 🟡     | Cannot act as a client for predictions, triggers and webhook requests               |
+| [Prediction client](STATUS.md#prediction-client) | 🟡     | Can act as a client for predictions and triggers. Cannot receive webhook requests         |
 
 A more detailed view of the single features is reported in [STATUS.md](STATUS.md)
 
