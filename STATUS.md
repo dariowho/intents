@@ -6,16 +6,17 @@ Dialogflow Agents.
 | Feature                          | State  | Note |
 |----------------------------------|--------|------|
 | Entity declaration               | ❌     |      |
-| Intent declaration               | ✔     |      |
+| Intent declaration               | ✔      |      |
 | Input/Output Context             | ❌     |      |
-| Examples Utterances              | ✔     |      |
-| Example Utterances with Entities | ✔     |      |
+| Custom Events                    | ❌     |      |
+| Examples Utterances              | ✔      |      |
+| Example Utterances with Entities | ✔      |      |
 | Action                           | ❌     |      |
-| Parameters with System Entities  | ✔     |      |
+| Parameters with System Entities  | ✔      |      |
 | Parameters with Custom Entities  | ❌     |      |
 | List Parameters                  | ❌     |      |
 | Required Parameters with prompts | ❌     |      |
-| Default Text Responses           | ~      |      |
+| Default Text Responses           | ✔      |      |
 | Platform Text/Rich Responses     | ❌     |      |
 | Custom Payload Responses         | ❌     |      |
 | Agent Webhook Settings           | ❌     |      |

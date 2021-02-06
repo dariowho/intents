@@ -24,6 +24,7 @@ files:
 """
 
 from dataclasses import dataclass, field
+from enum import Enum
 from typing import List, Union, Dict
 
 LANG = "en"
@@ -144,16 +145,21 @@ class Parameter:
     noInputPromptMessages: List = field(default_factory=list)
     outputDialogContexts: List = field(default_factory=list)
 
+class ResponseMessageTypes(Enum):
+    TEXT = "0"
 
 @dataclass
 class ResponseMessage:
-    speech: List[str]
-    type: str = "0"
+    type: str = "0" # TODO: use Enum with custom asdict() as string
     title: str = ""
     textToSpeech: str = ""
     lang: str = LANG
     condition: str = ""
 
+@dataclass
+class TextResponseMessage(ResponseMessage):
+    speech: List[str] = ""
+    type: str = "0"   # TODO: make constant, included in asdict()
 
 @dataclass
 class Response:

@@ -10,7 +10,7 @@ import os
 import re
 import sys
 import logging
-from typing import List
+from typing import List, Union
 from dataclasses import dataclass
 
 import yaml
@@ -63,8 +63,27 @@ class ExampleUtterance(str):
 
         return result
 
-class ResponseUtterance(str):
-    pass
+# TODO: abstract class
+class ResponseUtterance:
+
+    type: df.ResponseMessageTypes = None
+
+    def df_response(self):
+        pass
+
+class TextResponseUtterance(ResponseUtterance):
+
+    def __init__(self, choices: Union[str, List[str]]):
+        if not isinstance(choices, list):
+            assert isinstance(choices, str)
+            choices = [choices]
+
+        self.choices = choices
+
+    def df_response(self):
+        return df.TextResponseMessage(
+            speech=self.choices
+        )
 
 def intent_language_data(agent_cls: type, intent: IntentMetaclass) -> (List[ExampleUtterance], List[ResponseUtterance]):
     main_agent_package = agent_cls.__module__.split('.')[0]
@@ -88,8 +107,26 @@ def intent_language_data(agent_cls: type, intent: IntentMetaclass) -> (List[Exam
     responses_data = language_data.get('responses', [])
 
     examples = [ExampleUtterance(s, intent) for s in examples_data]
+    responses = _build_responses(responses_data)
 
-    return examples, responses_data
+    return examples, responses
+
+def _build_responses(responses_data: dict):
+    result = []
+
+    platform: str
+    responses: List[dict]
+    for platform, responses in responses_data.items():
+        if platform != 'default':
+            raise NotImplementedError(f"Unsupported platform '{platform}'. Currently, only 'default' is supported")
+        for r in responses:
+            assert len(r) == 1
+            for r_type, r_data in r.items():
+                if r_type != 'text':
+                    raise NotImplementedError(f"Unsupported response type '{r_type}'. Currently, only 'text' is supported")
+                result.append(TextResponseUtterance(r_data))
+
+    return result
 
 # from example_agent import ExampleAgent
 # from example_agent.intents import smalltalk

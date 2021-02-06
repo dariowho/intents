@@ -116,12 +116,10 @@ def render_parameters(intent: IntentMetaclass):
     return result
 
 def render_responses(intent: IntentMetaclass, responses: List[language.ResponseUtterance]):
-    # TODO: unstub
-    return [
-        df.ResponseMessage(
-            speech=["STUB RESPONSE!"]
-        )
-    ]
+    if not responses:
+        return [df.ResponseMessage()]
+
+    return [r.df_response() for r in responses]
 
 def render_intent_usersays(agent_cls: type, intent: IntentMetaclass, examples: List[language.ExampleUtterance]):
     result = []
