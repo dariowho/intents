@@ -44,7 +44,7 @@ export(agent, '/any/path/ExampleAgent.zip')
 
 `ExampleAgent.zip` can be loaded into an existing Dialogflow project by using the
 standard *"Settings > Export and Import > Restore from ZIP"* feature. Also via
-API, if you know how to use it.
+API, if you are familiar with it.
 
 ### Predict Intent
 
@@ -54,9 +54,12 @@ Uploaded Agents can be accessed with a human-friendly API:
 from example_agent import ExampleAgent
 
 agent = ExampleAgent('/path/to/service_account.json')
-agent.predict("My name is Guido")
+result = agent.predict("My name is Guido")
 
-# > user_name_give(user_name='Guido')
+result                  # user_name_give(user_name="Guido")
+result.user_name        # "Guido"
+result.fulfillment_text # "Hi Guido, I'm Bot"
+result.confidence       # 0.84
 ```
 
 ### Trigger Intent
@@ -67,9 +70,9 @@ Same goes for triggering intents:
 from example_agent.intents import smalltalk
 
 agent = ExampleAgent('/path/to/service_account.json')
-agent.trigger(smalltalk.agent_name_give(agent_name='Ugo'))
+result = agent.trigger(smalltalk.agent_name_give(agent_name='Ugo'))
 
-# > agent_name_give(user_name='Ugo')
+result.fulfillment_text # "Howdy Human, I'm Ugo"
 ```
 
 ## Documentation

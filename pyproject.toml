@@ -1,7 +1,7 @@
 [tool.poetry]
 name = "dialogflow-agents"
 version = "0.1.0"
-description = "Dialogflow Agents for Humans"
+description = "Define and operate with Dialogflow Agents with a simple, code-first, approach"
 authors = ["Dario <dario.chi@inventati.org>"]
 license = "Apache-2.0"
 

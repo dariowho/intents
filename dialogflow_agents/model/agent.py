@@ -8,6 +8,7 @@ import google.auth.credentials
 from google.protobuf.json_format import MessageToDict
 from google.cloud.dialogflow_v2.types import TextInput, QueryInput, EventInput
 from google.cloud.dialogflow_v2.services.sessions import SessionsClient
+from google.cloud.dialogflow_v2.types import DetectIntentResponse
 
 from dialogflow_agents.model.intent import Intent, IntentMetadata, IntentMetaclass
 from dialogflow_agents.model.entity import StringParameter
@@ -97,11 +98,11 @@ class Agent:
         return _result_decorator
 
     @classmethod
-    def _prediction_to_intent(cls, df_response: dict) -> Intent:
+    def _prediction_to_intent(cls, df_response: DetectIntentResponse) -> Intent:
         """
         Turns a Dialogflow response dict (note: no protobuf) into its Intent class.
         """
-        intent_name = df_response['queryResult']['intent']['displayName']
+        intent_name = df_response.query_result.intent.display_name
         intent_class = cls._intents_by_name.get(intent_name)
         if not intent_class:
             raise ValueError(f"Dialogflow prediction returned intent '{intent_name}', but this was not found in Agent definition. Make sure to restore a latest Agent export from `dialogflow_format.export.export()`. If the problem persists, please file a bug on the Dialoglfow Agents repository.")
@@ -130,7 +131,7 @@ class Agent:
             session=session_path,
             query_input=query_input
         )
-        df_response = MessageToDict(df_result._pb)
+        df_response = df_result._pb
         return self._prediction_to_intent(df_response)
 
     def trigger(self, intent: Intent) -> Intent:
@@ -166,7 +167,7 @@ class Agent:
             session=session_path,
             query_input=query_input
         )
-        df_response = MessageToDict(result._pb)
+        df_response = result._pb
         return self._prediction_to_intent(df_response)
 
     def save_session(self):

@@ -14,3 +14,4 @@ from dialogflow_agents.model.intent import Intent
 from dialogflow_agents.model.context import Context
 from dialogflow_agents.model.entity import Entity
 from dialogflow_agents.model.agent import Agent
+from dialogflow_agents.model.response_messages import FulfillmentMessagePlatform

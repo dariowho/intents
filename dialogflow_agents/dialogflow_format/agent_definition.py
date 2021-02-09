@@ -15,6 +15,10 @@ Intents can be found in the `intents/` folder. Each **intent** is defined by 2 f
 * `intents/<INTENT_NAME>_usersays.json` contains the list of example utterances. Each
   utterance is modelled in :class:`IntentUsersays`
 
+Intents are modelled in the official client as Protobuf structures
+(https://cloud.google.com/dialogflow/es/docs/reference/rpc/google.cloud.dialogflow.v2beta1#intent);
+however, they seem to have little in common with the JSON output format.
+
 Entities can be found in the `entities/` folder. Each **entity** is defined by 2
 files:
 
