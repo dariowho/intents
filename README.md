@@ -1,7 +1,12 @@
 # Dialogflow Agents
 
-A Python library to define and operate with Dialogflow Agents with an easy,
+A Python library to define and operate Dialogflow Agents with an easy,
 code-first approach.
+
+> **disclaimer**: this project is not affiliated, associated, authorized,
+> endorsed by, or in any way officially connected with Dialogflow. The names
+> Dialogflow, Google, as well as related names, marks, emblems and images are
+> registered trademarks of their respective owners.
 
 ## Project status
 
