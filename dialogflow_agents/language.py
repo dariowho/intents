@@ -86,8 +86,14 @@ class TextResponseUtterance(ResponseUtterance):
         )
 
 def intent_language_data(agent_cls: type, intent: IntentMetaclass) -> (List[ExampleUtterance], List[ResponseUtterance]):
-    main_agent_package = agent_cls.__module__.split('.')[0]
-    agent_folder = sys.modules[main_agent_package].__path__[0]
+    main_agent_package_name = agent_cls.__module__.split('.')[0]
+    main_agent_package = sys.modules[main_agent_package_name]
+    if '__path__' not in main_agent_package.__dict__:
+        # TODO: try workdir or something...
+        logger.warning(f"Agent {agent_cls} doesn't seem to be defined within a package. Language data will not be loaded.")
+        return [], []
+
+    agent_folder = main_agent_package.__path__[0]
     language_folder = os.path.join(agent_folder, 'language')
     if not os.path.isdir(language_folder):
         raise ValueError(f"No language folder found for agent {agent_cls} (expected: {language_folder})")

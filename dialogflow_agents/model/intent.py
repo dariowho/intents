@@ -1,5 +1,5 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import List, Dict
 from collections import defaultdict
 
@@ -7,14 +7,15 @@ from google.protobuf.json_format import MessageToDict
 from google.cloud.dialogflow_v2.types import DetectIntentResponse
 
 from dialogflow_agents.model.response_messages import FulfillmentMessagePlatform, build_response_message, FulfillmentMessage
+from dialogflow_agents.model import context
 
 logger = logging.getLogger(__name__)
 
 @dataclass
 class IntentMetadata:
     name: str
-    input_contexts: List[None] # TODO: model
-    output_contexts: List[None] # TODO: model
+    input_contexts: List[context._ContextMetaclass] # TODO: model
+    output_contexts: List[context.Context] # TODO: model
     events: List[str]
     action: str = None
     end_of_conversation: bool = False
@@ -34,9 +35,28 @@ class Intent(metaclass=IntentMetaclass):
     Represents a predicted intent. This is also used as a base class for the
     intent classes that model a Dialogflow Agent in Python code.
 
-    TODO: check parameter names: no underscore, no reserved names
+    TODO: check parameter names: no underscore, no reserved names, max length
     """
 
+    @dataclass
+    class Meta:
+        """
+        This is a simpler form of :class:`IntentMetadata`. It is used to specify
+        optional metadata when creating Intent classes, without interfering with
+        those that are managed by :class:`Agent`.
+
+        TODO: consider merging with IntentMetadata: currently the only
+        Agent-managed fields are "name" and "events"
+        """
+        input_contexts: List[context._ContextMetaclass] = field(default_factory=list)
+        output_contexts: List[context.Context] = field(default_factory=list)
+        # additional_events: List[Event] = None
+
+    # User fills this with desired extra metadata
+    meta: Meta = None
+
+    # :class:`Agent` fills this, integrating Intent.meta with managed fields
+    # TODO: make private, with a @property getter
     metadata: IntentMetadata = None
     _df_response = None
 

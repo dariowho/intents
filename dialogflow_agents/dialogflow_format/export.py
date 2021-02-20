@@ -80,7 +80,7 @@ def render_agent(agent: Agent):
 
 def render_intent(intent: IntentMetaclass, responses: List[language.ResponseUtterance]):
     response = df.Response(
-        affectedContexts=[],
+        affectedContexts=[df.AffectedContext(c.name, c.lifespan) for c in intent.metadata.output_contexts],
         parameters=render_parameters(intent),
         messages=render_responses(intent, responses),
         action=intent.metadata.action
@@ -89,6 +89,7 @@ def render_intent(intent: IntentMetaclass, responses: List[language.ResponseUtte
     return df.Intent(
         id=str(uuid1()),
         name=intent.metadata.name,
+        contexts=[c.name for c in intent.metadata.input_contexts],
         responses=[response],
         webhookUsed=intent.metadata.intent_webhook_enabled,
         webhookForSlotFilling=intent.metadata.slot_filling_webhook_enabled,

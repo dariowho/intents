@@ -125,9 +125,12 @@ class EntityEntry:
 #
 
 @dataclass
-class Context:
+class AffectedContext:
+    """
+    This is the name of output contexts in the DF Intent definition
+    """
     name: str
-    lifespan: int = 2
+    lifespan: int
 
 @dataclass
 class Prompt:
@@ -167,7 +170,7 @@ class TextResponseMessage(ResponseMessage):
 
 @dataclass
 class Response:
-    affectedContexts: List[Context]
+    affectedContexts: List[AffectedContext]
     parameters: List[Parameter]
     messages: List[ResponseMessage]
     speech: List = field(default_factory=list)
@@ -184,7 +187,7 @@ class Intent:
     name: str
     responses: List[Response]
     auto: bool = True
-    contexts: List = field(default_factory=list)
+    contexts: List[str] = field(default_factory=list)
     priority: int = 500000
     webhookUsed: bool = True
     webhookForSlotFilling: bool = True

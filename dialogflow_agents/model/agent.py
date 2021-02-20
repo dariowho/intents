@@ -1,6 +1,7 @@
 import re
 import logging
 from uuid import uuid1
+from inspect import isclass
 from typing import List, Dict, Union
 from dataclasses import dataclass
 
@@ -12,6 +13,7 @@ from google.cloud.dialogflow_v2.types import DetectIntentResponse
 
 from dialogflow_agents.model.intent import Intent, IntentMetadata, IntentMetaclass
 from dialogflow_agents.model.entity import StringParameter
+from dialogflow_agents.model.context import Context, _ContextMetaclass
 from dialogflow_agents.dialogflow_helpers.auth import resolve_credentials
 from dialogflow_agents.dialogflow_format.util import dict_to_protobuf
 
@@ -22,6 +24,7 @@ class Agent:
     intents: List[Intent] = []
     _intents_by_name: Dict[str, Intent] = {}
     _intents_by_event: Dict[str, Intent] = {}
+    _contexts_by_name: Dict[str, _ContextMetaclass] = {}
 
     _credentials: google.auth.credentials.Credentials = None
     _session: str = None
@@ -73,15 +76,24 @@ class Agent:
         if conflicting_intent := cls._intents_by_event.get(event_name):
             raise ValueError(f"Intent name {name} is ambiguous and clashes with {conflicting_intent} ('{conflicting_intent.metadata.name}')")
 
-        intent_metadata = IntentMetadata(
-            name=name,
-            input_contexts=[], # TODO: model
-            output_contexts=[], # TODO: model
-            events=[event_name] # TODO: handle additional Events
-            # TODO: handle other metadata
-        )
-
         def _result_decorator(decorated_cls):
+            if not decorated_cls.meta:
+                decorated_cls.meta = Intent.Meta()
+
+            for context_cls in decorated_cls.meta.input_contexts:
+                cls._register_context(context_cls)
+
+            for context in decorated_cls.meta.output_contexts:
+                cls._register_context(context)
+
+            intent_metadata = IntentMetadata(
+                name=name,
+                input_contexts=decorated_cls.meta.input_contexts,
+                output_contexts=decorated_cls.meta.output_contexts,
+                events=[event_name] # TODO: handle additional Events
+                # TODO: handle other metadata
+            )
+
             result = dataclass(decorated_cls)
             for field in result.__dataclass_fields__.values():
                 # TODO: support List
@@ -96,6 +108,25 @@ class Agent:
             return result
 
         return _result_decorator
+
+    @classmethod
+    def _register_context(cls, context_obj_or_cls: Union[_ContextMetaclass, Context]):
+        if isinstance(context_obj_or_cls, Context):
+            context_cls = context_obj_or_cls.__class__
+        elif isclass(context_obj_or_cls) and issubclass(context_obj_or_cls, Context):
+            context_cls = context_obj_or_cls
+        else:
+            raise ValueError(f"Context {context_obj_or_cls} is not a Context instance or subclass")
+
+        existing_cls = cls._contexts_by_name.get(context_cls.name)
+        if not existing_cls:
+            cls._contexts_by_name[context_cls.name] = context_cls
+            return
+
+        if existing_cls and id(context_cls) != id(existing_cls):
+            existing_cls_path = f"{existing_cls.__module__}.{existing_cls.__qualname__}"
+            context_cls_path = f"{context_cls.__module__}.{context_cls.__qualname__}"
+            raise ValueError(f"Two different Context classes exist with the same name: '{existing_cls_path}' and '{context_cls_path}'")
 
     @classmethod
     def _prediction_to_intent(cls, df_response: DetectIntentResponse) -> Intent:

@@ -19,15 +19,11 @@ class Context(SessionEntity, metaclass=_ContextMetaclass):
     'c_greetings'
     """
 
+    lifespan: int = None
+
+    def __init__(self, lifespan):
+        self.lifespan = lifespan
+
     @property
     def name(self):
         return self.__class__.name
-
-#
-# Example
-#
-
-class c_test_context(Context):
-    pass
-
-c_test_context()._session
