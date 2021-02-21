@@ -1,3 +1,8 @@
+"""
+Here we provide the :class:`Agent` base class. You will subclass it when
+defining your own Agent.
+"""
+
 import re
 import logging
 from uuid import uuid1
@@ -20,6 +25,10 @@ from dialogflow_agents.dialogflow_format.util import dict_to_protobuf
 logger = logging.getLogger(__name__)
 
 class Agent:
+    """
+    As the name suggests, Agent is the base class for your Dialogflow Agents
+    project.
+    """
 
     intents: List[Intent] = []
     _intents_by_name: Dict[str, Intent] = {}
@@ -42,18 +51,16 @@ class Agent:
         """
         Returns a decorator for Intent subclasses that:
 
-        1. Turns the Intent subclass into a `dataclass`
-        1. Registers the intent in the Agent object
-        1. Attach metadata to the decorated Intent class
-        1. Check language data (examples and responses)
+        #. Turns the Intent subclass into a `dataclass`
+        #. Registers the intent in the Agent object
+        #. Attach metadata to the decorated Intent class
+        #. Check language data (examples and responses)
 
-        .. code-block::python
+        .. code-block:: python
 
-            from dialogflow_agents import Agent, Intent
+            from my_agent_project import MyAgent
 
-            agent = Agent(...)
-
-            @agent.intent('my_test_intent_name')
+            @MyAgent.intent('my_test_intent_name')
             class my_test_intent(Intent):
                 a_parameter: str
                 another_parameter: str
@@ -149,9 +156,9 @@ class Agent:
 
     def predict(self, message: str) -> Intent:
         """
-        1. Load persisted session if necessary
-        2. Send predict() request, with existing session contexts
-        3. Return the right `Intent` subclass
+        #. Load persisted session if necessary
+        #. Send predict() request, with existing session contexts
+        #. Return the right `Intent` subclass
 
         :param message: The message to be interpreted
         """

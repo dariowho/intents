@@ -82,7 +82,15 @@ result.fulfillment_text # "Howdy Human, I'm Ugo"
 
 ## Documentation
 
-tbd
+This project is documented using Sphinx. This is how you build the documentation site:
+
+```sh
+poetry install
+cd docs/
+make html
+```
+
+Documentation will be created in the `docs/_build/` folder.
 
 ## Test
 

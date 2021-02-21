@@ -4,6 +4,9 @@ TMP_*
 _tmp_*
 _TMP_*
 
+# IDE
+.vscode/
+
 # Byte-compiled / optimized / DLL files
 __pycache__/
 *.py[cod]
