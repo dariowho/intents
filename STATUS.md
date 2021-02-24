@@ -8,7 +8,7 @@ Dialogflow Agents.
 | Entity declaration               | 🔴     |      |
 | Intent declaration               | 🟢     |      |
 | Input/Output Context             | 🟢     |      |
-| Custom Events                    | 🔴     |      |
+| Custom Events                    | 🟢     |      |
 | Examples Utterances              | 🟢     |      |
 | Example Utterances with Entities | 🟢     |      |
 | Action                           | 🔴     |      |

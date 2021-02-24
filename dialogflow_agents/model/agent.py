@@ -16,9 +16,10 @@ from google.cloud.dialogflow_v2.types import TextInput, QueryInput, EventInput
 from google.cloud.dialogflow_v2.services.sessions import SessionsClient
 from google.cloud.dialogflow_v2.types import DetectIntentResponse
 
-from dialogflow_agents.model.intent import Intent, IntentMetadata, IntentMetaclass
+from dialogflow_agents.model.intent import Intent, IntentMetadata, _IntentMetaclass
 from dialogflow_agents.model.entity import StringParameter
 from dialogflow_agents.model.context import Context, _ContextMetaclass
+from dialogflow_agents.model.event import _EventMetaclass
 from dialogflow_agents.dialogflow_helpers.auth import resolve_credentials
 from dialogflow_agents.dialogflow_format.util import dict_to_protobuf
 
@@ -30,10 +31,11 @@ class Agent:
     project.
     """
 
-    intents: List[Intent] = []
-    _intents_by_name: Dict[str, Intent] = {}
-    _intents_by_event: Dict[str, Intent] = {}
-    _contexts_by_name: Dict[str, _ContextMetaclass] = {}
+    intents: List[Intent] = None
+    _intents_by_name: Dict[str, Intent] = None
+    _intents_by_event: Dict[str, Intent] = None
+    _contexts_by_name: Dict[str, _ContextMetaclass] = None
+    _events_by_name: Dict[str, _EventMetaclass] = None
 
     _credentials: google.auth.credentials.Credentials = None
     _session: str = None
@@ -67,10 +69,13 @@ class Agent:
 
         """
         if not cls.intents or not cls._intents_by_name and not cls._intents_by_event:
-            assert not cls.intents and not cls._intents_by_name
+            assert not cls.intents and not cls._intents_by_name and not cls._intents_by_event 
+            assert not cls._contexts_by_name and not cls._events_by_name
             cls.intents = []
             cls._intents_by_name = {}
             cls._intents_by_event = {}
+            cls._contexts_by_name = {}
+            cls._events_by_name = {}
 
         name_is_valid, reason = _is_valid_intent_name(name)
         if not name_is_valid:
@@ -83,7 +88,7 @@ class Agent:
         if conflicting_intent := cls._intents_by_event.get(event_name):
             raise ValueError(f"Intent name {name} is ambiguous and clashes with {conflicting_intent} ('{conflicting_intent.metadata.name}')")
 
-        def _result_decorator(decorated_cls):
+        def _result_decorator(decorated_cls: _IntentMetaclass):
             if not decorated_cls.meta:
                 decorated_cls.meta = Intent.Meta()
 
@@ -93,11 +98,16 @@ class Agent:
             for context in decorated_cls.meta.output_contexts:
                 cls._register_context(context)
 
+            events = [event_name]
+            for event_cls in decorated_cls.meta.additional_events:
+                cls._register_event(event_cls, decorated_cls)
+                events.append(event_cls.name)
+
             intent_metadata = IntentMetadata(
                 name=name,
                 input_contexts=decorated_cls.meta.input_contexts,
                 output_contexts=decorated_cls.meta.output_contexts,
-                events=[event_name] # TODO: handle additional Events
+                events=events
                 # TODO: handle other metadata
             )
 
@@ -134,6 +144,26 @@ class Agent:
             existing_cls_path = f"{existing_cls.__module__}.{existing_cls.__qualname__}"
             context_cls_path = f"{context_cls.__module__}.{context_cls.__qualname__}"
             raise ValueError(f"Two different Context classes exist with the same name: '{existing_cls_path}' and '{context_cls_path}'")
+
+    @classmethod
+    def _register_event(cls, event_cls: _EventMetaclass, intent_cls: _IntentMetaclass):
+        existing_cls = cls._events_by_name.get(event_cls.name)
+
+        if not existing_cls:
+            cls._events_by_name[event_cls.name] = event_cls
+            cls._intents_by_event[event_cls.name] = intent_cls
+            return
+
+        if id(existing_cls) != id(event_cls):
+            existing_cls_path = f"{existing_cls.__module__}.{existing_cls.__qualname__}"
+            event_cls_path = f"{event_cls.__module__}.{event_cls.__qualname__}"
+            raise ValueError(f"Two different Event classes exist with the same name: '{existing_cls_path}' and '{event_cls_path}'")
+
+        # TODO: model different intents with same event and different input
+        # context (ok) vs. different intents with same event and same input
+        # context (not ok).
+        existing_intent = cls._intents_by_event[event_cls.name]
+        raise ValueError(f"Event '{event_cls.name}' is alreadt associated to Intent '{existing_intent}'. An Event can only be associated with 1 intent. (differenciation by input contexts is not supported yet)")
 
     @classmethod
     def _prediction_to_intent(cls, df_response: DetectIntentResponse) -> Intent:

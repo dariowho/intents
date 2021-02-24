@@ -13,7 +13,7 @@ from dataclasses import asdict
 
 from dialogflow_agents import Agent
 from dialogflow_agents import language
-from dialogflow_agents.model.intent import IntentMetaclass
+from dialogflow_agents.model.intent import _IntentMetaclass
 import dialogflow_agents.dialogflow_format.agent_definition as df
 
 logger = logging.getLogger(__name__)
@@ -78,7 +78,7 @@ def render_agent(agent: Agent):
         googleAssistant=google_assistant
     )
 
-def render_intent(intent: IntentMetaclass, responses: List[language.ResponseUtterance]):
+def render_intent(intent: _IntentMetaclass, responses: List[language.ResponseUtterance]):
     response = df.Response(
         affectedContexts=[df.AffectedContext(c.name, c.lifespan) for c in intent.metadata.output_contexts],
         parameters=render_parameters(intent),
@@ -96,7 +96,7 @@ def render_intent(intent: IntentMetaclass, responses: List[language.ResponseUtte
         events=[df.Event(e) for e in intent.metadata.events]
     )
 
-def render_parameters(intent: IntentMetaclass):
+def render_parameters(intent: _IntentMetaclass):
     result = []
     for field in intent.__dataclass_fields__.values():
         required = isinstance(field.default, dataclasses._MISSING_TYPE)
@@ -116,13 +116,13 @@ def render_parameters(intent: IntentMetaclass):
         ))
     return result
 
-def render_responses(intent: IntentMetaclass, responses: List[language.ResponseUtterance]):
+def render_responses(intent: _IntentMetaclass, responses: List[language.ResponseUtterance]):
     if not responses:
         return [df.ResponseMessage()]
 
     return [r.df_response() for r in responses]
 
-def render_intent_usersays(agent_cls: type, intent: IntentMetaclass, examples: List[language.ExampleUtterance]):
+def render_intent_usersays(agent_cls: type, intent: _IntentMetaclass, examples: List[language.ExampleUtterance]):
     result = []
     for e in examples:
         result.append(df.IntentUsersays(

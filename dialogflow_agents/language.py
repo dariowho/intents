@@ -16,7 +16,7 @@ from dataclasses import dataclass
 import yaml
 
 import dialogflow_agents
-from dialogflow_agents.model.intent import IntentMetaclass
+from dialogflow_agents.model.intent import _IntentMetaclass
 from dialogflow_agents.dialogflow_format import agent_definition as df
 
 logger = logging.getLogger(__name__)
@@ -85,7 +85,7 @@ class TextResponseUtterance(ResponseUtterance):
             speech=self.choices
         )
 
-def intent_language_data(agent_cls: type, intent: IntentMetaclass) -> (List[ExampleUtterance], List[ResponseUtterance]):
+def intent_language_data(agent_cls: type, intent: _IntentMetaclass) -> (List[ExampleUtterance], List[ResponseUtterance]):
     main_agent_package_name = agent_cls.__module__.split('.')[0]
     main_agent_package = sys.modules[main_agent_package_name]
     if '__path__' not in main_agent_package.__dict__:

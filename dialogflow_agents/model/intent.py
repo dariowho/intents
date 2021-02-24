@@ -7,7 +7,7 @@ from google.protobuf.json_format import MessageToDict
 from google.cloud.dialogflow_v2.types import DetectIntentResponse
 
 from dialogflow_agents.model.response_messages import FulfillmentMessagePlatform, build_response_message, FulfillmentMessage
-from dialogflow_agents.model import context
+from dialogflow_agents.model import context, event
 
 logger = logging.getLogger(__name__)
 
@@ -22,7 +22,7 @@ class IntentMetadata:
     intent_webhook_enabled: bool = False
     slot_filling_webhook_enabled: bool = False
 
-class IntentMetaclass(type):
+class _IntentMetaclass(type):
     # @property
     # def metadata(cls) -> IntentMetadata:
     #     if not cls.metadata:
@@ -30,7 +30,7 @@ class IntentMetaclass(type):
     #     return cls.metadata
     metadata: IntentMetadata = None
 
-class Intent(metaclass=IntentMetaclass):
+class Intent(metaclass=_IntentMetaclass):
     """
     Represents a predicted intent. This is also used as a base class for the
     intent classes that model a Dialogflow Agent in Python code.
@@ -50,7 +50,7 @@ class Intent(metaclass=IntentMetaclass):
         """
         input_contexts: List[context._ContextMetaclass] = field(default_factory=list)
         output_contexts: List[context.Context] = field(default_factory=list)
-        # additional_events: List[Event] = None
+        additional_events: List[event.Event] = field(default_factory=list)
 
     # User fills this with desired extra metadata
     meta: Meta = None
