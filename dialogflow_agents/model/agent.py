@@ -17,7 +17,7 @@ from google.cloud.dialogflow_v2.services.sessions import SessionsClient
 from google.cloud.dialogflow_v2.types import DetectIntentResponse
 
 from dialogflow_agents.model.intent import Intent, IntentMetadata, _IntentMetaclass
-from dialogflow_agents.model.entity import StringParameter
+from dialogflow_agents.model.entity import EntityMixin
 from dialogflow_agents.model.context import Context, _ContextMetaclass
 from dialogflow_agents.model.event import _EventMetaclass
 from dialogflow_agents.dialogflow_helpers.auth import resolve_credentials
@@ -114,8 +114,8 @@ class Agent:
             result = dataclass(decorated_cls)
             for field in result.__dataclass_fields__.values():
                 # TODO: support List
-                if not issubclass(field.type, StringParameter):
-                    raise ValueError(f"Invalid type '{field.type}' for parameter '{field.name}' in Intent '{name}': must be an Entity. Try 'sys.any()' from 'dialogflow_agents.system_entities' if you are unsure.")
+                if not issubclass(field.type, EntityMixin):
+                    raise ValueError(f"Invalid type '{field.type}' for parameter '{field.name}' in Intent '{name}': must be an Entity. Try 'dialogflow_agents.Sys.Any' if you are unsure.")
             decorated_cls.metadata = intent_metadata
             cls.intents.append(result)
             cls._intents_by_name[name] = result

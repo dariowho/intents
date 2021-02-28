@@ -101,14 +101,12 @@ def render_parameters(intent: _IntentMetaclass):
     for field in intent.__dataclass_fields__.values():
         required = isinstance(field.default, dataclasses._MISSING_TYPE)
         value = f"${field.name}"
-        # Could reference a context
-        if field.type.df_parameter_value:
-            value = field.type.df_parameter_value
+        entity_cls = field.type
         result.append(df.Parameter(
             id=str(uuid1()),
             name=field.name,
             required=required,
-            dataType=f'@{field.type.df_entity.name}',
+            dataType=f'@{entity_cls.metadata.name}',
             value=value,
             defaultValue=field.default if not required else '',
             isList=False

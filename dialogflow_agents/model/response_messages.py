@@ -24,7 +24,7 @@ class FulfillmentMessage(ABC):
         {
             "text": {
                 "text": [
-                "Nice to meet you Dario!"
+                    "Nice to meet you Dario!"
                 ]
             }
         }

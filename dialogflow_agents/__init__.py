@@ -11,7 +11,7 @@ class SessionEntity:
         return self
 
 from dialogflow_agents.model.intent import Intent
-from dialogflow_agents.model.entity import Entity
+from dialogflow_agents.model.entity import Entity, Sys
 from dialogflow_agents.model.context import Context
 from dialogflow_agents.model.event import Event
 from dialogflow_agents.model.agent import Agent

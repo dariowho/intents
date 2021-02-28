@@ -3,24 +3,26 @@ Dialogflow Agents.
 
 # Basic Agent Definition
 
-| Feature                          | State  | Note |
-|----------------------------------|--------|------|
-| Entity declaration               | 🔴     |      |
-| Intent declaration               | 🟢     |      |
-| Input/Output Context             | 🟢     |      |
-| Custom Events                    | 🟢     |      |
-| Examples Utterances              | 🟢     |      |
-| Example Utterances with Entities | 🟢     |      |
-| Action                           | 🔴     |      |
-| Parameters with System Entities  | 🟢     |      |
-| Parameters with Custom Entities  | 🔴     |      |
-| List Parameters                  | 🔴     |      |
-| Required Parameters with prompts | 🔴     |      |
-| Default Text Responses           | 🟢     |      |
-| Platform Text/Rich Responses     | 🔴     |      |
-| Custom Payload Responses         | 🔴     |      |
-| Agent Webhook Settings           | 🔴     |      |
-| Multi-Language Agents            | 🔴     |      |
+| Feature                          | State  | Note               |
+|----------------------------------|--------|--------------------|
+| Entity declaration               | 🔴     |                    |
+| Intent declaration               | 🟢     |                    |
+| Input/Output Context             | 🟢     |                    |
+| Custom Events                    | 🟢     |                    |
+| Examples Utterances              | 🟢     |                    |
+| Example Utterances with Entities | 🟢     |                    |
+| Action                           | ⚪     | Not planned        |
+| Parameters with System Entities  | 🟡     | Only some entities |
+| Parameters with Custom Entities  | 🔴     |                    |
+| Extended System Entities         | ⚪     | Not planned        |
+| Session Entities                 | ⚪     | Not planned        |
+| List Parameters                  | 🔴     |                    |
+| Required Parameters with prompts | 🔴     |                    |
+| Default Text Responses           | 🟢     |                    |
+| Platform Text/Rich Responses     | 🔴     |                    |
+| Custom Payload Responses         | 🔴     |                    |
+| Agent Webhook Settings           | 🔴     |                    |
+| Multi-Language Agents            | 🔴     |                    |
 
 # Rich Agent definition
 
@@ -29,6 +31,7 @@ Dialogflow Agents.
 | Follow-up Intent Shortcut        | 🔴     |      |
 | Intent Flow Graphs               | 🔴     |      |
 | Context Required Parameters      | 🔴     |      |
+| Advanced Slot Filling Framework  | 🔴     |      |
 
 # Cloud Sync
 

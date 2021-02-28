@@ -1,5 +1,4 @@
-from dialogflow_agents import Intent, Event
-from dialogflow_agents.system_entities import sys
+from dialogflow_agents import Intent, Event, Sys
 
 from example_agent import ExampleAgent
 
@@ -9,11 +8,11 @@ class hello(Intent):
 
 @ExampleAgent.intent('smalltalk.user_name.give')
 class user_name_give(Intent):
-    user_name: sys.person()
+    user_name: Sys.Person
 
 @ExampleAgent.intent('smalltalk.agent_name.give')
 class agent_name_give(Intent):
-    agent_name: sys.person()
+    agent_name: Sys.Person
 
 
 class WelcomeEvent(Event):
@@ -29,4 +28,4 @@ class agent_welcomes_user(Intent):
         additional_events=[WelcomeEvent]
     )
 
-    user_name: sys.person()
+    user_name: Sys.Person
