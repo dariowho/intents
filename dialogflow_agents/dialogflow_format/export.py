@@ -14,6 +14,7 @@ from dataclasses import asdict
 from dialogflow_agents import Agent
 from dialogflow_agents import language
 from dialogflow_agents.model.intent import _IntentMetaclass
+from dialogflow_agents.model.entity import EntityMixin
 import dialogflow_agents.dialogflow_format.agent_definition as df
 
 logger = logging.getLogger(__name__)
@@ -57,9 +58,23 @@ def export(agent: Agent, output_path: str) -> None:
             usersays_data = [asdict(x) for x in rendered_intent_usersays]
             json.dump(usersays_data, f, indent=2)
 
+    for entity_cls in agent_cls._entities_by_name.values():
+        entries = language.entity_language_data(agent_cls, entity_cls)
+        rendered_entity = render_entity(entity_cls)
+        with open(os.path.join(entities_dir, f"{entity_cls.metadata.name}.json"), "w") as f:
+            json.dump(asdict(rendered_entity), f, indent=2)
+        rendered_entity_entries = render_entity_entries(agent_cls, entries)
+        with open(os.path.join(entities_dir, f"{entity_cls.metadata.name}_entries_en.json"), "w") as f:
+            entries_data = [asdict(x) for x in rendered_entity_entries]
+            json.dump(entries_data, f, indent=2)
+
     if output_path.endswith('.zip'):
         output_path = output_path[:-4]
     shutil.make_archive(output_path, 'zip', output_dir)
+
+#
+# Agent
+#
 
 def render_agent(agent: Agent):
     google_assistant = df.AgentGoogleAssistant(
@@ -77,6 +92,10 @@ def render_agent(agent: Agent):
         webhook=webhook,
         googleAssistant=google_assistant
     )
+
+#
+# Intent
+#
 
 def render_intent(intent: _IntentMetaclass, responses: List[language.ResponseUtterance]):
     response = df.Response(
@@ -126,6 +145,29 @@ def render_intent_usersays(agent_cls: type, intent: _IntentMetaclass, examples: 
         result.append(df.IntentUsersays(
             id=str(uuid1()),
             data=e.df_chunks()
+        ))
+    return result
+
+#
+# Entity
+#
+
+def render_entity(entity_cls: EntityMixin) -> df.Entity:
+    metadata = entity_cls.metadata
+    return df.Entity(
+        id=str(uuid1()),
+        name=metadata.name,
+        isRegexp=metadata.regex_entity,
+        automatedExpansion=metadata.automated_expansion,
+        allowFuzzyExtraction=metadata.fuzzy_matching
+    )
+
+def render_entity_entries(entity_cls: EntityMixin, entries: List[language.EntityEntry]) -> List[df.EntityEntry]:
+    result = []
+    for e in entries:
+        result.append(df.EntityEntry(
+            value=e.value,
+            synonyms=e.synonyms
         ))
     return result
 

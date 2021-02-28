@@ -17,10 +17,31 @@ import yaml
 
 import dialogflow_agents
 from dialogflow_agents.model.intent import _IntentMetaclass
+from dialogflow_agents.model.entity import EntityMixin
 from dialogflow_agents.dialogflow_format import agent_definition as df
 
 logger = logging.getLogger(__name__)
 
+def agent_language_folder(agent_cls: type):
+    main_agent_package_name = agent_cls.__module__.split('.')[0]
+    main_agent_package = sys.modules[main_agent_package_name]
+    if '__path__' not in main_agent_package.__dict__:
+        # TODO: try workdir or something...
+        logger.warning(f"Agent {agent_cls} doesn't seem to be defined within a package. Language data will not be loaded.")
+        return [], []
+
+    agent_folder = main_agent_package.__path__[0]
+    language_folder = os.path.join(agent_folder, 'language')
+    if not os.path.isdir(language_folder):
+        raise ValueError(f"No language folder found for agent {agent_cls} (expected: {language_folder})")
+
+    return language_folder
+
+#
+# Intents
+#
+
+# TODO: check that parameter_value is one of the entries in custom entities
 RE_EXAMPLE_PARAMETERS = re.compile(r"\$(?P<parameter_name>[\w]+)\{(?P<parameter_value>[^\}]+)\}")
 
 class ExampleUtterance(str):
@@ -87,18 +108,8 @@ class TextResponseUtterance(ResponseUtterance):
         )
 
 def intent_language_data(agent_cls: type, intent: _IntentMetaclass) -> (List[ExampleUtterance], List[ResponseUtterance]):
-    main_agent_package_name = agent_cls.__module__.split('.')[0]
-    main_agent_package = sys.modules[main_agent_package_name]
-    if '__path__' not in main_agent_package.__dict__:
-        # TODO: try workdir or something...
-        logger.warning(f"Agent {agent_cls} doesn't seem to be defined within a package. Language data will not be loaded.")
-        return [], []
+    language_folder = agent_language_folder(agent_cls)
 
-    agent_folder = main_agent_package.__path__[0]
-    language_folder = os.path.join(agent_folder, 'language')
-    if not os.path.isdir(language_folder):
-        raise ValueError(f"No language folder found for agent {agent_cls} (expected: {language_folder})")
-    
     # TODO: support multiple languages
     language_file = os.path.join(language_folder, "intents", f"{intent.metadata.name}__en.yaml")
     if not os.path.isfile(language_file):
@@ -135,9 +146,50 @@ def _build_responses(responses_data: dict):
 
     return result
 
+#
+# Entities
+#
+
+@dataclass
+class EntityEntry:
+
+    value: str
+    synonyms: List[str]
+
+def entity_language_data(agent_cls: type, entity_cls: EntityMixin) -> List[EntityEntry]:
+    language_folder = agent_language_folder(agent_cls)
+
+    # TODO: support other languages
+    language_file = os.path.join(language_folder, "entities", f"{entity_cls.metadata.name}__en.yaml")
+    if not os.path.isfile(language_file):
+        raise ValueError(f"Language file not found for entity '{entity_cls.metadata.name}'. Expected path: {language_file}.")
+    
+    with open(language_file, 'r') as f:
+        language_data = yaml.load(f.read(), Loader=yaml.FullLoader)
+
+    if not language_data:
+        return []
+
+    entries_data = language_data.get('entries', [])
+    if not isinstance(entries_data, dict):
+        raise ValueError(f"Invalid Entity language data for entity {entity_cls.metadata.name}. Entries data must be a dict. Entries data: {entries_data}")
+
+    entries = []
+    for value, synonyms in entries_data.items():
+        if not isinstance(synonyms, list):
+            raise ValueError(f"Invalid language data for entry {entity_cls.metadata.name}. Synonims data must always be lists. Synonims data for '{value}': '{synonyms}'")
+        entries.append(EntityEntry(value, synonyms))
+
+    return entries
+
 # from example_agent import ExampleAgent
 # from example_agent.intents import smalltalk
 
 # examples, responses = intent_language_data(ExampleAgent, smalltalk.user_name_give)
 # for e in examples:
 #     print(e.df_chunks())
+
+# from example_agent import ExampleAgent
+# from example_agent.intents.restaurant import PizzaType
+
+# entity_language_data(ExampleAgent, PizzaType)

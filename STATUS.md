@@ -5,7 +5,7 @@ Dialogflow Agents.
 
 | Feature                          | State  | Note               |
 |----------------------------------|--------|--------------------|
-| Entity declaration               | 🔴     |                    |
+| Entity declaration               | 🟢     |                    |
 | Intent declaration               | 🟢     |                    |
 | Input/Output Context             | 🟢     |                    |
 | Custom Events                    | 🟢     |                    |
@@ -13,7 +13,7 @@ Dialogflow Agents.
 | Example Utterances with Entities | 🟢     |                    |
 | Action                           | ⚪     | Not planned        |
 | Parameters with System Entities  | 🟡     | Only some entities |
-| Parameters with Custom Entities  | 🔴     |                    |
+| Parameters with Custom Entities  | 🟢     |                    |
 | Extended System Entities         | ⚪     | Not planned        |
 | Session Entities                 | ⚪     | Not planned        |
 | List Parameters                  | 🔴     |                    |

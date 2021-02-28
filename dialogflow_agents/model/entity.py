@@ -59,22 +59,28 @@ class Entity(str, EntityMixin):
 
     meta: Meta = None
 
+class SystemEntityMixin(EntityMixin):
+    """
+    This is used to signal that the entity is one of the Dialogflow default
+    entities and doesn't need language resources.
+    """
+
 class Sys:
 
-    class Any(str, EntityMixin):
+    class Any(str, SystemEntityMixin):
         """
         Matches any non-empty input
         """
         __df_name__ = "sys.any"
 
-    class Integer(int, EntityMixin):
+    class Integer(int, SystemEntityMixin):
         """
         Matches integers only
         """
         __df_name__ = "sys.number-integer"
 
     @dataclass
-    class Person(EntityMixin):
+    class Person(SystemEntityMixin):
         """
         Matches common given names, last names or their combinations.
         """
@@ -83,7 +89,7 @@ class Sys:
         name: str
 
     @dataclass
-    class UnitCurrency(EntityMixin):
+    class UnitCurrency(SystemEntityMixin):
         """
         Number + currency name
         """

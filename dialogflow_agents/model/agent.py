@@ -17,7 +17,7 @@ from google.cloud.dialogflow_v2.services.sessions import SessionsClient
 from google.cloud.dialogflow_v2.types import DetectIntentResponse
 
 from dialogflow_agents.model.intent import Intent, IntentMetadata, _IntentMetaclass
-from dialogflow_agents.model.entity import EntityMixin
+from dialogflow_agents.model.entity import EntityMixin, SystemEntityMixin
 from dialogflow_agents.model.context import Context, _ContextMetaclass
 from dialogflow_agents.model.event import _EventMetaclass
 from dialogflow_agents.dialogflow_helpers.auth import resolve_credentials
@@ -34,6 +34,7 @@ class Agent:
     intents: List[Intent] = None
     _intents_by_name: Dict[str, Intent] = None
     _intents_by_event: Dict[str, Intent] = None
+    _entities_by_name: Dict[str, EntityMixin] = None
     _contexts_by_name: Dict[str, _ContextMetaclass] = None
     _events_by_name: Dict[str, _EventMetaclass] = None
 
@@ -74,6 +75,7 @@ class Agent:
             cls.intents = []
             cls._intents_by_name = {}
             cls._intents_by_event = {}
+            cls._entities_by_name = {}
             cls._contexts_by_name = {}
             cls._events_by_name = {}
 
@@ -113,9 +115,7 @@ class Agent:
 
             result = dataclass(decorated_cls)
             for field in result.__dataclass_fields__.values():
-                # TODO: support List
-                if not issubclass(field.type, EntityMixin):
-                    raise ValueError(f"Invalid type '{field.type}' for parameter '{field.name}' in Intent '{name}': must be an Entity. Try 'dialogflow_agents.Sys.Any' if you are unsure.")
+                cls._register_entity(field.type, field.name, name)
             decorated_cls.metadata = intent_metadata
             cls.intents.append(result)
             cls._intents_by_name[name] = result
@@ -125,6 +125,27 @@ class Agent:
             return result
 
         return _result_decorator
+
+    @classmethod
+    def _register_entity(cls, entity_cls: EntityMixin, parameter_name: str, intent_name: str):
+        # TODO: support List
+        if not issubclass(entity_cls, EntityMixin):
+            raise ValueError(f"Invalid type '{field.type}' for parameter '{parameter_name}' in Intent '{intent_name}': must be an Entity. Try 'dialogflow_agents.Sys.Any' if you are unsure.")
+
+        if issubclass(entity_cls, SystemEntityMixin):
+            return
+
+        existing_cls = cls._entities_by_name.get(entity_cls.metadata.name)
+        if not existing_cls:
+            from dialogflow_agents import language
+            language.entity_language_data(cls, entity_cls) # Checks that language data is existing and consistent
+            cls._entities_by_name[entity_cls.metadata.name] = entity_cls
+            return
+
+        if id(entity_cls) != id(existing_cls):
+            existing_cls_path = f"{existing_cls.__module__}.{existing_cls.__qualname__}"
+            entity_cls_path = f"{entity_cls.__module__}.{entity_cls.__qualname__}"
+            raise ValueError(f"Two different Entity classes exist with the same name: '{existing_cls_path}' and '{entity_cls_path}'")
 
     @classmethod
     def _register_context(cls, context_obj_or_cls: Union[_ContextMetaclass, Context]):
@@ -140,7 +161,7 @@ class Agent:
             cls._contexts_by_name[context_cls.name] = context_cls
             return
 
-        if existing_cls and id(context_cls) != id(existing_cls):
+        if id(context_cls) != id(existing_cls):
             existing_cls_path = f"{existing_cls.__module__}.{existing_cls.__qualname__}"
             context_cls_path = f"{context_cls.__module__}.{context_cls.__qualname__}"
             raise ValueError(f"Two different Context classes exist with the same name: '{existing_cls_path}' and '{context_cls_path}'")
