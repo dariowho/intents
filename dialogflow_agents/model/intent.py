@@ -1,15 +1,28 @@
 import logging
 from dataclasses import dataclass, field
-from typing import List, Dict
-from collections import defaultdict
+from typing import List
 
-from google.protobuf.json_format import MessageToDict
-from google.cloud.dialogflow_v2.types import DetectIntentResponse
-
-from dialogflow_agents.model.response_messages import FulfillmentMessagePlatform, build_response_message, FulfillmentMessage
 from dialogflow_agents.model import context, event
 
 logger = logging.getLogger(__name__)
+
+#
+# Fulfillment Messages
+#
+
+class FulfillmentMessage:
+    """
+    This is a base class for Intent Fulfillment Messages
+    """
+
+class TextFulfillmentMessage(str, FulfillmentMessage):
+    """
+    This is a simple text fulfillment message.
+    """
+
+#
+# Intent
+#
 
 @dataclass
 class IntentMetadata:
@@ -60,49 +73,45 @@ class Intent(metaclass=_IntentMetaclass):
     metadata: IntentMetadata = None
     _df_response = None
 
+    # A :class:`PredictionService` provides this
+    prediction: 'dialogflow_agents.Prediction'
+
     @property
     def confidence(self) -> float:
-        return self._df_response.query_result.intent_detection_confidence
+        return self.prediction.confidence
 
     @property
     def contexts(self) -> list:
-        return MessageToDict(self._df_response.output_contexts)
+        return self.prediction.contexts
 
     @property
     def fulfillment_text(self) -> str:
-        return self._df_response.query_result.fulfillment_text
+        return self.prediction.fulfillment_text
 
-    def fulfillment_messages(self, platform: FulfillmentMessagePlatform=None) -> List[FulfillmentMessage]:
-        if not platform:
-            platform = FulfillmentMessagePlatform.PLATFORM_UNSPECIFIED
+    def fulfillment_messages(self) -> List[FulfillmentMessage]:
+        return self.prediction.fulfillment_messages
 
-        result_per_platform = defaultdict(list)
-        for m in self._df_response.query_result.fulfillment_messages:
-            m_platform = FulfillmentMessagePlatform(m.platform)
-            result_per_platform[m_platform].append(build_response_message(m))
+    # def fulfillment_messages(self, platform: FulfillmentMessagePlatform=None) -> List[FulfillmentMessage]:
+    #     if not platform:
+    #         platform = FulfillmentMessagePlatform.PLATFORM_UNSPECIFIED
 
-        return result_per_platform[platform]
+    #     result_per_platform = defaultdict(list)
+    #     for m in self._prediction.fulfillment_messages:
+    #         m_platform = FulfillmentMessagePlatform(m.platform)
+    #         result_per_platform[m_platform].append(build_response_message(m))
+
+    #     return result_per_platform[platform]
 
     @classmethod
-    def from_df_response(cls, df_response: DetectIntentResponse) -> 'Intent':
-        # 'parameter_name' -> type
+    def from_prediction(cls, prediction: 'dialogflow_agents.Prediction') -> 'Intent':
         parameter_definition = cls.__dict__.get('__annotations__', {})
-        
-        # will convert snake_case to lowerCamelCase <rant> so API is documented
-        # snake_case, protobuf is snake_case, dialogflow results are camelCase,
-        # protobuf converted to dict is camelCase (unless you use a flag,
-        # in that case it could also be snake_case) 💀 This is one of the
-        # reasons this library exists </rant>
-        df_response_dict = MessageToDict(df_response)
-
-        df_parameters_dict = MessageToDict(df_response.query_result.parameters)
         if parameter_definition:
             logger.debug("Parameters found in class %s", cls)
-            result = cls(**df_parameters_dict)
-        elif df_parameters_dict:
-            raise ValueError(f"Found parameters in Dialogflow Response, but class {cls} doesn't take any: {df_response}")
-        
-        # TODO: assert intent name matches intent class
-        result._df_response = df_response
+            result = cls(**prediction.parameters_dict) # TODO: convert types
+        elif prediction.parameters_dict:
+            raise ValueError(f"Found parameters in Service Prediction, but class {cls} doesn't take any: {prediction}")
+        else:
+            result = cls()
 
+        result.prediction = prediction
         return result

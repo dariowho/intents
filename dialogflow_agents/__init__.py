@@ -15,4 +15,4 @@ from dialogflow_agents.model.entity import Entity, Sys
 from dialogflow_agents.model.context import Context
 from dialogflow_agents.model.event import Event
 from dialogflow_agents.model.agent import Agent
-from dialogflow_agents.model.response_messages import FulfillmentMessagePlatform
+from dialogflow_agents.prediction_service import PredictionService

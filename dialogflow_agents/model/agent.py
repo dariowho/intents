@@ -11,17 +11,12 @@ from typing import List, Dict, Union
 from dataclasses import dataclass
 
 import google.auth.credentials
-from google.protobuf.json_format import MessageToDict
-from google.cloud.dialogflow_v2.types import TextInput, QueryInput, EventInput
-from google.cloud.dialogflow_v2.services.sessions import SessionsClient
-from google.cloud.dialogflow_v2.types import DetectIntentResponse
 
 from dialogflow_agents.model.intent import Intent, IntentMetadata, _IntentMetaclass
 from dialogflow_agents.model.entity import EntityMixin, SystemEntityMixin
 from dialogflow_agents.model.context import Context, _ContextMetaclass
 from dialogflow_agents.model.event import _EventMetaclass
-from dialogflow_agents.dialogflow_helpers.auth import resolve_credentials
-from dialogflow_agents.dialogflow_format.util import dict_to_protobuf
+from dialogflow_agents.prediction_service import PredictionService
 
 logger = logging.getLogger(__name__)
 
@@ -38,16 +33,18 @@ class Agent:
     _contexts_by_name: Dict[str, _ContextMetaclass] = None
     _events_by_name: Dict[str, _EventMetaclass] = None
 
-    _credentials: google.auth.credentials.Credentials = None
-    _session: str = None
+    _prediction_service: PredictionService
+    _session: str
 
     def __init__(self, google_credentials: Union[str, google.auth.credentials.Credentials], session: str=None, language: str="en"):
         if not session:
             session = f"py-{str(uuid1())}"
-        self._credentials = resolve_credentials(google_credentials)
+        
+        from dialogflow_agents.dialogflow_service.service import DialogflowPredictionService
+        self._prediction_service = DialogflowPredictionService(self, google_credentials)
+
         self._session = session
         self.language = language
-        self._df_session_client = SessionsClient(credentials=self._credentials)
 
     @classmethod
     def intent(cls, name: str):
@@ -70,7 +67,7 @@ class Agent:
 
         """
         if not cls.intents or not cls._intents_by_name and not cls._intents_by_event:
-            assert not cls.intents and not cls._intents_by_name and not cls._intents_by_event 
+            assert not cls.intents and not cls._intents_by_name and not cls._intents_by_event
             assert not cls._contexts_by_name and not cls._events_by_name
             cls.intents = []
             cls._intents_by_name = {}
@@ -85,8 +82,8 @@ class Agent:
 
         if cls._intents_by_name.get(name):
             raise ValueError(f"Another intent exists with name {name}: {cls._intents_by_name[name]}")
-        
-        event_name = _event_name(name)
+
+        event_name = Agent._event_name(name)
         if conflicting_intent := cls._intents_by_event.get(event_name):
             raise ValueError(f"Intent name {name} is ambiguous and clashes with {conflicting_intent} ('{conflicting_intent.metadata.name}')")
 
@@ -130,7 +127,7 @@ class Agent:
     def _register_entity(cls, entity_cls: EntityMixin, parameter_name: str, intent_name: str):
         # TODO: support List
         if not issubclass(entity_cls, EntityMixin):
-            raise ValueError(f"Invalid type '{field.type}' for parameter '{parameter_name}' in Intent '{intent_name}': must be an Entity. Try 'dialogflow_agents.Sys.Any' if you are unsure.")
+            raise ValueError(f"Invalid type '{entity_cls}' for parameter '{parameter_name}' in Intent '{intent_name}': must be an Entity. Try 'dialogflow_agents.Sys.Any' if you are unsure.")
 
         if issubclass(entity_cls, SystemEntityMixin):
             return
@@ -186,24 +183,10 @@ class Agent:
         existing_intent = cls._intents_by_event[event_cls.name]
         raise ValueError(f"Event '{event_cls.name}' is alreadt associated to Intent '{existing_intent}'. An Event can only be associated with 1 intent. (differenciation by input contexts is not supported yet)")
 
-    @classmethod
-    def _prediction_to_intent(cls, df_response: DetectIntentResponse) -> Intent:
-        """
-        Turns a Dialogflow response dict (note: no protobuf) into its Intent class.
-        """
-        intent_name = df_response.query_result.intent.display_name
-        intent_class = cls._intents_by_name.get(intent_name)
-        if not intent_class:
-            raise ValueError(f"Dialogflow prediction returned intent '{intent_name}', but this was not found in Agent definition. Make sure to restore a latest Agent export from `dialogflow_format.export.export()`. If the problem persists, please file a bug on the Dialoglfow Agents repository.")
-        return intent_class.from_df_response(df_response)
-
-    @property
-    def gcp_project_id(self):
-        return self._credentials.project_id
-
     @property
     def name(self):
-        return f"py-{self.gcp_project_id}"
+        return "py-agent" # TODO: parametrize
+        # return f"py-{self.gcp_project_id}"
 
     def predict(self, message: str) -> Intent:
         """
@@ -213,15 +196,7 @@ class Agent:
 
         :param message: The message to be interpreted
         """
-        text_input = TextInput(text=message, language_code=self.language)
-        query_input = QueryInput(text=text_input)
-        session_path=self._df_session_client.session_path(self.gcp_project_id, self._session)
-        df_result = self._df_session_client.detect_intent(
-            session=session_path,
-            query_input=query_input
-        )
-        df_response = df_result._pb
-        return self._prediction_to_intent(df_response)
+        return self._prediction_service.predict_intent(message)
 
     def trigger(self, intent: Intent) -> Intent:
         """
@@ -234,37 +209,14 @@ class Agent:
         >>> df_result.confidence
         1.0
         """
-        intent_name = intent.metadata.name
-        event_name = _event_name(intent_name)
-        event_parameters = {}
-        for parameter_name in intent.__dataclass_fields__:
-            if parameter_name in intent.__dict__:
-                event_parameters[parameter_name] = intent.__dict__[parameter_name]
-
-        logger.info("Triggering event '%s' in session '%s' with parameters: %s", event_name, self._session, event_parameters)
-        if not event_parameters:
-            event_parameters = {}
-            
-        event_input = EventInput(
-            name=event_name,
-            parameters=dict_to_protobuf(event_parameters),
-            language_code=self.language
-        )
-        query_input = QueryInput(event=event_input)
-        session_path=self._df_session_client.session_path(self.gcp_project_id, self._session)
-        result = self._df_session_client.detect_intent(
-            session=session_path,
-            query_input=query_input
-        )
-        df_response = result._pb
-        return self._prediction_to_intent(df_response)
+        return self._prediction_service.trigger_intent(intent)
 
     def save_session(self):
         """
         Store the current session (most importantly, the list of active
         contexts) to a persisted storage.
         """
-        pass
+        raise NotImplementedError("Context persistence is unsupported yet")
 
     def load_session(self):
         """
@@ -272,17 +224,19 @@ class Agent:
         in a format that can be used by :meth:`Agent.predict` to restore the
         state before prediction.
         """
-        pass
+        raise NotImplementedError("Context persistence is unsupported yet")
 
-def _event_name(intent_name: str) -> str:
-    """
-    Generate the default event name that we associate with every intent.
+    @staticmethod
+    def _event_name(intent_name: str) -> str:
+        """
+        Generate the default event name that we associate with every intent.
 
-    >>> _event_name('test.intent_name')
-    'E_TEST_INTENT_NAME'
+        >>> _event_name('test.intent_name')
+        'E_TEST_INTENT_NAME'
 
-    """
-    return "E_" + intent_name.upper().replace('.', '_')
+        TODO: This is only used in Dialogflow -> Deprecate and move to DialogflowPredictionService
+        """
+        return "E_" + intent_name.upper().replace('.', '_')
 
 def _is_valid_intent_name(candidate_name):
     if re.search(r'[^a-zA-Z_\.]', candidate_name):
@@ -295,6 +249,7 @@ def _is_valid_intent_name(candidate_name):
         return False, "must not contain __"
 
     return True, None
+
 #
 # Example code
 #

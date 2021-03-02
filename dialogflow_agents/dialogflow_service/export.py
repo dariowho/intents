@@ -15,7 +15,8 @@ from dialogflow_agents import Agent
 from dialogflow_agents import language
 from dialogflow_agents.model.intent import _IntentMetaclass
 from dialogflow_agents.model.entity import EntityMixin
-import dialogflow_agents.dialogflow_format.agent_definition as df
+import dialogflow_agents.dialogflow_service.df_format as df
+from dialogflow_agents.dialogflow_service.service import DialogflowPredictionService
 
 logger = logging.getLogger(__name__)
 
@@ -24,6 +25,7 @@ def export(agent: Agent, output_path: str) -> None:
     Export the given agent to the given path
     """
     assert isinstance(agent, Agent)
+    assert isinstance(agent._prediction_service, DialogflowPredictionService)
     agent_cls = agent.__class__
 
     output_dir = os.path.join(tempfile.gettempdir(), 'dialogflow-agents-export', agent.name)
@@ -78,7 +80,7 @@ def export(agent: Agent, output_path: str) -> None:
 
 def render_agent(agent: Agent):
     google_assistant = df.AgentGoogleAssistant(
-        project=agent.gcp_project_id,
+        project=agent._prediction_service.gcp_project_id,
         oAuthLinking=df.AgentGoogleAssistantOauthLinking()
         # TODO: include Google Assistant configuration
     )

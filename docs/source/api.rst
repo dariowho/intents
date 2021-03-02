@@ -21,5 +21,5 @@ These base classes are the building blocks of your Agents.
 Export
 ------
 
-.. automodule:: dialogflow_agents.dialogflow_format.export
+.. automodule:: dialogflow_agents.dialogflow_service.export
    :members:

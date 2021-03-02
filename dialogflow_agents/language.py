@@ -18,7 +18,7 @@ import yaml
 import dialogflow_agents
 from dialogflow_agents.model.intent import _IntentMetaclass
 from dialogflow_agents.model.entity import EntityMixin
-from dialogflow_agents.dialogflow_format import agent_definition as df
+from dialogflow_agents.dialogflow_service import df_format as df
 
 logger = logging.getLogger(__name__)
 
