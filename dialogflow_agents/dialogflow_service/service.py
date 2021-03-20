@@ -20,22 +20,32 @@ from google.cloud.dialogflow_v2.types import DetectIntentResponse
 from google.protobuf.json_format import MessageToDict
 
 from dialogflow_agents import Agent, Intent
-from dialogflow_agents.prediction_service import PredictionService, Prediction
+from dialogflow_agents.prediction_service import PredictionService, Prediction, EntityMapping
 from dialogflow_agents.model.intent import TextFulfillmentMessage
 from dialogflow_agents.dialogflow_service.auth import resolve_credentials
 from dialogflow_agents.dialogflow_service.util import dict_to_protobuf
+from dialogflow_agents.dialogflow_service import entities as df_entities
 
 logger = logging.getLogger(__name__)
 
 @dataclass
 class DialogflowPrediction(Prediction):
+    """
+    This is an implementation of :class:`Prediction` that comes from Dialogflow.
+    `DialogflowPredictions` are produced by :class:`DialogflowPredictionService`
+    """
     df_response: DetectIntentResponse = None
+
+    entity_mappings = df_entities.MAPPINGS
+
 
 class DialogflowPredictionService(PredictionService):
     """
-    This is an implementation of :class:`PredictionService` that maps Agents on
-    Dialogflow projects
+    This is an implementation of :class:`PredictionService` that enable Agents to
+    work as Dialogflow projects
     """
+
+    entity_mappings = df_entities.MAPPINGS
 
     _agent: Agent
 
@@ -51,7 +61,7 @@ class DialogflowPredictionService(PredictionService):
     def gcp_project_id(self):
         return self._credentials.project_id
 
-    def predict_intent(self, message: str) -> Intent:
+    def predict_intent(self, message: str) -> Prediction:
         text_input = TextInput(text=message, language_code=self._agent.language)
         query_input = QueryInput(text=text_input)
         session_path=self._session_client.session_path(self.gcp_project_id, self._agent._session)
@@ -60,10 +70,9 @@ class DialogflowPredictionService(PredictionService):
             query_input=query_input
         )
         df_response = df_result._pb
-        prediction = _df_response_to_prediction(df_response)
-        return self._prediction_to_intent(prediction)
+        return _df_response_to_prediction(df_response)
 
-    def trigger_intent(self, intent: Intent) -> Intent:
+    def trigger_intent(self, intent: Intent) -> Prediction:
         intent_name = intent.metadata.name
         event_name = Agent._event_name(intent_name)
         event_parameters = {}
@@ -88,15 +97,14 @@ class DialogflowPredictionService(PredictionService):
         )
         df_response = result._pb
 
-        prediction = _df_response_to_prediction(df_response)
-        return self._prediction_to_intent(prediction)
+        return _df_response_to_prediction(df_response)
 
 def _df_response_to_prediction(df_response: DetectIntentResponse) -> DialogflowPrediction:
     fulfillment_messages = []
-    for m in df_response.query_result.fulfillment_messages:
-        fulfillment_messages.append(_build_response_message(m))
+    for message in df_response.query_result.fulfillment_messages:
+        fulfillment_messages.append(_build_response_message(message))
 
-    return DialogflowPrediction(
+    return DialogflowPrediction( # pylint: disable=abstract-class-instantiated
         intent_name=df_response.query_result.intent.display_name,
         parameters_dict=MessageToDict(df_response.query_result.parameters), # TODO: check types
         contexts=[MessageToDict(c) for c in df_response.query_result.output_contexts], # TODO: model

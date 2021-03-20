@@ -4,21 +4,20 @@ from dataclasses import dataclass
 class _EntityMetaclass(type):
 
     @property
-    def metadata(cls):
-        name = cls.__dict__.get('__df_name__')
-        if not name:
-            name = cls.__name__
-        
+    def name(cls):
+        return cls.__name__
+
+    @property
+    def metadata(cls) -> "Entity.Meta":
+        """
+        TODO: consider removing this altogether, a `metadata` field in Entity
+        may be enough
+        """
         meta = cls.__dict__.get('meta')
         if not meta:
-            meta = Entity.Meta()
-        
-        return Entity._Metadata(
-            name=name,
-            regex_entity = meta.regex_entity,
-            automated_expansion = meta.automated_expansion,
-            fuzzy_matching = meta.fuzzy_matching
-        )
+            return Entity.Meta()
+
+        return meta
 
 class EntityMixin(metaclass=_EntityMetaclass):
     """
@@ -37,9 +36,9 @@ class EntityMixin(metaclass=_EntityMetaclass):
             return cls(**match)
 
         return cls(match)
-    
+
 class Entity(str, EntityMixin):
-    
+
     @dataclass
     class Meta:
         """
@@ -48,14 +47,6 @@ class Entity(str, EntityMixin):
         regex_entity: bool = False
         automated_expansion: bool = False
         fuzzy_matching: bool = False
-            
-    @dataclass
-    class _Metadata(Meta):
-        """
-        This class is used internally, to combine user-controlled parameters in
-        :class:`Meta` with framework-controlled parameter `name`
-        """
-        name: str = None
 
     meta: Meta = None
 
@@ -71,29 +62,27 @@ class Sys:
         """
         Matches any non-empty input
         """
-        __df_name__ = "sys.any"
 
     class Integer(int, SystemEntityMixin):
         """
         Matches integers only
         """
-        __df_name__ = "sys.number-integer"
 
-    @dataclass
-    class Person(SystemEntityMixin):
+    class Person(str, SystemEntityMixin):
         """
         Matches common given names, last names or their combinations.
-        """
-        __df_name__ = "sys.person"
 
-        name: str
-
-    @dataclass
-    class UnitCurrency(SystemEntityMixin):
+        Note that in Dialogflow this is returned as an Object (e.g. `{"name":
+        "John"}`), while here we define `Person` as a String. The Dialogflow
+        module defines proper entity mappings to handle the conversion.
         """
-        Number + currency name
-        """
-        __df_name__ = "sys.unit-currency"
 
-        amount: float
-        currency: str
+    # @dataclass
+    # class UnitCurrency(SystemEntityMixin):
+    #     """
+    #     Number + currency name
+    #     """
+    #     __df_name__ = "sys.unit-currency"
+
+    #     amount: float
+    #     currency: str

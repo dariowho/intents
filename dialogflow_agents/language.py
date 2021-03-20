@@ -17,7 +17,7 @@ import yaml
 
 import dialogflow_agents
 from dialogflow_agents.model.intent import _IntentMetaclass
-from dialogflow_agents.model.entity import EntityMixin
+from dialogflow_agents.model.entity import EntityMixin, SystemEntityMixin
 from dialogflow_agents.dialogflow_service import df_format as df
 
 logger = logging.getLogger(__name__)
@@ -58,6 +58,10 @@ class ExampleUtterance(str):
         """
         Return Chunks in the Dialogflow intent definition format.
         """
+        # TODO: abstract from Dialogflow. Keep chunking here, move DF-specific
+        # code to `dialogflow_service`
+        from dialogflow_agents.dialogflow_service.entities import MAPPINGS as DF_ENTITY_MAPPINGS
+        
         result = []
         last_end = 0
         for m in RE_EXAMPLE_PARAMETERS.finditer(self):
@@ -70,11 +74,14 @@ class ExampleUtterance(str):
                 raise ValueError(f"Example '{self}' references parameter ${parameter_name}, but intent {self._intent.metadata.name} does not define such parameter.")
  
             entity_cls = self._intent.__dataclass_fields__[parameter_name].type
-            meta = f'@{entity_cls.metadata.name}'
+            if issubclass(entity_cls, SystemEntityMixin):
+                meta = DF_ENTITY_MAPPINGS[entity_cls].service_name
+            else:
+                meta = entity_cls.name
             result.append(df.UsersaysEntityChunk(
                 text=m_groups['parameter_value'],
                 alias=m_groups['parameter_name'],
-                meta=meta,
+                meta=f'@{meta}',
                 userDefined=True
             ))
             last_end = m_end
@@ -160,9 +167,9 @@ def entity_language_data(agent_cls: type, entity_cls: EntityMixin) -> List[Entit
     language_folder = agent_language_folder(agent_cls)
 
     # TODO: support other languages
-    language_file = os.path.join(language_folder, "entities", f"{entity_cls.metadata.name}__en.yaml")
+    language_file = os.path.join(language_folder, "entities", f"{entity_cls.name}__en.yaml")
     if not os.path.isfile(language_file):
-        raise ValueError(f"Language file not found for entity '{entity_cls.metadata.name}'. Expected path: {language_file}.")
+        raise ValueError(f"Language file not found for entity '{entity_cls.name}'. Expected path: {language_file}.")
     
     with open(language_file, 'r') as f:
         language_data = yaml.load(f.read(), Loader=yaml.FullLoader)
@@ -172,12 +179,12 @@ def entity_language_data(agent_cls: type, entity_cls: EntityMixin) -> List[Entit
 
     entries_data = language_data.get('entries', [])
     if not isinstance(entries_data, dict):
-        raise ValueError(f"Invalid Entity language data for entity {entity_cls.metadata.name}. Entries data must be a dict. Entries data: {entries_data}")
+        raise ValueError(f"Invalid Entity language data for entity {entity_cls.name}. Entries data must be a dict. Entries data: {entries_data}")
 
     entries = []
     for value, synonyms in entries_data.items():
         if not isinstance(synonyms, list):
-            raise ValueError(f"Invalid language data for entry {entity_cls.metadata.name}. Synonims data must always be lists. Synonims data for '{value}': '{synonyms}'")
+            raise ValueError(f"Invalid language data for entry {entity_cls.name}. Synonims data must always be lists. Synonims data for '{value}': '{synonyms}'")
         entries.append(EntityEntry(value, synonyms))
 
     return entries

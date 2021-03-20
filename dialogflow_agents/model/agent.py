@@ -16,7 +16,7 @@ from dialogflow_agents.model.intent import Intent, IntentMetadata, _IntentMetacl
 from dialogflow_agents.model.entity import EntityMixin, SystemEntityMixin
 from dialogflow_agents.model.context import Context, _ContextMetaclass
 from dialogflow_agents.model.event import _EventMetaclass
-from dialogflow_agents.prediction_service import PredictionService
+from dialogflow_agents.prediction_service import PredictionService, Prediction
 
 logger = logging.getLogger(__name__)
 
@@ -132,11 +132,11 @@ class Agent:
         if issubclass(entity_cls, SystemEntityMixin):
             return
 
-        existing_cls = cls._entities_by_name.get(entity_cls.metadata.name)
+        existing_cls = cls._entities_by_name.get(entity_cls.name)
         if not existing_cls:
             from dialogflow_agents import language
             language.entity_language_data(cls, entity_cls) # Checks that language data is existing and consistent
-            cls._entities_by_name[entity_cls.metadata.name] = entity_cls
+            cls._entities_by_name[entity_cls.name] = entity_cls
             return
 
         if id(entity_cls) != id(existing_cls):
@@ -196,7 +196,8 @@ class Agent:
 
         :param message: The message to be interpreted
         """
-        return self._prediction_service.predict_intent(message)
+        prediction: Prediction = self._prediction_service.predict_intent(message)
+        return self._prediction_to_intent(prediction)
 
     def trigger(self, intent: Intent) -> Intent:
         """
@@ -209,7 +210,18 @@ class Agent:
         >>> df_result.confidence
         1.0
         """
-        return self._prediction_service.trigger_intent(intent)
+        prediction: Prediction = self._prediction_service.trigger_intent(intent)
+        return self._prediction_to_intent(prediction)
+
+    def _prediction_to_intent(self, prediction: Prediction) -> Intent:
+        """
+        Turns a Prediction object into an Intent object
+        """
+        intent_class = self._intents_by_name.get(prediction.intent_name)
+        if not intent_class:
+            # TODO: error refers to Dialogflow
+            raise ValueError(f"Prediction returned intent '{prediction.intent_name}', but this was not found in Agent definition. Make sure to restore a latest Agent export from `dialogflow_service.export.export()`. If the problem persists, please file a bug on the Dialoglfow Agents repository.")
+        return intent_class.from_prediction(prediction)
 
     def save_session(self):
         """

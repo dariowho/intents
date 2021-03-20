@@ -1,6 +1,6 @@
 import logging
 from dataclasses import dataclass, field
-from typing import List
+from typing import List, Dict
 
 from dialogflow_agents.model import context, event
 
@@ -103,15 +103,27 @@ class Intent(metaclass=_IntentMetaclass):
     #     return result_per_platform[platform]
 
     @classmethod
-    def from_prediction(cls, prediction: 'dialogflow_agents.Prediction') -> 'Intent':
-        parameter_definition = cls.__dict__.get('__annotations__', {})
-        if parameter_definition:
-            logger.debug("Parameters found in class %s", cls)
-            result = cls(**prediction.parameters_dict) # TODO: convert types
-        elif prediction.parameters_dict:
-            raise ValueError(f"Found parameters in Service Prediction, but class {cls} doesn't take any: {prediction}")
-        else:
-            result = cls()
+    def parameter_schema(cls) -> Dict[str, type]:
+        """
+        Return a dict representing the Intent parameter definition. A key is a
+        parameter name, a value is a parameter type.
+        """
+        return cls.__dict__.get('__annotations__', {})
 
+    @classmethod
+    def from_prediction(cls, prediction: 'dialogflow_agents.Prediction') -> 'Intent':
+        """
+        Build an :class:`Intent` class from a :class:`Prediction`. In practice:
+
+        #. Match parameters givent the Intent schema
+        #. Instantiate the Intent
+        #. Set the `prediction` field on the instantiated Intent.
+        """
+        try:
+            parameters = prediction.parameters(cls.parameter_schema())
+        except ValueError as exc:
+            raise ValueError(f"Failed to match parameters for Intent class '{cls}'. Prediction: {prediction}") from exc
+
+        result = cls(**parameters)
         result.prediction = prediction
         return result

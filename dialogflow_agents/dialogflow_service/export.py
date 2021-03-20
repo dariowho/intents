@@ -14,9 +14,10 @@ from dataclasses import asdict
 from dialogflow_agents import Agent
 from dialogflow_agents import language
 from dialogflow_agents.model.intent import _IntentMetaclass
-from dialogflow_agents.model.entity import EntityMixin
+from dialogflow_agents.model.entity import EntityMixin, SystemEntityMixin
 import dialogflow_agents.dialogflow_service.df_format as df
 from dialogflow_agents.dialogflow_service.service import DialogflowPredictionService
+from dialogflow_agents.dialogflow_service.entities import MAPPINGS as ENTITY_MAPPINGS
 
 logger = logging.getLogger(__name__)
 
@@ -63,10 +64,10 @@ def export(agent: Agent, output_path: str) -> None:
     for entity_cls in agent_cls._entities_by_name.values():
         entries = language.entity_language_data(agent_cls, entity_cls)
         rendered_entity = render_entity(entity_cls)
-        with open(os.path.join(entities_dir, f"{entity_cls.metadata.name}.json"), "w") as f:
+        with open(os.path.join(entities_dir, f"{entity_cls.name}.json"), "w") as f:
             json.dump(asdict(rendered_entity), f, indent=2)
         rendered_entity_entries = render_entity_entries(agent_cls, entries)
-        with open(os.path.join(entities_dir, f"{entity_cls.metadata.name}_entries_en.json"), "w") as f:
+        with open(os.path.join(entities_dir, f"{entity_cls.name}_entries_en.json"), "w") as f:
             entries_data = [asdict(x) for x in rendered_entity_entries]
             json.dump(entries_data, f, indent=2)
 
@@ -123,11 +124,15 @@ def render_parameters(intent: _IntentMetaclass):
         required = isinstance(field.default, dataclasses._MISSING_TYPE)
         value = f"${field.name}"
         entity_cls = field.type
+        if issubclass(entity_cls, SystemEntityMixin):
+            data_type = ENTITY_MAPPINGS[entity_cls].service_name
+        else:
+            data_type = entity_cls.name
         result.append(df.Parameter(
             id=str(uuid1()),
             name=field.name,
             required=required,
-            dataType=f'@{entity_cls.metadata.name}',
+            dataType=f'@{data_type}',
             value=value,
             defaultValue=field.default if not required else '',
             isList=False
@@ -158,7 +163,7 @@ def render_entity(entity_cls: EntityMixin) -> df.Entity:
     metadata = entity_cls.metadata
     return df.Entity(
         id=str(uuid1()),
-        name=metadata.name,
+        name=entity_cls.name,
         isRegexp=metadata.regex_entity,
         automatedExpansion=metadata.automated_expansion,
         allowFuzzyExtraction=metadata.fuzzy_matching
