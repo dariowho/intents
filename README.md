@@ -28,7 +28,7 @@ This library is not published anywhere yet. Wheel must be built from source, we
 use Poetry (https://python-poetry.org/docs/#installation) for that:
 
 ```sh
-poetry build
+poetry install
 ```
 
 ## Usage
@@ -43,6 +43,7 @@ A Dialogflow-compatible Agent ZIP can be built as follows:
 
 ```py
 from example_agent import ExampleAgent
+from dialogflow_agents.dialogflow_service.export import export
 agent = ExampleAgent('/path/to/service_account.json')
 export(agent, '/any/path/ExampleAgent.zip')
 ```

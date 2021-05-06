@@ -17,8 +17,7 @@ import yaml
 
 import dialogflow_agents
 from dialogflow_agents.model.intent import _IntentMetaclass
-from dialogflow_agents.model.entity import EntityMixin, SystemEntityMixin
-from dialogflow_agents.dialogflow_service import df_format as df
+from dialogflow_agents.model.entity import _EntityMetaclass
 
 logger = logging.getLogger(__name__)
 
@@ -27,7 +26,7 @@ def agent_language_folder(agent_cls: type):
     main_agent_package = sys.modules[main_agent_package_name]
     if '__path__' not in main_agent_package.__dict__:
         # TODO: try workdir or something...
-        logger.warning(f"Agent {agent_cls} doesn't seem to be defined within a package. Language data will not be loaded.")
+        logger.warning("Agent %s doesn't seem to be defined within a package. Language data will not be loaded.", agent_cls)
         return [], []
 
     agent_folder = main_agent_package.__path__[0]
@@ -38,69 +37,99 @@ def agent_language_folder(agent_cls: type):
     return language_folder
 
 #
-# Intents
+# Intent Language Data
 #
+
+class UtteranceChunk:
+    """
+    An Example Utterance can be seen as a sequence of Chunks, where each Chunk
+    is either a mapped Entity, or a plain text string.
+    """
+
+@dataclass
+class TextUtteranceChunk(UtteranceChunk):
+    """
+    An Utterance Chunk that is a static, plain text string.
+    """
+    text: str
+
+@dataclass
+class EntityUtteranceChunk(UtteranceChunk):
+    """
+    An Utterance Chunk that is a matched entity
+    """
+    entity_cls: _EntityMetaclass
+    parameter_name: str
+    parameter_value: str
 
 # TODO: check that parameter_value is one of the entries in custom entities
 RE_EXAMPLE_PARAMETERS = re.compile(r"\$(?P<parameter_name>[\w]+)\{(?P<parameter_value>[^\}]+)\}")
 
 class ExampleUtterance(str):
+    """
+    One of the example Utterances of a given Intent.
+    """
     
-    # TODO: init with intent and check for escape characters
+    # TODO: check for escape characters
     def __init__(self, example: str, intent: dialogflow_agents.Intent):
         self._intent = intent
-        self.df_chunks() # Will check parameters
+        self.chunks() # Will check parameters
     
     def __new__(cls, example: str, intent: dialogflow_agents.Intent):
         return super().__new__(cls, example)
 
-    def df_chunks(self) -> List[df.UsersaysChunk]:
+    def chunks(self):
         """
-        Return Chunks in the Dialogflow intent definition format.
+        Return the Utterance as a sequence of :class:`UtteranceChunk`. Each
+        chunk is either a plain text string, or a mapped Entity.
+
+        >>> utterance = ExampleUtterance("My name is $user_name{Guido}!", intents.user_gives_name)
+        >>> utterance.chunks()
+        [
+            TextUtteranceChunk(text="My name is "),
+            EntityUtteranceChunk(entity_cls=Sys.Person, parameter_name="user_name", parameter_value="Guido"),
+            TextUtteranceChunk(text="!")
+        ]
         """
-        # TODO: abstract from Dialogflow. Keep chunking here, move DF-specific
-        # code to `dialogflow_service`
-        from dialogflow_agents.dialogflow_service.entities import MAPPINGS as DF_ENTITY_MAPPINGS
-        
+        parameter_schema = self._intent.parameter_schema()
         result = []
         last_end = 0
         for m in RE_EXAMPLE_PARAMETERS.finditer(self):
             m_start, m_end = m.span()
             m_groups = m.groupdict()
             if m_start > 0:
-                result.append(df.UsersaysTextChunk(text=self[last_end:m_start], userDefined=True))
+                result.append(TextUtteranceChunk(text=self[last_end:m_start]))
             
-            if (parameter_name := m_groups['parameter_name']) not in self._intent.__dataclass_fields__:
+            if (parameter_name := m_groups['parameter_name']) not in parameter_schema:
                 raise ValueError(f"Example '{self}' references parameter ${parameter_name}, but intent {self._intent.metadata.name} does not define such parameter.")
  
-            entity_cls = self._intent.__dataclass_fields__[parameter_name].type
-            if issubclass(entity_cls, SystemEntityMixin):
-                meta = DF_ENTITY_MAPPINGS[entity_cls].service_name
-            else:
-                meta = entity_cls.name
-            result.append(df.UsersaysEntityChunk(
-                text=m_groups['parameter_value'],
-                alias=m_groups['parameter_name'],
-                meta=f'@{meta}',
-                userDefined=True
+            entity_cls = parameter_schema[parameter_name].entity_cls
+            result.append(EntityUtteranceChunk(
+                entity_cls=entity_cls,
+                parameter_name=m_groups['parameter_name'],
+                parameter_value=m_groups['parameter_value']
             ))
+
             last_end = m_end
-            
-        last_chunk = df.UsersaysTextChunk(text=self[last_end:], userDefined=True)
+
+        last_chunk = TextUtteranceChunk(text=self[last_end:])
         if last_chunk.text:
             result.append(last_chunk)
 
         return result
 
-# TODO: abstract class
 class ResponseUtterance:
-
-    type: df.ResponseMessageTypes = None
-
-    def df_response(self):
-        pass
+    """
+    One of the Response Utterances of a given Intent.
+    """
 
 class TextResponseUtterance(ResponseUtterance):
+    """
+    A plain text response. The actual response is picked randomly from a pool of
+    choices.
+    """
+
+    choices: List[str]
 
     def __init__(self, choices: Union[str, List[str]]):
         if not isinstance(choices, list):
@@ -108,11 +137,6 @@ class TextResponseUtterance(ResponseUtterance):
             choices = [choices]
 
         self.choices = choices
-
-    def df_response(self):
-        return df.TextResponseMessage(
-            speech=self.choices
-        )
 
 def intent_language_data(agent_cls: type, intent: _IntentMetaclass) -> (List[ExampleUtterance], List[ResponseUtterance]):
     language_folder = agent_language_folder(agent_cls)
@@ -163,7 +187,7 @@ class EntityEntry:
     value: str
     synonyms: List[str]
 
-def entity_language_data(agent_cls: type, entity_cls: EntityMixin) -> List[EntityEntry]:
+def entity_language_data(agent_cls: type, entity_cls: _EntityMetaclass) -> List[EntityEntry]:
     language_folder = agent_language_folder(agent_cls)
 
     # TODO: support other languages
@@ -194,7 +218,7 @@ def entity_language_data(agent_cls: type, entity_cls: EntityMixin) -> List[Entit
 
 # examples, responses = intent_language_data(ExampleAgent, smalltalk.user_name_give)
 # for e in examples:
-#     print(e.df_chunks())
+#     print(e.chunks())
 
 # from example_agent import ExampleAgent
 # from example_agent.intents.restaurant import PizzaType

@@ -14,7 +14,7 @@ from dataclasses import asdict
 from dialogflow_agents import Agent
 from dialogflow_agents import language
 from dialogflow_agents.model.intent import _IntentMetaclass
-from dialogflow_agents.model.entity import EntityMixin, SystemEntityMixin
+from dialogflow_agents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
 import dialogflow_agents.dialogflow_service.df_format as df
 from dialogflow_agents.dialogflow_service.service import DialogflowPredictionService
 from dialogflow_agents.dialogflow_service.entities import MAPPINGS as ENTITY_MAPPINGS
@@ -100,58 +100,84 @@ def render_agent(agent: Agent):
 # Intent
 #
 
-def render_intent(intent: _IntentMetaclass, responses: List[language.ResponseUtterance]):
+def render_intent(intent_cls: _IntentMetaclass, responses: List[language.ResponseUtterance]):
     response = df.Response(
-        affectedContexts=[df.AffectedContext(c.name, c.lifespan) for c in intent.metadata.output_contexts],
-        parameters=render_parameters(intent),
-        messages=render_responses(intent, responses),
-        action=intent.metadata.action
+        affectedContexts=[df.AffectedContext(c.name, c.lifespan) for c in intent_cls.metadata.output_contexts],
+        parameters=render_parameters(intent_cls),
+        messages=render_responses(intent_cls, responses),
+        action=intent_cls.metadata.action
     )
 
     return df.Intent(
         id=str(uuid1()),
-        name=intent.metadata.name,
-        contexts=[c.name for c in intent.metadata.input_contexts],
+        name=intent_cls.metadata.name,
+        contexts=[c.name for c in intent_cls.metadata.input_contexts],
         responses=[response],
-        webhookUsed=intent.metadata.intent_webhook_enabled,
-        webhookForSlotFilling=intent.metadata.slot_filling_webhook_enabled,
-        events=[df.Event(e) for e in intent.metadata.events]
+        webhookUsed=intent_cls.metadata.intent_webhook_enabled,
+        webhookForSlotFilling=intent_cls.metadata.slot_filling_webhook_enabled,
+        events=[df.Event(e) for e in intent_cls.metadata.events]
     )
 
-def render_parameters(intent: _IntentMetaclass):
+def render_parameters(intent_cls: _IntentMetaclass):
     result = []
-    for field in intent.__dataclass_fields__.values():
-        required = isinstance(field.default, dataclasses._MISSING_TYPE)
-        value = f"${field.name}"
-        entity_cls = field.type
+    for param_name, param_metadata in intent_cls.parameter_schema().items():
+        entity_cls = param_metadata.entity_cls
         if issubclass(entity_cls, SystemEntityMixin):
             data_type = ENTITY_MAPPINGS[entity_cls].service_name
         else:
             data_type = entity_cls.name
+
         result.append(df.Parameter(
             id=str(uuid1()),
-            name=field.name,
-            required=required,
+            name=param_name,
+            required=param_metadata.required,
             dataType=f'@{data_type}',
-            value=value,
-            defaultValue=field.default if not required else '',
-            isList=False
+            value=f"${param_name}",
+            defaultValue=param_metadata.default if not param_metadata.required else '',
+            isList=param_metadata.is_list
             # TODO: support prompts
         ))
     return result
 
-def render_responses(intent: _IntentMetaclass, responses: List[language.ResponseUtterance]):
+def render_response(response: language.ResponseUtterance):
+    if isinstance(response, language.TextResponseUtterance):
+        response: language.TextResponseUtterance
+        return df.TextResponseMessage(
+            speech=response.choices
+        )
+
+def render_responses(intent_cls: _IntentMetaclass, responses: List[language.ResponseUtterance]):
     if not responses:
         return [df.ResponseMessage()]
 
-    return [r.df_response() for r in responses]
+    return [render_response(r) for r in responses]
+
+def render_utterance_chunk(chunk: language.UtteranceChunk):
+    if isinstance(chunk, language.TextUtteranceChunk):
+        return df.UsersaysTextChunk(text=chunk.text, userDefined=True)
+
+    if isinstance(chunk, language.EntityUtteranceChunk):
+        chunk: language.EntityUtteranceChunk
+        if issubclass(chunk.entity_cls, SystemEntityMixin):
+            meta = ENTITY_MAPPINGS[chunk.entity_cls].service_name
+        else:
+            meta = chunk.entity_cls.name
+
+        return df.UsersaysEntityChunk(
+            text=chunk.parameter_value,
+            alias=chunk.parameter_name,
+            meta=f'@{meta}',
+            userDefined=True
+        )
+
+    raise ValueError(f"Unsupported Utterance Chunk Type: {chunk}")
 
 def render_intent_usersays(agent_cls: type, intent: _IntentMetaclass, examples: List[language.ExampleUtterance]):
     result = []
     for e in examples:
         result.append(df.IntentUsersays(
             id=str(uuid1()),
-            data=e.df_chunks()
+            data=[render_utterance_chunk(c) for c in e.chunks()]
         ))
     return result
 
@@ -159,7 +185,7 @@ def render_intent_usersays(agent_cls: type, intent: _IntentMetaclass, examples: 
 # Entity
 #
 
-def render_entity(entity_cls: EntityMixin) -> df.Entity:
+def render_entity(entity_cls: _EntityMetaclass) -> df.Entity:
     metadata = entity_cls.metadata
     return df.Entity(
         id=str(uuid1()),
@@ -169,7 +195,7 @@ def render_entity(entity_cls: EntityMixin) -> df.Entity:
         allowFuzzyExtraction=metadata.fuzzy_matching
     )
 
-def render_entity_entries(entity_cls: EntityMixin, entries: List[language.EntityEntry]) -> List[df.EntityEntry]:
+def render_entity_entries(entity_cls: _EntityMetaclass, entries: List[language.EntityEntry]) -> List[df.EntityEntry]:
     result = []
     for e in entries:
         result.append(df.EntityEntry(

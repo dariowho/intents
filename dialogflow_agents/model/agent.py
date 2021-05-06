@@ -7,13 +7,13 @@ import re
 import logging
 from uuid import uuid1
 from inspect import isclass
-from typing import List, Dict, Union
+from typing import List, Dict, Union, _GenericAlias
 from dataclasses import dataclass
 
 import google.auth.credentials
 
 from dialogflow_agents.model.intent import Intent, IntentMetadata, _IntentMetaclass
-from dialogflow_agents.model.entity import EntityMixin, SystemEntityMixin
+from dialogflow_agents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
 from dialogflow_agents.model.context import Context, _ContextMetaclass
 from dialogflow_agents.model.event import _EventMetaclass
 from dialogflow_agents.prediction_service import PredictionService, Prediction
@@ -29,7 +29,7 @@ class Agent:
     intents: List[Intent] = None
     _intents_by_name: Dict[str, Intent] = None
     _intents_by_event: Dict[str, Intent] = None
-    _entities_by_name: Dict[str, EntityMixin] = None
+    _entities_by_name: Dict[str, _EntityMetaclass] = None
     _contexts_by_name: Dict[str, _ContextMetaclass] = None
     _events_by_name: Dict[str, _EventMetaclass] = None
 
@@ -111,8 +111,8 @@ class Agent:
             )
 
             result = dataclass(decorated_cls)
-            for field in result.__dataclass_fields__.values():
-                cls._register_entity(field.type, field.name, name)
+            for param_name, param_metadata in result.parameter_schema().items():
+                cls._register_entity(param_metadata.entity_cls, param_name, name)
             decorated_cls.metadata = intent_metadata
             cls.intents.append(result)
             cls._intents_by_name[name] = result
@@ -124,8 +124,7 @@ class Agent:
         return _result_decorator
 
     @classmethod
-    def _register_entity(cls, entity_cls: EntityMixin, parameter_name: str, intent_name: str):
-        # TODO: support List
+    def _register_entity(cls, entity_cls: _EntityMetaclass, parameter_name: str, intent_name: str):
         if not issubclass(entity_cls, EntityMixin):
             raise ValueError(f"Invalid type '{entity_cls}' for parameter '{parameter_name}' in Intent '{intent_name}': must be an Entity. Try 'dialogflow_agents.Sys.Any' if you are unsure.")
 

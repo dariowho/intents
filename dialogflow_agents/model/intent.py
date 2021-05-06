@@ -1,8 +1,9 @@
 import logging
+import dataclasses
 from dataclasses import dataclass, field
-from typing import List, Dict
+from typing import List, Dict, Any, _GenericAlias
 
-from dialogflow_agents.model import context, event
+from dialogflow_agents.model import context, event, entity
 
 logger = logging.getLogger(__name__)
 
@@ -42,6 +43,14 @@ class _IntentMetaclass(type):
     #         raise ValueError(f"Intent {cls} has no metadata. You need to register it with @agent.intent before using it")
     #     return cls.metadata
     metadata: IntentMetadata = None
+
+@dataclass
+class IntentParameterMetadata:
+    name: str
+    entity_cls: entity._EntityMetaclass
+    is_list: bool
+    required: bool
+    default: Any
 
 class Intent(metaclass=_IntentMetaclass):
     """
@@ -103,12 +112,40 @@ class Intent(metaclass=_IntentMetaclass):
     #     return result_per_platform[platform]
 
     @classmethod
-    def parameter_schema(cls) -> Dict[str, type]:
+    def parameter_schema(cls) -> Dict[str, IntentParameterMetadata]:
         """
         Return a dict representing the Intent parameter definition. A key is a
-        parameter name, a value is a parameter type.
+        parameter name, a value is a :class:`IntentParameterMetadata` object.
+
+        TODO: consider computing this in metaclass to cache value and check types
         """
-        return cls.__dict__.get('__annotations__', {})
+        result = {}
+        for param_field in cls.__dict__['__dataclass_fields__'].values():
+            # List[...]
+            if isinstance(param_field.type, _GenericAlias):
+                if param_field.type.__dict__.get('_name') != 'List':
+                    raise ValueError(f"Invalid typing '{param_field.type}' for parameter '{param_field.name}'. Only 'List' is supported.")
+
+                if len(param_field.type.__dict__.get('__args__')) != 1:
+                    raise ValueError(f"Invalid List modifier '{param_field.type}' for parameter '{param_field.name}'. Must define exactly one inner type (e.g. 'List[Sys.Any]')")
+                
+                # From here on, check the inner type (e.g. List[Sys.any] -> Sys.Any)
+                entity_cls = param_field.type.__dict__.get('__args__')[0]
+                is_list = True
+            else:
+                entity_cls = param_field.type
+                is_list = False
+
+            required = isinstance(param_field.default, dataclasses._MISSING_TYPE)
+            result[param_field.name] = IntentParameterMetadata(
+                name=param_field.name,
+                entity_cls=entity_cls,
+                is_list=is_list,
+                required=required,
+                default=param_field.default if not required else '',
+            )
+
+        return result
 
     @classmethod
     def from_prediction(cls, prediction: 'dialogflow_agents.Prediction') -> 'Intent':

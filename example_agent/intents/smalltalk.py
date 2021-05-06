@@ -1,3 +1,5 @@
+from typing import List
+
 from dialogflow_agents import Intent, Event, Sys
 
 from example_agent import ExampleAgent
@@ -14,6 +16,10 @@ class user_name_give(Intent):
 class agent_name_give(Intent):
     agent_name: Sys.Person
 
+
+@ExampleAgent.intent('smalltalk.greet_friends')
+class greet_friends(Intent):
+    friend_names: List[Sys.Person]
 
 class WelcomeEvent(Event):
     """

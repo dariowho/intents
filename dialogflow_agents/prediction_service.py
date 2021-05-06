@@ -3,6 +3,7 @@ from typing import Dict, Any, List
 from dataclasses import dataclass
 
 from dialogflow_agents import Intent
+from dialogflow_agents.model.intent import IntentParameterMetadata
 from dialogflow_agents.model.entity import SystemEntityMixin, _EntityMetaclass
 
 class EntityMapping(ABC):
@@ -45,14 +46,14 @@ class EntityMapping(ABC):
     def from_service(self, service_data: Any) -> SystemEntityMixin:
         """
         Converts the Service representation of an Entity (typically the value
-        that is returned at prediction time) to one of the internal Entity
+        that is returned at prediction time) to an instance of one of the internal Entity
         classes in :class:`dialogflow_agents.model.entities`
         """
 
     @abstractmethod
     def to_service(self, entity: SystemEntityMixin) -> Any:
         """
-        Converts a System Entity class into a Service representation (typically,
+        Converts a System Entity instance into a Service representation (typically,
         to be sent as a parameter of a trigger request)
 
         TODO: this is currently not used (string values are passed straight to
@@ -121,7 +122,7 @@ class Prediction(ABC):
         in `parameters_dict` to their generic `Sys.*` type.
         """
 
-    def parameters(self, schema: Dict[str, type]) -> Dict[str, Any]:
+    def parameters(self, schema: Dict[str, IntentParameterMetadata]) -> Dict[str, Any]:
         """
         Cast parameters in `Prediction.parameters_dict` according to the given
         schema. This is necessary, because parameter types are not known at
@@ -132,9 +133,11 @@ class Prediction(ABC):
         for param_name, param_value in self.parameters_dict.items():
             if param_name not in schema:
                 raise ValueError(f"Found parameter {param_name} in Service Prediction, but Intent class does not define it.")
-            param_type = schema[param_name]
+            param_metadata = schema[param_name]
             # TODO: handle List[type]
-            mapping = self.entity_mappings[param_type]
+            if param_metadata.is_list:
+                raise NotImplementedError("List parameters are not supported in inference yet.")
+            mapping = self.entity_mappings[param_metadata.entity_cls]
 
             result[param_name] = mapping.from_service(param_value)
         return result

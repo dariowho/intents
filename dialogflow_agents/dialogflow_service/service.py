@@ -76,7 +76,7 @@ class DialogflowPredictionService(PredictionService):
         intent_name = intent.metadata.name
         event_name = Agent._event_name(intent_name)
         event_parameters = {}
-        for parameter_name in intent.__dataclass_fields__:
+        for parameter_name in intent.parameter_schema():
             if parameter_name in intent.__dict__:
                 event_parameters[parameter_name] = intent.__dict__[parameter_name]
 

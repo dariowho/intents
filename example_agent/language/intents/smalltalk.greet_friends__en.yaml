@@ -1,0 +1,9 @@
+examples:
+  - Say hi to $friend_names{Al}, $friend_names{John} and $friend_names{Jack}
+
+responses:
+  default:
+    - text:
+      - Greetings, $friend_names
+      - Hello, $friend_names!
+      - Hey there $friend_names
