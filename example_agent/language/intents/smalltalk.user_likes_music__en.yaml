@@ -1,0 +1,11 @@
+examples:
+  - I love music
+  - I like music
+  - I love listening to music
+  - I like $music_genre{Reggae} music
+  - I really lile $music_genre{pop} music
+
+responses:
+  default:
+    - text:
+      - I love $music_genre!

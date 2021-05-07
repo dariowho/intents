@@ -22,5 +22,7 @@ class PersonEntityMapping(EntityMapping):
 MAPPINGS = ServiceEntityMappings.from_list([
     StringEntityMapping(Sys.Any, "sys.any"),
     StringEntityMapping(Sys.Integer, "sys.number-integer"),
-    PersonEntityMapping()
+    PersonEntityMapping(),
+    StringEntityMapping(Sys.MusicArtist, "sys.music-artist"),
+    StringEntityMapping(Sys.MusicGenre, "sys.music-genre"),
 ])

@@ -8,7 +8,7 @@ import logging
 import tempfile
 import dataclasses
 from uuid import uuid1
-from typing import List
+from typing import List, Dict
 from dataclasses import asdict
 
 from dialogflow_agents import Agent
@@ -52,11 +52,11 @@ def export(agent: Agent, output_path: str) -> None:
 
     for intent in agent_cls.intents:
         # TODO: handle multiple languages
-        examples, responses = language.intent_language_data(agent_cls, intent)
-        rendered_intent = render_intent(intent, responses)
+        language_data = language.intent_language_data(agent_cls, intent)
+        rendered_intent = render_intent(intent, language_data)
         with open(os.path.join(intents_dir, f"{intent.metadata.name}.json"), "w") as f:
             json.dump(asdict(rendered_intent), f, indent=2)
-        rendered_intent_usersays = render_intent_usersays(agent_cls, intent, examples)
+        rendered_intent_usersays = render_intent_usersays(agent_cls, intent, language_data.example_utterances)
         with open(os.path.join(intents_dir, f"{intent.metadata.name}_usersays_en.json"), "w") as f:
             usersays_data = [asdict(x) for x in rendered_intent_usersays]
             json.dump(usersays_data, f, indent=2)
@@ -100,11 +100,11 @@ def render_agent(agent: Agent):
 # Intent
 #
 
-def render_intent(intent_cls: _IntentMetaclass, responses: List[language.ResponseUtterance]):
+def render_intent(intent_cls: _IntentMetaclass, language_data: language.IntentLanguageData):
     response = df.Response(
         affectedContexts=[df.AffectedContext(c.name, c.lifespan) for c in intent_cls.metadata.output_contexts],
-        parameters=render_parameters(intent_cls),
-        messages=render_responses(intent_cls, responses),
+        parameters=render_parameters(intent_cls, language_data.slot_filling_prompts),
+        messages=render_responses(intent_cls, language_data.responses),
         action=intent_cls.metadata.action
     )
 
@@ -118,7 +118,7 @@ def render_intent(intent_cls: _IntentMetaclass, responses: List[language.Respons
         events=[df.Event(e) for e in intent_cls.metadata.events]
     )
 
-def render_parameters(intent_cls: _IntentMetaclass):
+def render_parameters(intent_cls: _IntentMetaclass, slot_filling_prompts: Dict[str, List[str]]):
     result = []
     for param_name, param_metadata in intent_cls.parameter_schema().items():
         entity_cls = param_metadata.entity_cls
@@ -134,8 +134,8 @@ def render_parameters(intent_cls: _IntentMetaclass):
             dataType=f'@{data_type}',
             value=f"${param_name}",
             defaultValue=param_metadata.default if not param_metadata.required else '',
-            isList=param_metadata.is_list
-            # TODO: support prompts
+            isList=param_metadata.is_list,
+            prompts=[df.Prompt(value=p) for p in slot_filling_prompts.get(param_name, {})]
         ))
     return result
 

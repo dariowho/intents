@@ -16,8 +16,8 @@ Dialogflow Agents.
 | Parameters with Custom Entities  | 🟢     |                    |
 | Extended System Entities         | ⚪     | Not planned        |
 | Session Entities                 | ⚪     | Not planned        |
-| List Parameters                  | 🔴     |                    |
-| Required Parameters with prompts | 🔴     |                    |
+| List Parameters                  | 🟢     |                    |
+| Required Parameters with prompts | 🟢     |                    |
 | Default Text Responses           | 🟢     |                    |
 | Platform Text/Rich Responses     | 🔴     |                    |
 | Custom Payload Responses         | 🔴     |                    |

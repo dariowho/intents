@@ -10,7 +10,7 @@ import os
 import re
 import sys
 import logging
-from typing import List, Union
+from typing import List, Dict, Union
 from dataclasses import dataclass
 
 import yaml
@@ -138,27 +138,56 @@ class TextResponseUtterance(ResponseUtterance):
 
         self.choices = choices
 
-def intent_language_data(agent_cls: type, intent: _IntentMetaclass) -> (List[ExampleUtterance], List[ResponseUtterance]):
+@dataclass
+class IntentLanguageData:
+    """
+    Language data for an Intent consists of three resources:
+
+    * Example Utterances
+    * Slot Filling Prompts
+    * Responses
+
+    Example Utterances are the messages that Agent will be trained on to
+    recognize the Intent.
+
+    Responses, intuitively, are the Agent's response messages that will be sent
+    to User once the Intent is recognized.
+
+    Slot Filling Promps are used to solve parameters that couldn't be tagged in
+    the original message. For instance a `order_pizza` intent may have a
+    `pizza_type` parameter. When User asks "I'd like a pizza" we want to fill
+    the slot by asking "What type of pizza?". `slot_filling_prompts` will map
+    parameters to their prompts: `{"pizza_type": ["What type of pizza?"]}`
+    """
+    example_utterances: List[ExampleUtterance]
+    slot_filling_prompts: Dict[str, List[str]]
+    responses: List[ResponseUtterance]
+
+def intent_language_data(agent_cls: type, intent_cls: _IntentMetaclass) -> IntentLanguageData:
     language_folder = agent_language_folder(agent_cls)
 
     # TODO: support multiple languages
-    language_file = os.path.join(language_folder, "intents", f"{intent.metadata.name}__en.yaml")
+    language_file = os.path.join(language_folder, "intents", f"{intent_cls.metadata.name}__en.yaml")
     if not os.path.isfile(language_file):
-        raise ValueError(f"Language file not found for intent '{intent.metadata.name}'. Expected path: {language_file}. Language files are required even if the intent doesn't need language; in this case, use an empty file.")
+        raise ValueError(f"Language file not found for intent '{intent_cls.metadata.name}'. Expected path: {language_file}. Language files are required even if the intent doesn't need language; in this case, use an empty file.")
     
     with open(language_file, 'r') as f:
         language_data = yaml.load(f.read(), Loader=yaml.FullLoader)
 
     if not language_data:
-        return [], []
+        return IntentLanguageData([], {}, [])
 
     examples_data = language_data.get('examples', [])
     responses_data = language_data.get('responses', [])
 
-    examples = [ExampleUtterance(s, intent) for s in examples_data]
+    examples = [ExampleUtterance(s, intent_cls) for s in examples_data]
     responses = _build_responses(responses_data)
 
-    return examples, responses
+    return IntentLanguageData(
+        example_utterances=examples,
+        slot_filling_prompts=language_data.get('slot_filling_prompts', {}),
+        responses=responses
+    )
 
 def _build_responses(responses_data: dict):
     result = []

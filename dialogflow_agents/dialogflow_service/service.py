@@ -138,9 +138,9 @@ def _build_text_fulfillment_message(protobuf):
         }
     }
     ```
-        
+
     https://cloud.google.com/dialogflow/es/docs/reference/rpc/google.cloud.dialogflow.v2#text
-    
+
     We ignore, the fact that `text` is defined as a list: Dialogflow responses
     only have one.
     """

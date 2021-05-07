@@ -77,6 +77,16 @@ class Sys:
         module defines proper entity mappings to handle the conversion.
         """
 
+    class MusicArtist(str, SystemEntityMixin):
+        """
+        Matches the name of a music artist
+        """
+
+    class MusicGenre(str, SystemEntityMixin):
+        """
+        Matches a music genre (rock, pop, reggae, ...)
+        """
+
     # @dataclass
     # class UnitCurrency(SystemEntityMixin):
     #     """

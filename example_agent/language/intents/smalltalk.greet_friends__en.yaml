@@ -1,5 +1,13 @@
 examples:
   - Say hi to $friend_names{Al}, $friend_names{John} and $friend_names{Jack}
+  - Say hi to my friends
+  - Can you say hello to my friends?
+
+slot_filling_prompts:
+  friend_names:
+    - What are the name of your friends?
+    - Sure, but tell me your friends' names first!
+    - With pleasure, how are they called?
 
 responses:
   default:

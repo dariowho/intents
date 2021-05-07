@@ -134,12 +134,13 @@ class Prediction(ABC):
             if param_name not in schema:
                 raise ValueError(f"Found parameter {param_name} in Service Prediction, but Intent class does not define it.")
             param_metadata = schema[param_name]
-            # TODO: handle List[type]
-            if param_metadata.is_list:
-                raise NotImplementedError("List parameters are not supported in inference yet.")
             mapping = self.entity_mappings[param_metadata.entity_cls]
-
-            result[param_name] = mapping.from_service(param_value)
+            if param_metadata.is_list:
+                if not isinstance(param_value, list):
+                    raise ValueError(f"Parameter {param_name} is defined as List, but returned value is not of 'list' type: {param_value}")
+                result[param_name] = [mapping.from_service(x) for x in param_value]
+            else:
+                result[param_name] = mapping.from_service(param_value)
         return result
 
 class PredictionService(ABC):
