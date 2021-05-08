@@ -83,7 +83,7 @@ result.fulfillment_text # "Howdy Human, I'm Ugo"
 
 ## Develop
 
-## Setup
+### Setup
 
 Dependencies are managed with Poetry
 (https://python-poetry.org/docs/#installation). This is how you setup your
@@ -91,7 +91,7 @@ environment:
 
     poetry install
 
-## Build Documentation
+### Build Documentation
 
 This project is documented using Sphinx. This is how you build the documentation site:
 
@@ -102,6 +102,6 @@ poetry run make html
 
 Documentation will be created in the `docs/_build/` folder.
 
-## Test
+### Test
 
 tbd
