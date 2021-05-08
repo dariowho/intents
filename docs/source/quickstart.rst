@@ -6,15 +6,11 @@ Here some guidance on how to move the first steps with *Intents*.
 Install
 -------
 
-This library is not published on PyPi yet: you must **install from source**. Make
-sure you have Poetry installed (https://python-poetry.org/docs/#installation),
-then install with
+This library is published on PyPi yet, you can install it with
 
 .. code-block:: sh
 
-    git clone https://github.com/dario-chiappetta/dialogflow-agents.git
-    cd dialogflow-agents
-    poetry install
+    pip install intents
 
 Define An Agent
 ---------------

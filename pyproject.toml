@@ -4,6 +4,8 @@ version = "0.0.1"
 description = "Define and operate Dialogflow Agents with a simple, code-first, approach"
 authors = ["Dario <dario.chi@inventati.org>"]
 license = "Apache-2.0"
+readme = 'README.md'
+repository = "https://github.com/dariowho/intents"
 
 [tool.poetry.dependencies]
 python = "^3.8"

@@ -24,11 +24,10 @@ A more detailed view of the single features is reported in [STATUS.md](STATUS.md
 
 ## Install
 
-This library is not published anywhere yet. Wheel must be built from source, we
-use Poetry (https://python-poetry.org/docs/#installation) for that:
+*Intents* can be installed with PIP as a standard Python package
 
 ```sh
-poetry install
+pip install intents
 ```
 
 ## Usage
@@ -82,14 +81,23 @@ result = agent.trigger(smalltalk.agent_name_give(agent_name='Ugo'))
 result.fulfillment_text # "Howdy Human, I'm Ugo"
 ```
 
-## Documentation
+## Develop
+
+## Setup
+
+Dependencies are managed with Poetry
+(https://python-poetry.org/docs/#installation). This is how you setup your
+environment:
+
+    poetry install
+
+## Build Documentation
 
 This project is documented using Sphinx. This is how you build the documentation site:
 
 ```sh
-poetry install
 cd docs/
-make html
+poetry run make html
 ```
 
 Documentation will be created in the `docs/_build/` folder.
