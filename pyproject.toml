@@ -6,6 +6,7 @@ authors = ["Dario <dario.chi@inventati.org>"]
 license = "Apache-2.0"
 readme = 'README.md'
 repository = "https://github.com/dariowho/intents"
+documentation = "https://intents.readthedocs.io/"
 
 [tool.poetry.dependencies]
 python = "^3.8"
@@ -23,6 +24,7 @@ sphinx-rtd-theme = "^0.5.1"
 autopep8 = "^1.5.6"
 m2r2 = "^0.2.7"
 sphinx-markdown-tables = "^0.0.15"
+pytest = "^6.2.4"
 
 [build-system]
 requires = ["poetry>=0.12"]

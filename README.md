@@ -1,5 +1,8 @@
 # Intents ⛺
 
+[![Documentation Status](https://readthedocs.org/projects/intents/badge/?version=latest)](https://intents.readthedocs.io/en/latest/?badge=latest)
+
+
 **Intents** is a Python library to define and operate Dialogflow Agents with a simple,
 code-first approach.
 
@@ -24,11 +27,15 @@ A more detailed view of the single features is reported in [STATUS.md](STATUS.md
 
 ## Install
 
-*Intents* can be installed with PIP as a standard Python package
+*Intents* can be installed as follows:
 
 ```sh
 pip install intents
 ```
+
+## Documentation
+
+Documentation is published at https://intents.readthedocs.io/
 
 ## Usage
 
@@ -104,4 +111,8 @@ Documentation will be created in the `docs/_build/` folder.
 
 ### Test
 
-tbd
+The project's test suite can be run as follows:
+
+    poetry run pytest
+
+Note that the coverage is currently very low.

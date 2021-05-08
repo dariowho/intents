@@ -6,7 +6,7 @@ Here some guidance on how to move the first steps with *Intents*.
 Install
 -------
 
-This library is published on PyPi yet, you can install it with
+Install with
 
 .. code-block:: sh
 
@@ -38,8 +38,8 @@ ZIP file:
 
 .. code-block:: python
 
-    from example_agent import ExampleAgent
-
+    from intents.dialogflow_service import export
+    
     agent = ExampleAgent('/path/to/your/service_account.json')
     export(agent, '/anywhere/you/like/EXPORTED_EXAMPLE_AGENT.zip')
 
@@ -53,8 +53,6 @@ Make predictions
 Your `ExampleAgent` class can also be used as a **prediction client** for the agent you just uploaded.
 
 .. code-block:: python
-
-    from example_agent import ExampleAgent
 
     agent = ExampleAgent('/path/to/service_account.json', session='any-session-id')
     result = agent.predict("My name is Guido")

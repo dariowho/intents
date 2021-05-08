@@ -136,13 +136,24 @@ class Intent(metaclass=_IntentMetaclass):
                 entity_cls = param_field.type
                 is_list = False
 
-            required = isinstance(param_field.default, dataclasses._MISSING_TYPE)
+            required = True
+            default = None
+            if not isinstance(param_field.default, dataclasses._MISSING_TYPE):
+                required = False
+                default = param_field.default
+            if not isinstance(param_field.default_factory, dataclasses._MISSING_TYPE):
+                required = False
+                default = param_field.default_factory()
+
+            if not required and is_list and not isinstance(default, list):
+                raise ValueError(f"List parameter has non-list default value in intent {cls}: {param_field}")
+
             result[param_field.name] = IntentParameterMetadata(
                 name=param_field.name,
                 entity_cls=entity_cls,
                 is_list=is_list,
                 required=required,
-                default=param_field.default if not required else '',
+                default=default
             )
 
         return result

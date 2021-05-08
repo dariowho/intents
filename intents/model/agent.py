@@ -12,6 +12,7 @@ from dataclasses import dataclass
 
 import google.auth.credentials
 
+from intents import language
 from intents.model.intent import Intent, IntentMetadata, _IntentMetaclass
 from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
 from intents.model.context import Context, _ContextMetaclass
@@ -133,7 +134,6 @@ class Agent:
 
         existing_cls = cls._entities_by_name.get(entity_cls.name)
         if not existing_cls:
-            from intents import language
             language.entity_language_data(cls, entity_cls) # Checks that language data is existing and consistent
             cls._entities_by_name[entity_cls.name] = entity_cls
             return
