@@ -1,7 +1,8 @@
-Here we report how individual Dialogflow features are currently supported in
-Dialogflow Agents.
+# Project Status
 
-# Basic Agent Definition
+Here we report how individual Dialogflow features are currently supported in *Intents*.
+
+## Basic Agent Definition
 
 | Feature                          | State  | Note               |
 |----------------------------------|--------|--------------------|
@@ -24,7 +25,7 @@ Dialogflow Agents.
 | Agent Webhook Settings           | 🔴     |                    |
 | Multi-Language Agents            | 🔴     |                    |
 
-# Rich Agent definition
+## Rich Agent definition
 
 | Feature                          | State  | Note |
 |----------------------------------|--------|------|
@@ -33,7 +34,7 @@ Dialogflow Agents.
 | Context Required Parameters      | 🔴     |      |
 | Advanced Slot Filling Framework  | 🔴     |      |
 
-# Cloud Sync
+## Cloud Sync
 
 | Feature                                | State  | Note |
 |----------------------------------------|--------|------|
@@ -42,7 +43,7 @@ Dialogflow Agents.
 | Sync Language changes from Cloud       | 🔴     |      |
 | Upload agent to a new Cloud project    | 🔴     |      |
 
-# Prediction Client
+## Prediction Client
 
 | Feature                       | State  | Note |
 |-------------------------------|--------|------|

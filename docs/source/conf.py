@@ -20,12 +20,12 @@ sys.path.insert(0, os.path.abspath('../../'))
 
 # -- Project information -----------------------------------------------------
 
-project = 'Dialogflow Agents'
+project = 'Intents ⛺'
 copyright = '2021, Dario Chiappetta'
 author = 'Dario Chiappetta'
 
 # The full version, including alpha/beta/rc tags
-release = '0.1.0'
+release = '0.0.1'
 
 
 # -- General configuration ---------------------------------------------------
@@ -35,7 +35,9 @@ release = '0.1.0'
 # ones.
 extensions = [
     "sphinx.ext.autodoc",
+    "sphinx.ext.viewcode",
     "recommonmark",
+    "sphinx_markdown_tables",
     "sphinx_rtd_theme"
 ]
 

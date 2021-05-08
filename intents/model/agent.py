@@ -12,17 +12,17 @@ from dataclasses import dataclass
 
 import google.auth.credentials
 
-from dialogflow_agents.model.intent import Intent, IntentMetadata, _IntentMetaclass
-from dialogflow_agents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
-from dialogflow_agents.model.context import Context, _ContextMetaclass
-from dialogflow_agents.model.event import _EventMetaclass
-from dialogflow_agents.prediction_service import PredictionService, Prediction
+from intents.model.intent import Intent, IntentMetadata, _IntentMetaclass
+from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
+from intents.model.context import Context, _ContextMetaclass
+from intents.model.event import _EventMetaclass
+from intents.prediction_service import PredictionService, Prediction
 
 logger = logging.getLogger(__name__)
 
 class Agent:
     """
-    As the name suggests, Agent is the base class for your Dialogflow Agents
+    As the name suggests, Agent is the base class for your Agents
     project.
     """
 
@@ -40,7 +40,7 @@ class Agent:
         if not session:
             session = f"py-{str(uuid1())}"
         
-        from dialogflow_agents.dialogflow_service.service import DialogflowPredictionService
+        from intents.dialogflow_service.service import DialogflowPredictionService
         self._prediction_service = DialogflowPredictionService(self, google_credentials)
 
         self._session = session
@@ -117,7 +117,7 @@ class Agent:
             cls.intents.append(result)
             cls._intents_by_name[name] = result
             cls._intents_by_event[event_name] = result
-            from dialogflow_agents import language
+            from intents import language
             language.intent_language_data(cls, result) # Checks that language data is existing and consistent
             return result
 
@@ -126,14 +126,14 @@ class Agent:
     @classmethod
     def _register_entity(cls, entity_cls: _EntityMetaclass, parameter_name: str, intent_name: str):
         if not issubclass(entity_cls, EntityMixin):
-            raise ValueError(f"Invalid type '{entity_cls}' for parameter '{parameter_name}' in Intent '{intent_name}': must be an Entity. Try 'dialogflow_agents.Sys.Any' if you are unsure.")
+            raise ValueError(f"Invalid type '{entity_cls}' for parameter '{parameter_name}' in Intent '{intent_name}': must be an Entity. Try 'intents.Sys.Any' if you are unsure.")
 
         if issubclass(entity_cls, SystemEntityMixin):
             return
 
         existing_cls = cls._entities_by_name.get(entity_cls.name)
         if not existing_cls:
-            from dialogflow_agents import language
+            from intents import language
             language.entity_language_data(cls, entity_cls) # Checks that language data is existing and consistent
             cls._entities_by_name[entity_cls.name] = entity_cls
             return
@@ -204,7 +204,7 @@ class Agent:
         instance of the given Intent, where prediction details have been filled
         in from the response.
 
-        >>> from example_agent.intents import smalltalk
+        >>> from example_agent import smalltalk
         >>> df_result = agent.trigger(smalltalk.agent_name_give(agent_name='Alice'))
         >>> df_result.confidence
         1.0
@@ -266,7 +266,7 @@ def _is_valid_intent_name(candidate_name):
 #
 
 # from example_agent import ExampleAgent
-# from example_agent.intents import smalltalk
+# from example_agent import smalltalk
 
 # agent = ExampleAgent('/home/dario/lavoro/dialogflow-agents/_tmp_agents/learning-dialogflow-5827a2d16c34.json')
 # triggered_intent = agent.trigger(smalltalk.agent_name_give(agent_name='Ugo'))

@@ -29,7 +29,7 @@ class EntityMixin(metaclass=_EntityMetaclass):
     def from_df_response(cls, match: Any):
         """
         Buid the Entity object from the match data from a Dialogflow Response.
-        Specifically, :var:`match` is the :class:`dict` version of
+        Specifically, `match` is the :class:`dict` version of
         `queryResult.parameters.<PARAMETER_NAME>`.
         """
         if isinstance(match, dict):

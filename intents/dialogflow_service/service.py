@@ -19,12 +19,12 @@ from google.cloud.dialogflow_v2.services.sessions import SessionsClient
 from google.cloud.dialogflow_v2.types import DetectIntentResponse
 from google.protobuf.json_format import MessageToDict
 
-from dialogflow_agents import Agent, Intent
-from dialogflow_agents.prediction_service import PredictionService, Prediction, EntityMapping
-from dialogflow_agents.model.intent import TextFulfillmentMessage
-from dialogflow_agents.dialogflow_service.auth import resolve_credentials
-from dialogflow_agents.dialogflow_service.util import dict_to_protobuf
-from dialogflow_agents.dialogflow_service import entities as df_entities
+from intents import Agent, Intent
+from intents.prediction_service import PredictionService, Prediction, EntityMapping
+from intents.model.intent import TextFulfillmentMessage
+from intents.dialogflow_service.auth import resolve_credentials
+from intents.dialogflow_service.util import dict_to_protobuf
+from intents.dialogflow_service import entities as df_entities
 
 logger = logging.getLogger(__name__)
 

@@ -3,7 +3,7 @@ import dataclasses
 from dataclasses import dataclass, field
 from typing import List, Dict, Any, _GenericAlias
 
-from dialogflow_agents.model import context, event, entity
+from intents.model import context, event, entity
 
 logger = logging.getLogger(__name__)
 
@@ -83,7 +83,7 @@ class Intent(metaclass=_IntentMetaclass):
     _df_response = None
 
     # A :class:`PredictionService` provides this
-    prediction: 'dialogflow_agents.Prediction'
+    prediction: 'intents.Prediction'
 
     @property
     def confidence(self) -> float:
@@ -148,7 +148,7 @@ class Intent(metaclass=_IntentMetaclass):
         return result
 
     @classmethod
-    def from_prediction(cls, prediction: 'dialogflow_agents.Prediction') -> 'Intent':
+    def from_prediction(cls, prediction: 'intents.Prediction') -> 'Intent':
         """
         Build an :class:`Intent` class from a :class:`Prediction`. In practice:
 

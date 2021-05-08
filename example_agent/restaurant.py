@@ -2,7 +2,7 @@
 This Intents demonstrate the use of **Custom Entities**, which are used to
 recognize simple food orders.
 """
-from dialogflow_agents import Intent, Entity, Sys
+from intents import Intent, Entity, Sys
 from example_agent import ExampleAgent
 
 class PizzaType(Entity):

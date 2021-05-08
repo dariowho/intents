@@ -15,9 +15,9 @@ from dataclasses import dataclass
 
 import yaml
 
-import dialogflow_agents
-from dialogflow_agents.model.intent import _IntentMetaclass
-from dialogflow_agents.model.entity import _EntityMetaclass
+import intents
+from intents.model.intent import _IntentMetaclass
+from intents.model.entity import _EntityMetaclass
 
 logger = logging.getLogger(__name__)
 
@@ -71,11 +71,11 @@ class ExampleUtterance(str):
     """
     
     # TODO: check for escape characters
-    def __init__(self, example: str, intent: dialogflow_agents.Intent):
+    def __init__(self, example: str, intent: intents.Intent):
         self._intent = intent
         self.chunks() # Will check parameters
     
-    def __new__(cls, example: str, intent: dialogflow_agents.Intent):
+    def __new__(cls, example: str, intent: intents.Intent):
         return super().__new__(cls, example)
 
     def chunks(self):
@@ -243,13 +243,13 @@ def entity_language_data(agent_cls: type, entity_cls: _EntityMetaclass) -> List[
     return entries
 
 # from example_agent import ExampleAgent
-# from example_agent.intents import smalltalk
+# from example_agent import smalltalk
 
 # examples, responses = intent_language_data(ExampleAgent, smalltalk.user_name_give)
 # for e in examples:
 #     print(e.chunks())
 
 # from example_agent import ExampleAgent
-# from example_agent.intents.restaurant import PizzaType
+# from example_agent.restaurant import PizzaType
 
 # entity_language_data(ExampleAgent, PizzaType)

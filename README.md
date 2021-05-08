@@ -1,6 +1,6 @@
-# Dialogflow Agents
+# Intents ⛺
 
-A Python library to define and operate Dialogflow Agents with an easy,
+**Intents** is a Python library to define and operate Dialogflow Agents with a simple,
 code-first approach.
 
 > **disclaimer**: this project is not affiliated, associated, authorized,
@@ -33,7 +33,7 @@ poetry install
 
 ## Usage
 
-Check out the included `example_agent/` to explore Dialogflow Agents approach to
+Check out the included `example_agent/` to explore *Intents* approach to
 Agent definition. In short, that is a full Agent defined as a set of Python
 classes (Intents and Entities) and YAML files (language resources).
 
@@ -43,7 +43,8 @@ A Dialogflow-compatible Agent ZIP can be built as follows:
 
 ```py
 from example_agent import ExampleAgent
-from dialogflow_agents.dialogflow_service.export import export
+from intents.dialogflow_service.export import export
+
 agent = ExampleAgent('/path/to/service_account.json')
 export(agent, '/any/path/ExampleAgent.zip')
 ```
@@ -73,7 +74,7 @@ result.confidence       # 0.84
 Same goes for triggering intents:
 
 ```py
-from example_agent.intents import smalltalk
+from example_agent import smalltalk
 
 agent = ExampleAgent('/path/to/service_account.json')
 result = agent.trigger(smalltalk.agent_name_give(agent_name='Ugo'))

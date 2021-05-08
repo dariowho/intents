@@ -1,7 +1,7 @@
 Quickstart
 ==========
 
-Here some guidance on how to move the first steps with *Dialogflow Agents*.
+Here some guidance on how to move the first steps with *Intents*.
 
 Install
 -------
@@ -79,7 +79,7 @@ agent:
 
 .. code-block:: python
 
-    from example_agent.intents import smalltalk
+    from example_agent import smalltalk
 
     agent = ExampleAgent('/path/to/service_account.json')
     result = agent.trigger(smalltalk.agent_name_give(agent_name='Ugo'))

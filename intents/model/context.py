@@ -1,4 +1,4 @@
-from dialogflow_agents import SessionEntity
+from intents import SessionEntity
 
 class _ContextMetaclass(type):
     """

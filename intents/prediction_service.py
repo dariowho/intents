@@ -2,9 +2,9 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, List
 from dataclasses import dataclass
 
-from dialogflow_agents import Intent
-from dialogflow_agents.model.intent import IntentParameterMetadata
-from dialogflow_agents.model.entity import SystemEntityMixin, _EntityMetaclass
+from intents import Intent
+from intents.model.intent import IntentParameterMetadata
+from intents.model.entity import SystemEntityMixin, _EntityMetaclass
 
 class EntityMapping(ABC):
     """
@@ -47,7 +47,7 @@ class EntityMapping(ABC):
         """
         Converts the Service representation of an Entity (typically the value
         that is returned at prediction time) to an instance of one of the internal Entity
-        classes in :class:`dialogflow_agents.model.entities`
+        classes in :class:`intents.model.entities`
         """
 
     @abstractmethod
@@ -153,7 +153,7 @@ class PredictionService(ABC):
     # must be set as keys. Values must be either strings or EntityMapping object
     entity_mappings = None
 
-    _agent: 'dialogflow_agents.Agent'
+    _agent: 'intents.Agent'
 
     @abstractmethod
     def predict_intent(self, message: str) -> Prediction:

@@ -6,20 +6,20 @@ Model
 
 These base classes are the building blocks of your Agents.
 
-.. automodule:: dialogflow_agents.model.agent
+.. automodule:: intents.model.agent
    :members:
 
-.. automodule:: dialogflow_agents.model.intent
+.. automodule:: intents.model.intent
    :members:
 
-.. automodule:: dialogflow_agents.model.entity
+.. automodule:: intents.model.entity
    :members:
 
-.. automodule:: dialogflow_agents.model.context
+.. automodule:: intents.model.context
    :members:
 
 Export
 ------
 
-.. automodule:: dialogflow_agents.dialogflow_service.export
+.. automodule:: intents.dialogflow_service.export
    :members:

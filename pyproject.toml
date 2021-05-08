@@ -1,7 +1,7 @@
 [tool.poetry]
-name = "dialogflow-agents"
-version = "0.1.0"
-description = "Define and operate with Dialogflow Agents with a simple, code-first, approach"
+name = "intents"
+version = "0.0.1"
+description = "Define and operate Dialogflow Agents with a simple, code-first, approach"
 authors = ["Dario <dario.chi@inventati.org>"]
 license = "Apache-2.0"
 
@@ -19,6 +19,8 @@ sphinx = "^3.5.1"
 recommonmark = "^0.7.1"
 sphinx-rtd-theme = "^0.5.1"
 autopep8 = "^1.5.6"
+m2r2 = "^0.2.7"
+sphinx-markdown-tables = "^0.0.15"
 
 [build-system]
 requires = ["poetry>=0.12"]

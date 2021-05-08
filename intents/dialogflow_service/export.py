@@ -11,13 +11,13 @@ from uuid import uuid1
 from typing import List, Dict
 from dataclasses import asdict
 
-from dialogflow_agents import Agent
-from dialogflow_agents import language
-from dialogflow_agents.model.intent import _IntentMetaclass
-from dialogflow_agents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
-import dialogflow_agents.dialogflow_service.df_format as df
-from dialogflow_agents.dialogflow_service.service import DialogflowPredictionService
-from dialogflow_agents.dialogflow_service.entities import MAPPINGS as ENTITY_MAPPINGS
+from intents import Agent
+from intents import language
+from intents.model.intent import _IntentMetaclass
+from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
+import intents.dialogflow_service.df_format as df
+from intents.dialogflow_service.service import DialogflowPredictionService
+from intents.dialogflow_service.entities import MAPPINGS as ENTITY_MAPPINGS
 
 logger = logging.getLogger(__name__)
 
