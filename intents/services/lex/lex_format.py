@@ -3,6 +3,8 @@ Here we model the JSON format of Lex agents with Python dataclasses.
 
 We consider Lex schema version 1.0, as it is defined in
 https://docs.aws.amazon.com/lex/latest/dg/import-export-format.html.
+
+TODO: These models are not tested
 """
 from dataclasses import dataclass, field
 from typing import List, Union
