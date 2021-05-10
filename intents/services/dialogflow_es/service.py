@@ -22,9 +22,9 @@ from google.protobuf.json_format import MessageToDict
 from intents import Agent, Intent
 from intents.prediction_service import PredictionService, Prediction, EntityMapping
 from intents.model.intent import TextFulfillmentMessage
-from intents.dialogflow_service.auth import resolve_credentials
-from intents.dialogflow_service.util import dict_to_protobuf
-from intents.dialogflow_service import entities as df_entities
+from intents.services.dialogflow_es.auth import resolve_credentials
+from intents.services.dialogflow_es.util import dict_to_protobuf
+from intents.services.dialogflow_es import entities as df_entities
 
 logger = logging.getLogger(__name__)
 

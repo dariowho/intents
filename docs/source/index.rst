@@ -1,10 +1,13 @@
+Intents ⛺
+==========
 **Intents** is a Python library to define and operate Dialogflow Agents with a simple,
 code-first approach.
 
 .. warning::
 
-   *Intents* is still in early development stage, its API could change without notice.
-   More details can be found in *Project Status*
+   *Intents* is still in early development stage, its API can change without notice 
+   and this documentation may be inconsistent or incomplete. More details can be 
+   found in *Project Status*.
 
 Why *Intents*
 =============
@@ -18,7 +21,7 @@ Versioning and Continuous Integration
 -------------------------------------
 With *Intents* you can **generate an Agent from code**, your developers
 can work in branches, the right Agent can be generated and restored
-automatically in your CI pipelines.
+programmatically in CI pipelines.
 
 A Human-friendly prediction client
 ----------------------------------

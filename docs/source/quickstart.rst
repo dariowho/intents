@@ -38,7 +38,7 @@ ZIP file:
 
 .. code-block:: python
 
-    from intents.dialogflow_service import export
+    from intents.services.dialogflow_es import export
     
     agent = ExampleAgent('/path/to/your/service_account.json')
     export(agent, '/anywhere/you/like/EXPORTED_EXAMPLE_AGENT.zip')

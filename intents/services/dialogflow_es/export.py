@@ -15,9 +15,9 @@ from intents import Agent
 from intents import language
 from intents.model.intent import _IntentMetaclass
 from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
-import intents.dialogflow_service.df_format as df
-from intents.dialogflow_service.service import DialogflowPredictionService
-from intents.dialogflow_service.entities import MAPPINGS as ENTITY_MAPPINGS
+import intents.services.dialogflow_es.df_format as df
+from intents.services.dialogflow_es.service import DialogflowPredictionService
+from intents.services.dialogflow_es.entities import MAPPINGS as ENTITY_MAPPINGS
 
 logger = logging.getLogger(__name__)
 

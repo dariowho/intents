@@ -1,3 +1,14 @@
+"""
+Prediction Services connect *Intents* Agent definitions with cloud services such
+as Dialogflow. A prediction service must be able to
+
+* Export an :class:`intents.Agent` in a format that is natively readable by the
+  Service
+* Predict User messages on the Cloud representation of the Agent
+* Trigger :class:`intents.Intent`\ s on the Cloud representation of the Agent
+
+More details can be found in the :class:`PredictionService` interface.
+"""
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List
 from dataclasses import dataclass
@@ -168,3 +179,12 @@ class PredictionService(ABC):
         """
         Trigger the given Intent and return the Service Prediction.
         """
+
+    # @abstractmethod
+    # def export(self):
+    #     """
+    #     Export the given Agent in a format that can be read and imported
+    #     natively by the Prediction service. For instance, the Dialogflow service
+    #     will produce a ZIP export that can be imported from the Dialogflow
+    #     console.
+    #     """

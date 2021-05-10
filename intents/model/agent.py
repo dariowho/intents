@@ -41,7 +41,7 @@ class Agent:
         if not session:
             session = f"py-{str(uuid1())}"
         
-        from intents.dialogflow_service.service import DialogflowPredictionService
+        from intents.services.dialogflow_es.service import DialogflowPredictionService
         self._prediction_service = DialogflowPredictionService(self, google_credentials)
 
         self._session = session
@@ -219,7 +219,7 @@ class Agent:
         intent_class = self._intents_by_name.get(prediction.intent_name)
         if not intent_class:
             # TODO: error refers to Dialogflow
-            raise ValueError(f"Prediction returned intent '{prediction.intent_name}', but this was not found in Agent definition. Make sure to restore a latest Agent export from `dialogflow_service.export.export()`. If the problem persists, please file a bug on the Dialoglfow Agents repository.")
+            raise ValueError(f"Prediction returned intent '{prediction.intent_name}', but this was not found in Agent definition. Make sure to restore a latest Agent export from `services.dialogflow_es.export.export()`. If the problem persists, please file a bug on the Dialoglfow Agents repository.")
         return intent_class.from_prediction(prediction)
 
     def save_session(self):

@@ -21,5 +21,5 @@ These base classes are the building blocks of your Agents.
 Export
 ------
 
-.. automodule:: intents.dialogflow_service.export
+.. automodule:: intents.services.dialogflow_es.export
    :members:

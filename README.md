@@ -49,7 +49,7 @@ A Dialogflow-compatible Agent ZIP can be built as follows:
 
 ```py
 from example_agent import ExampleAgent
-from intents.dialogflow_service.export import export
+from intents.services.dialogflow_es.export import export
 
 agent = ExampleAgent('/path/to/service_account.json')
 export(agent, '/any/path/ExampleAgent.zip')
