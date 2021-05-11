@@ -33,60 +33,40 @@ A more detailed view of the single features is reported in [STATUS.md](STATUS.md
 pip install intents
 ```
 
-## Documentation
-
-Documentation is published at https://intents.readthedocs.io/
-
 ## Usage
 
-Check out the included `example_agent/` to explore *Intents* approach to
-Agent definition. In short, that is a full Agent defined as a set of Python
-classes (Intents and Entities) and YAML files (language resources).
+Intents are defined like standard Python **dataclasses**:
 
-### Export Agent
-
-A Dialogflow-compatible Agent ZIP can be built as follows:
-
-```py
-from example_agent import ExampleAgent
-from intents.services.dialogflow_es.export import export
-
-agent = ExampleAgent('/path/to/service_account.json')
-export(agent, '/any/path/ExampleAgent.zip')
+```python
+@MyAgent.intent('HelloIntent')
+class HelloIntent(Intent):
+    user_name: Sys.Person = "Guido"
 ```
 
-`ExampleAgent.zip` can be loaded into an existing Dialogflow project by using the
-standard *"Settings > Export and Import > Restore from ZIP"* feature. Also via
-API, if you are familiar with it.
+Their **language** resources are stored in separate YAML files:
 
-### Predict Intent
+```yaml
+utterances:
+  - Hi! My name is $user_name{Guido}
+  - Hello there, I'm $user_name{Mario}
 
-Uploaded Agents can be accessed with a human-friendly API:
-
-```py
-from example_agent import ExampleAgent
-
-agent = ExampleAgent('/path/to/service_account.json')
-result = agent.predict("My name is Guido")
-
-result                  # user_name_give(user_name="Guido")
-result.user_name        # "Guido"
-result.fulfillment_text # "Hi Guido, I'm Bot"
-result.confidence       # 0.84
+responses:
+  default:
+    text:
+      - Hi $user_name
+      - Hello $user_name
+      - Nice to meet you, $user_name
 ```
 
-### Trigger Intent
+Agents can be automatically **exported** into Cloud Dialogflow projects; *Intents* will act transparently as a prediction client:
 
-Same goes for triggering intents:
-
-```py
-from example_agent import smalltalk
-
-agent = ExampleAgent('/path/to/service_account.json')
-result = agent.trigger(smalltalk.agent_name_give(agent_name='Ugo'))
-
-result.fulfillment_text # "Howdy Human, I'm Ugo"
+```python
+dialogflow = DialogflowEsSesson('/path/to/service-account.json', MyAgent)
+predicted = dialogflow.predict("Hi there, my name is Mario")  # HelloIntent(user_name="Mario")
+print(predicted.fulfillment_text)                             # "Hello Mario"
 ```
+
+For a complete working example, check out the included [Example Agent](example_agent/). Also, *Intents* **documentation** is published at https://intents.readthedocs.io/ 📚
 
 ## Develop
 
