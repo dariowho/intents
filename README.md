@@ -2,7 +2,6 @@
 
 [![Documentation Status](https://readthedocs.org/projects/intents/badge/?version=latest)](https://intents.readthedocs.io/en/latest/?badge=latest)
 
-
 **Intents** is a Python library to define and operate Dialogflow Agents with a simple,
 code-first approach.
 
@@ -61,9 +60,9 @@ responses:
 Agents can be automatically **exported** into Cloud Dialogflow projects; *Intents* will act transparently as a prediction client:
 
 ```python
-dialogflow = DialogflowEsSesson('/path/to/service-account.json', MyAgent)
-predicted = dialogflow.predict("Hi there, my name is Mario")  # HelloIntent(user_name="Mario")
-print(predicted.fulfillment_text)                             # "Hello Mario"
+df = DialogflowEsConnector('/path/to/service-account.json', MyAgent)
+predicted = df.predict("Hi there, my name is Mario")  # HelloIntent(user_name="Mario")
+print(predicted.fulfillment_text)                     # "Hello Mario"
 ```
 
 For a complete working example, check out the included [Example Agent](example_agent/). Also, *Intents* **documentation** is published at https://intents.readthedocs.io/ 📚

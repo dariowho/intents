@@ -1,19 +1,21 @@
 """
-Prediction Services connect *Intents* Agent definitions with cloud services such
-as Dialogflow. A prediction service must be able to
+Service Connectors connect *Intents* Agent definitions with cloud services such
+as Dialogflow ES. They are used to operate with the cloud version of the Agent,
+and specifically to:
 
 * Export an :class:`intents.Agent` in a format that is natively readable by the
   Service
-* Predict User messages on the Cloud representation of the Agent
-* Trigger :class:`intents.Intent`\ s on the Cloud representation of the Agent
+* Predict User messages on the Cloud Agent
+* Trigger Intents on the Cloud Agent
 
-More details can be found in the :class:`PredictionService` interface.
+More details can be found in the :class:`ServiceConnector` interface.
 """
+from uuid import uuid1
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List
 from dataclasses import dataclass
 
-from intents import Intent
+from intents import Intent, Agent
 from intents.model.intent import IntentParameterMetadata
 from intents.model.entity import SystemEntityMixin, _EntityMetaclass
 
@@ -154,37 +156,85 @@ class Prediction(ABC):
                 result[param_name] = mapping.from_service(param_value)
         return result
 
-class PredictionService(ABC):
-    """
-    This is the interface that Prediction Services must implement to integrate
-    with Agents.
-    """
+class ServiceConnector(ABC):
 
-    # TODO: use a metaclass to validate this: must be a dict; all Sys entities
-    # must be set as keys. Values must be either strings or EntityMapping object
-    entity_mappings = None
+    agent_cls: type(Agent)
+    default_session: str
+    default_language: str
 
-    _agent: 'intents.Agent'
+    def __init__(self, agent_cls: type(Agent), default_session: str=None, default_language: str="en"):
+        """
+        Connect the given Agent to a Prediction Service.
+
+        :param agent_cls: The Agent to connect
+        :param default_session: A default session ID (conversation channel) for predictions
+        :param default_language: A default language for predictions
+        """
+        if not default_session:
+            default_session = f"py-{str(uuid1())}"
+        
+        self.agent_cls = agent_cls
+        self.default_session = default_session
+        self.default_language = default_language
 
     @abstractmethod
-    def predict_intent(self, message: str) -> Prediction:
+    def predict(self, message: str, session: str=None, language: str=None) -> Intent:
         """
-        Predict the Intent from the given User message
+        Predict the given User message in the given session using the given
+        language. When `session` or `language` are None, `predict` will use the
+        default values that are specified in :meth:`__init__`.
 
-        :param message: The message to be classified
+        *predict* will:
+
+        #. Load persisted session if configured (to be implemented)
+        #. Send predict() request, with existing session contexts
+        #. Return the right `Intent` subclass
+
+        >>> from intents import DialogflowEsConnector
+        >>> from example_agent import ExampleAgent
+        >>> df = DialogflowEsConnector('/path/to/service-account.json', ExampleAgent)
+        >>> df_result = df.predict("Hi, my name is Guido")
+        user_name_give(user_name='Guido')
+        >>> df_result.user_name
+        "Guido"
+        >>> df_result.fulfillment_text
+        "Hi Guido, I'm Bot"
+        >>> df_result.confidence
+        0.86
         """
 
     @abstractmethod
-    def trigger_intent(self, intent: Intent) -> Prediction:
+    def trigger(self, intent: Intent, session: str=None, language: str=None) -> Intent:
         """
-        Trigger the given Intent and return the Service Prediction.
+        Trigger the given Intent in the given session using the given language.
+        When `session` or `language` are None, `predict` will use the default
+        values that are specified in :meth:`__init__`.
+
+        >>> from intents import DialogflowEsConnector
+        >>> from example_agent import ExampleAgent, smalltalk
+        >>> df = DialogflowEsConnector('/path/to/service-account.json', ExampleAgent)
+        >>> df_result = df.trigger(smalltalk.agent_name_give(agent_name='Alice'))
+        agent_name_give(agent_name='Alice')
+        >>> df_result.fulfillment_text
+        "Howdy Human, I'm Alice"
+        >>> df_result.confidence
+        1.0
         """
 
-    # @abstractmethod
-    # def export(self):
-    #     """
-    #     Export the given Agent in a format that can be read and imported
-    #     natively by the Prediction service. For instance, the Dialogflow service
-    #     will produce a ZIP export that can be imported from the Dialogflow
-    #     console.
-    #     """
+    @abstractmethod
+    def export(self, destination: str):
+        """
+        Export the connected Agent in a format that can be read and imported
+        natively by the Prediction service. For instance, the Dialogflow service
+        will produce a ZIP export that can be imported from the Dialogflow
+        console.
+
+        :param destination: destination path of the exported Agent
+        """
+
+# from example_agent import ExampleAgent, smalltalk
+# from intents import DialogflowEsConnector
+# df = DialogflowEsConnector('/home/dario/lavoro/dialogflow-agents/_tmp_agents/learning-dialogflow-5827a2d16c34.json', ExampleAgent)
+# df.export('TMP_AGENT.zip')
+# df_result = df.predict("Hi, my name is Guido")
+# df_result = df.trigger(smalltalk.agent_name_give(agent_name='Alice'))

@@ -5,19 +5,15 @@ defining your own Agent.
 
 import re
 import logging
-from uuid import uuid1
 from inspect import isclass
-from typing import List, Dict, Union, _GenericAlias
+from typing import List, Dict, Union
 from dataclasses import dataclass
-
-import google.auth.credentials
 
 from intents import language
 from intents.model.intent import Intent, IntentMetadata, _IntentMetaclass
 from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
 from intents.model.context import Context, _ContextMetaclass
 from intents.model.event import _EventMetaclass
-from intents.prediction_service import PredictionService, Prediction
 
 logger = logging.getLogger(__name__)
 
@@ -25,6 +21,10 @@ class Agent:
     """
     As the name suggests, Agent is the base class for your Agents
     project.
+
+    TODO: Agents used to be instantiated with connection parameters to make
+    predictions. This is no more the case: consider using Agent instances
+    instead of passing `agent_cls` around
     """
 
     intents: List[Intent] = None
@@ -33,19 +33,6 @@ class Agent:
     _entities_by_name: Dict[str, _EntityMetaclass] = None
     _contexts_by_name: Dict[str, _ContextMetaclass] = None
     _events_by_name: Dict[str, _EventMetaclass] = None
-
-    _prediction_service: PredictionService
-    _session: str
-
-    def __init__(self, google_credentials: Union[str, google.auth.credentials.Credentials], session: str=None, language: str="en"):
-        if not session:
-            session = f"py-{str(uuid1())}"
-        
-        from intents.services.dialogflow_es.service import DialogflowPredictionService
-        self._prediction_service = DialogflowPredictionService(self, google_credentials)
-
-        self._session = session
-        self.language = language
 
     @classmethod
     def intent(cls, name: str):
@@ -118,7 +105,6 @@ class Agent:
             cls.intents.append(result)
             cls._intents_by_name[name] = result
             cls._intents_by_event[event_name] = result
-            from intents import language
             language.intent_language_data(cls, result) # Checks that language data is existing and consistent
             return result
 
@@ -182,46 +168,6 @@ class Agent:
         existing_intent = cls._intents_by_event[event_cls.name]
         raise ValueError(f"Event '{event_cls.name}' is alreadt associated to Intent '{existing_intent}'. An Event can only be associated with 1 intent. (differenciation by input contexts is not supported yet)")
 
-    @property
-    def name(self):
-        return "py-agent" # TODO: parametrize
-        # return f"py-{self.gcp_project_id}"
-
-    def predict(self, message: str) -> Intent:
-        """
-        #. Load persisted session if necessary
-        #. Send predict() request, with existing session contexts
-        #. Return the right `Intent` subclass
-
-        :param message: The message to be interpreted
-        """
-        prediction: Prediction = self._prediction_service.predict_intent(message)
-        return self._prediction_to_intent(prediction)
-
-    def trigger(self, intent: Intent) -> Intent:
-        """
-        Trigger the given intent with the given parameters. Return another
-        instance of the given Intent, where prediction details have been filled
-        in from the response.
-
-        >>> from example_agent import smalltalk
-        >>> df_result = agent.trigger(smalltalk.agent_name_give(agent_name='Alice'))
-        >>> df_result.confidence
-        1.0
-        """
-        prediction: Prediction = self._prediction_service.trigger_intent(intent)
-        return self._prediction_to_intent(prediction)
-
-    def _prediction_to_intent(self, prediction: Prediction) -> Intent:
-        """
-        Turns a Prediction object into an Intent object
-        """
-        intent_class = self._intents_by_name.get(prediction.intent_name)
-        if not intent_class:
-            # TODO: error refers to Dialogflow
-            raise ValueError(f"Prediction returned intent '{prediction.intent_name}', but this was not found in Agent definition. Make sure to restore a latest Agent export from `services.dialogflow_es.export.export()`. If the problem persists, please file a bug on the Dialoglfow Agents repository.")
-        return intent_class.from_prediction(prediction)
-
     def save_session(self):
         """
         Store the current session (most importantly, the list of active
@@ -245,7 +191,7 @@ class Agent:
         >>> _event_name('test.intent_name')
         'E_TEST_INTENT_NAME'
 
-        TODO: This is only used in Dialogflow -> Deprecate and move to DialogflowPredictionService
+        TODO: This is only used in Dialogflow -> Deprecate and move to DialogflowConnector
         """
         return "E_" + intent_name.upper().replace('.', '_')
 
@@ -260,14 +206,3 @@ def _is_valid_intent_name(candidate_name):
         return False, "must not contain __"
 
     return True, None
-
-#
-# Example code
-#
-
-# from example_agent import ExampleAgent
-# from example_agent import smalltalk
-
-# agent = ExampleAgent('/home/dario/lavoro/dialogflow-agents/_tmp_agents/learning-dialogflow-5827a2d16c34.json')
-# triggered_intent = agent.trigger(smalltalk.agent_name_give(agent_name='Ugo'))
-# predicted_intent = agent.predict("My name is Guido")

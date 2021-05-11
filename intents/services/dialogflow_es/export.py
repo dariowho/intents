@@ -6,46 +6,41 @@ import json
 import shutil
 import logging
 import tempfile
-import dataclasses
 from uuid import uuid1
 from typing import List, Dict
 from dataclasses import asdict
 
-from intents import Agent
 from intents import language
 from intents.model.intent import _IntentMetaclass
-from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
+from intents.model.entity import SystemEntityMixin, _EntityMetaclass
 import intents.services.dialogflow_es.df_format as df
-from intents.services.dialogflow_es.service import DialogflowPredictionService
 from intents.services.dialogflow_es.entities import MAPPINGS as ENTITY_MAPPINGS
 
 logger = logging.getLogger(__name__)
 
-def export(agent: Agent, output_path: str) -> None:
+def export(connector: "intents.DialogflowEsConnector", output_path: str, agent_name="py-agent") -> None:
     """
     Export the given agent to the given path
     """
-    assert isinstance(agent, Agent)
-    assert isinstance(agent._prediction_service, DialogflowPredictionService)
-    agent_cls = agent.__class__
+    agent_cls = connector.agent_cls
 
-    output_dir = os.path.join(tempfile.gettempdir(), 'dialogflow-agents-export', agent.name)
+    output_dir = os.path.join(tempfile.gettempdir(), 'dialogflow-agents-export', agent_name)
     intents_dir = os.path.join(output_dir, 'intents')
     entities_dir = os.path.join(output_dir, 'entities')
 
     if os.path.isdir(intents_dir):
-        logger.warning(f"Removing existing intents folder: {intents_dir}")
+        logger.warning("Removing existing intents folder: %s", intents_dir)
         shutil.rmtree(intents_dir)
 
     if os.path.isdir(entities_dir):
-        logger.warning(f"Removing existing entities folder: {entities_dir}")
+        logger.warning("Removing existing entities folder: %s", entities_dir)
         shutil.rmtree(entities_dir)
 
     os.makedirs(intents_dir)
     os.makedirs(entities_dir)
 
     with open(os.path.join(output_dir, 'agent.json'), 'w') as f:
-        json.dump(asdict(render_agent(agent)), f, indent=2)
+        json.dump(asdict(render_agent(connector, agent_name)), f, indent=2)
 
     with open(os.path.join(output_dir, 'package.json'), 'w') as f:
         json.dump({"version": "1.0.0"}, f, indent=2)
@@ -79,9 +74,9 @@ def export(agent: Agent, output_path: str) -> None:
 # Agent
 #
 
-def render_agent(agent: Agent):
+def render_agent(connector: "intents.DialogflowEsConnector",  agent_name: str):
     google_assistant = df.AgentGoogleAssistant(
-        project=agent._prediction_service.gcp_project_id,
+        project=connector.gcp_project_id,
         oAuthLinking=df.AgentGoogleAssistantOauthLinking()
         # TODO: include Google Assistant configuration
     )
@@ -91,7 +86,7 @@ def render_agent(agent: Agent):
     )
 
     return df.Agent(
-        displayName=agent.name,
+        displayName=agent_name,
         webhook=webhook,
         googleAssistant=google_assistant
     )

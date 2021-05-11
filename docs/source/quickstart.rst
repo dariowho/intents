@@ -1,12 +1,11 @@
 Quickstart
 ==========
 
-Here some guidance on how to move the first steps with *Intents*.
+Here some guidance on how to move the first steps with *Intents*. Here we will
+show how to connect an Agent to **Dialogflow ES** to make predictions and trigger Intents.
 
 Install
 -------
-
-Install with
 
 .. code-block:: sh
 
@@ -18,52 +17,66 @@ Define An Agent
 The idea is to create your own Agent Python package: it will be a requirement of
 your Fulfillment project, or part of it.
 
-For now, let's start from the **example agent** that comes with the library
-(`example_agent/`). You can use it straight away, or explore it and adapt it at
-your taste.
+For now, let's start from the :ref:`Example Agent` that is included in the
+library's repo (https://github.com/dariowho/intents/example_agent). You can use
+it straight away, or explore it and adapt it at your taste.
 
 .. code-block:: python
 
     from example_agent import ExampleAgent
 
+Setup a Dialogflow Agent
+------------------------
+
+We will operate on a real Agent on Dialogflow ES. To do this we must have access
+to one, and particularly:
+
+#. Register to Dialogflow ES
+#. Create a new Agent
+#. Make sure API acess is enabled 
+#. Download JSON credentials for using a service account.
+
+The whole procedure is described here:
+https://cloud.google.com/dialogflow/es/docs/quick/setup.
+
+Connect to Dialogflow
+---------------------
+
+Agents alone aren't tied to a particular prediction service (ideally, we can use
+the same Agent on different services). To use Dialogflow we need a specific
+**connector**:
+
+.. code-block:: python
+    
+    from intents import DialogflowEsConnector
+    dialogflow = DialogflowEsConnector('/path/to/your/service_account.json', ExampleAgent)
+
 Upload to Cloud Agent
 ---------------------
 
-Now, **setup** a Dialogflow agent, make sure API access is enabled and that you
-have JSON credentials for using a service account. The whole procedure is
-described here: https://cloud.google.com/dialogflow/es/docs/quick/setup.
-
-Once you have your Cloud agent, let's export our example agent into a Dialogflow
-ZIP file:
+Let's **export** our example agent into a Dialogflow ZIP file:
 
 .. code-block:: python
-
-    from intents.services.dialogflow_es import export
     
-    agent = ExampleAgent('/path/to/your/service_account.json')
-    export(agent, '/anywhere/you/like/EXPORTED_EXAMPLE_AGENT.zip')
+    dialogflow.export('/anywhere/you/like/EXPORTED_EXAMPLE_AGENT.zip')
 
-All is left to do, is to **restore** the Agent from your Dialogflow UI
-(*Settings > Export and Import*). And it's done: your Python Agent definition is
-translated into a working Dialogflow Agent.
+All is left to do, is to **restore** the Agent from your Dialogflow ES Console
+(*Settings > Export and Import > Restore*). And it's done: your Python Agent
+definition is translated into a working Dialogflow Agent.
 
 Make predictions
 ----------------
 
-Your `ExampleAgent` class can also be used as a **prediction client** for the agent you just uploaded.
+We can use the same Connector as a **prediction client** for the agent you just uploaded.
 
 .. code-block:: python
 
-    agent = ExampleAgent('/path/to/service_account.json', session='any-session-id')
-    result = agent.predict("My name is Guido")
+    result = dialogflow.predict("My name is Guido")
 
     result                  # user_name_give(user_name="Guido")
     result.user_name        # "Guido"
     result.fulfillment_text # "Hi Guido, I'm Bot"
     result.confidence       # 0.84
-
-Note that `any-session-id` is a string of your choice that identifies the
-current conversation. If you omit the parameter, it will be generated randomly.
 
 Trigger Intents
 ---------------
@@ -75,7 +88,35 @@ agent:
 
     from example_agent import smalltalk
 
-    agent = ExampleAgent('/path/to/service_account.json')
-    result = agent.trigger(smalltalk.agent_name_give(agent_name='Ugo'))
+    result = dialogflow.trigger(smalltalk.agent_name_give(agent_name='Ugo'))
 
     result.fulfillment_text # "Howdy Human, I'm Ugo"
+    result.confidence       # 1.0
+
+Sessions
+--------
+
+We are done with *Intents* fundamentals. However, you may have noticed that we
+didn't include any information about the User who is sending message. Since
+(hopefully) our Agent will converse with many users, each with a different
+conversation history and context, it is crucial to keep them separate and inform
+the Agent about its User at prediction time.
+
+Borrowing terminology from Dialogflow, we call each of these conversations a
+**session**. Sessions can be included in prediction/trigger requests:
+
+.. code-block:: python
+
+    dialogflow = DialogflowEsConnector('service_account.json', ExampleAgent)
+    dialogflow.predict("My name is Ada", session='user-id-ada')
+
+The `session` string is arbitrary: it will be created if it doesn't exist on the
+Cloud Agent. Session information can also be set when the Connector is created.
+
+.. code-block:: python
+
+    dialogflow = DialogflowEsConnector('service_account.json', ExampleAgent, default_session='user-id-ada')
+    dialogflow.predict("My name is Bob")
+
+Note that `any-session-id` is a string of your choice that identifies the
+current conversation. If you omit the parameter, it will be generated randomly.

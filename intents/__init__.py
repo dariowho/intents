@@ -17,4 +17,5 @@ from intents.model.entity import Entity, Sys
 from intents.model.context import Context
 from intents.model.event import Event
 from intents.model.agent import Agent
-from intents.prediction_service import PredictionService
+
+from intents.services.dialogflow_es.connector import DialogflowEsConnector

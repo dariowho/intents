@@ -1,3 +1,5 @@
+.. _Example Agent:
+
 Example Agent
 =============
 

@@ -1,5 +1,5 @@
 from intents.model.entity import Sys
-from intents.prediction_service import EntityMapping, StringEntityMapping, ServiceEntityMappings
+from intents.service_connector import EntityMapping, StringEntityMapping, ServiceEntityMappings
 
 class PersonEntityMapping(EntityMapping):
     """

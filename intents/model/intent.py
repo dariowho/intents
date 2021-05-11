@@ -82,7 +82,7 @@ class Intent(metaclass=_IntentMetaclass):
     metadata: IntentMetadata = None
     _df_response = None
 
-    # A :class:`PredictionService` provides this
+    # A :class:`ServiceConnector` provides this
     prediction: 'intents.Prediction'
 
     @property
