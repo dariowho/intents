@@ -1,0 +1,12 @@
+examples:
+  - Ciao
+  - Salve
+  - Buongiorno
+  - Buonasera
+  - Hey
+
+responses:
+  default:
+    - text:
+      - Ciao Umano :)
+      - Ciao!

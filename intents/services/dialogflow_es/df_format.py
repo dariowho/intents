@@ -31,8 +31,6 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Union, Dict
 
-LANG = "en"
-
 #
 # agent.json
 #
@@ -135,7 +133,7 @@ class AffectedContext:
 @dataclass
 class Prompt:
     value: str
-    lang: str = LANG
+    lang: str
 
 @dataclass
 class Parameter:
@@ -221,8 +219,8 @@ class UsersaysTextChunk(UsersaysChunk):
 @dataclass
 class IntentUsersays:
     id: str
+    lang: str
     data: List[Union[UsersaysTextChunk, UsersaysEntityChunk]]
     isTemplate: bool = False
     count: int = 0
-    lang: str = LANG
     updated: int = 0

@@ -22,6 +22,28 @@ from intents.model.entity import _EntityMetaclass
 
 logger = logging.getLogger(__name__)
 
+class LanguageCode(Enum):
+
+    ENGLISH = 'en'
+    ENGLISH_US = 'en_US'
+    ENGLISH_UK = 'en_UK'
+    ITALIAN = 'it'
+    SPANISH = 'es'
+    SPANISH_SPAIN = 'es_ES'
+    SPANISH_LATIN_AMERICA = 'es_LA'
+    GERMAN = 'de'
+    FRENCH = 'fr'
+    DUTCH = 'nl'
+    CHINESE = 'zh'
+    CHINESE_PRC = 'zh_CN'
+    CHINESE_HONG_KONG = 'zh_HK'
+
+LANGUAGE_CODES = [x.value for x in LanguageCode]
+
+#
+# Agent
+#
+
 def agent_language_folder(agent_cls: type) -> str:
     main_agent_package_name = agent_cls.__module__.split('.')[0]
     main_agent_package = sys.modules[main_agent_package_name]
@@ -36,6 +58,19 @@ def agent_language_folder(agent_cls: type) -> str:
         raise ValueError(f"No language folder found for agent {agent_cls} (expected: {language_folder})")
 
     return language_folder
+
+def agent_supported_languages(agent_cls: type) -> List[LanguageCode]:
+    result = []
+    
+    language_folder = agent_language_folder(agent_cls)
+    for f in os.scandir(language_folder):
+        if f.is_dir() and not f.name.startswith('.')  and not f.name.startswith('_'):
+            if f.name in LANGUAGE_CODES:
+                result.append(LanguageCode(f.name))
+            else:
+                logger.warning("Unrecognized language code: '%s' (must be one of %s). Skipping language data.", f.name, LANGUAGE_CODES)
+        
+    return result
 
 #
 # Intent Language Data
@@ -155,24 +190,6 @@ class TextResponseUtterance(ResponseUtterance):
     def __repr__(self):
         return str(self)
 
-class LanguageCode(Enum):
-
-    ENGLISH = 'en'
-    ENGLISH_US = 'en_US'
-    ENGLISH_UK = 'en_UK'
-    ITALIAN = 'it'
-    SPANISH = 'es'
-    SPANISH_SPAIN = 'es_ES'
-    SPANISH_LATIN_AMERICA = 'es_LA'
-    GERMAN = 'de'
-    FRENCH = 'fr'
-    DUTCH = 'nl'
-    CHINESE = 'zh'
-    CHINESE_PRC = 'zh_CN'
-    CHINESE_HONG_KONG = 'zh_HK'
-
-LANGUAGE_CODES = [x.value for x in LanguageCode]
-
 @dataclass
 class IntentLanguageData:
     """
@@ -203,14 +220,9 @@ def intent_language_data(agent_cls: type, intent_cls: _IntentMetaclass, language
 
     if not language_code:
         result = {}
-        for f in os.scandir(language_folder):
-            if f.is_dir() and not f.name.startswith('.')  and not f.name.startswith('_'):
-                if f.name in LANGUAGE_CODES:
-                    language_code = LanguageCode(f.name)
-                    language_data = intent_language_data(agent_cls, intent_cls, language_code)
-                    result[language_code] = language_data[language_code]
-                else:
-                    logger.warning("Unrecognized language code: '%s' (must be one of %s). Skipping language data.", language_code, LANGUAGE_CODES)
+        for language_code in agent_supported_languages(agent_cls):
+            language_data = intent_language_data(agent_cls, intent_cls, language_code)
+            result[language_code] = language_data[language_code]
         return result
 
     if isinstance(language_code, str):

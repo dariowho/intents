@@ -1,0 +1,16 @@
+examples:
+  - Saluta i miei amici $friend_names{Al}, $friend_names{John} e $friend_names{Jack}
+  - Saluta i miei amici
+  - Puoi salutare i miei amici?
+
+slot_filling_prompts:
+  friend_names:
+    - Come si chiamano?
+    - Certo, come si chiamano i tuoi amici?
+    - Con piacere, dimmi come si chiamano!
+
+responses:
+  default:
+    - text:
+      - Ciao, $friend_names
+      - Piacere di conoscervi, $friend_names!

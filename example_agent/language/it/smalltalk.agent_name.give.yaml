@@ -1,0 +1,4 @@
+responses:
+  default:
+    - text:
+      - Ciao Umano, io mi chiamo $agent_name

@@ -1,0 +1,11 @@
+examples:
+  - Mi piace la musica
+  - Amo la musica
+  - Mi piace ascoltare la musica
+  - Mi piace la musica $music_genre{Reggae}
+  - Mi piace un sacco la musica $music_genre{pop}
+
+responses:
+  default:
+    - text:
+      - Mi piace la musica $music_genre!

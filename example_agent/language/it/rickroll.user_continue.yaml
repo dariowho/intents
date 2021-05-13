@@ -1,0 +1,7 @@
+examples:
+  - Never gonna
+
+responses:
+  default:
+    - text:
+      - Let you down

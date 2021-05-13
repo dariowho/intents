@@ -40,7 +40,8 @@ def export(connector: "intents.DialogflowEsConnector", output_path: str, agent_n
     os.makedirs(entities_dir)
 
     with open(os.path.join(output_dir, 'agent.json'), 'w') as f:
-        json.dump(asdict(render_agent(connector, agent_name)), f, indent=2)
+        languages = language.agent_supported_languages(agent_cls)
+        json.dump(asdict(render_agent(connector, agent_name, languages)), f, indent=2)
 
     with open(os.path.join(output_dir, 'package.json'), 'w') as f:
         json.dump({"version": "1.0.0"}, f, indent=2)
@@ -53,7 +54,7 @@ def export(connector: "intents.DialogflowEsConnector", output_path: str, agent_n
             json.dump(asdict(rendered_intent), f, indent=2)
         
         for language_code, language_code_data in language_data.items():
-            rendered_intent_usersays = render_intent_usersays(agent_cls, intent, language_code_data.example_utterances)
+            rendered_intent_usersays = render_intent_usersays(agent_cls, intent, language_code, language_code_data.example_utterances)
             with open(os.path.join(intents_dir, f"{intent.metadata.name}_usersays_{language_code.value}.json"), "w") as f:
                 usersays_data = [asdict(x) for x in rendered_intent_usersays]
                 json.dump(usersays_data, f, indent=2)
@@ -76,7 +77,7 @@ def export(connector: "intents.DialogflowEsConnector", output_path: str, agent_n
 # Agent
 #
 
-def render_agent(connector: "intents.DialogflowEsConnector",  agent_name: str):
+def render_agent(connector: "intents.DialogflowEsConnector",  agent_name: str, languages: List[language.LanguageCode]):
     google_assistant = df.AgentGoogleAssistant(
         project=connector.gcp_project_id,
         oAuthLinking=df.AgentGoogleAssistantOauthLinking()
@@ -87,10 +88,13 @@ def render_agent(connector: "intents.DialogflowEsConnector",  agent_name: str):
         # TODO: include Webhook configuration
     )
 
+    languages = [l.value for l in languages]
     return df.Agent(
         displayName=agent_name,
         webhook=webhook,
-        googleAssistant=google_assistant
+        googleAssistant=google_assistant,
+        language=languages[0],
+        supportedLanguages=languages[1:]
     )
 
 #
@@ -127,7 +131,7 @@ def render_parameters(intent_cls: _IntentMetaclass, language_data: Dict[language
         prompts = []
         for language_code, language_code_data in language_data.items():
             for prompt in language_code_data.slot_filling_prompts.get(param_name, []):
-                prompts.append(df.Prompt(value=prompt))
+                prompts.append(df.Prompt(value=prompt, lang=language_code.value))
 
         result.append(df.Parameter(
             id=str(uuid1()),
@@ -153,6 +157,7 @@ def render_response(response: language.ResponseUtterance, language_code: languag
 
 def render_responses(intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
     result = []
+
     for language_code, language_code_data in language_data.items():
         if not language_code_data.responses:
             result.append(df.ResponseMessage(language_code.value))
@@ -160,7 +165,8 @@ def render_responses(intent_cls: _IntentMetaclass, language_data: Dict[language.
 
         for r in language_code_data.responses:
             result.append(render_response(r, language_code))
-    return 
+
+    return result
 
 def render_utterance_chunk(chunk: language.UtteranceChunk):
     if isinstance(chunk, language.TextUtteranceChunk):
@@ -182,11 +188,12 @@ def render_utterance_chunk(chunk: language.UtteranceChunk):
 
     raise ValueError(f"Unsupported Utterance Chunk Type: {chunk}")
 
-def render_intent_usersays(agent_cls: type, intent: _IntentMetaclass, examples: List[language.ExampleUtterance]):
+def render_intent_usersays(agent_cls: type, intent: _IntentMetaclass, language_code: language.LanguageCode, examples: List[language.ExampleUtterance]):
     result = []
     for e in examples:
         result.append(df.IntentUsersays(
             id=str(uuid1()),
+            lang=language_code.value,
             data=[render_utterance_chunk(c) for c in e.chunks()]
         ))
     return result
@@ -215,5 +222,6 @@ def render_entity_entries(entity_cls: _EntityMetaclass, entries: List[language.E
     return result
 
 # from example_agent import ExampleAgent
-# agent = ExampleAgent('/home/dario/lavoro/dialogflow-agents/_tmp_agents/learning-dialogflow-5827a2d16c34.json')
-# export(agent, '/home/dario/lavoro/dialogflow-agents/TMP_AGENT.zip')
+# from intents import DialogflowEsConnector
+# df = DialogflowEsConnector('/home/dario/lavoro/dialogflow-agents/_tmp_agents/learning-dialogflow-5827a2d16c34.json', ExampleAgent)
+# df.export('/home/dario/lavoro/dialogflow-agents/TMP_AGENT.zip')

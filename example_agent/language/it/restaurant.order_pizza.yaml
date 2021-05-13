@@ -1,0 +1,10 @@
+examples:
+  - Vorrei ordinare una $pizza_type{Margherita}
+  - Una pizza $pizza_type{diavola} per favore
+  - $amount{1} pizze $pizza_type{pepperoni}
+
+responses:
+  default:
+    - text:
+      - Ok, $amount pizza $pizza_type
+      - Va bene, aggiungo $amount pizza $pizza_type
