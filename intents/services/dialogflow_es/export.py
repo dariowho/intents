@@ -47,7 +47,6 @@ def export(connector: "intents.DialogflowEsConnector", output_path: str, agent_n
         json.dump({"version": "1.0.0"}, f, indent=2)
 
     for intent in agent_cls.intents:
-        # TODO: handle multiple languages
         language_data = language.intent_language_data(agent_cls, intent)
         rendered_intent = render_intent(intent, language_data)
         with open(os.path.join(intents_dir, f"{intent.metadata.name}.json"), "w") as f:
@@ -55,19 +54,23 @@ def export(connector: "intents.DialogflowEsConnector", output_path: str, agent_n
         
         for language_code, language_code_data in language_data.items():
             rendered_intent_usersays = render_intent_usersays(agent_cls, intent, language_code, language_code_data.example_utterances)
-            with open(os.path.join(intents_dir, f"{intent.metadata.name}_usersays_{language_code.value}.json"), "w") as f:
+            filename = f"{intent.metadata.name}_usersays_{language_code.value}.json"
+            with open(os.path.join(intents_dir, filename), "w") as f:
                 usersays_data = [asdict(x) for x in rendered_intent_usersays]
                 json.dump(usersays_data, f, indent=2)
 
     for entity_cls in agent_cls._entities_by_name.values():
-        entries = language.entity_language_data(agent_cls, entity_cls)
+        language_data = language.entity_language_data(agent_cls, entity_cls)
         rendered_entity = render_entity(entity_cls)
         with open(os.path.join(entities_dir, f"{entity_cls.name}.json"), "w") as f:
             json.dump(asdict(rendered_entity), f, indent=2)
-        rendered_entity_entries = render_entity_entries(agent_cls, entries)
-        with open(os.path.join(entities_dir, f"{entity_cls.name}_entries_en.json"), "w") as f:
-            entries_data = [asdict(x) for x in rendered_entity_entries]
-            json.dump(entries_data, f, indent=2)
+
+        for language_code, entries in language_data.items():
+            rendered_entity_entries = render_entity_entries(agent_cls, entries)
+            filename = f"{entity_cls.name}_entries_{language_code.value}.json"
+            with open(os.path.join(entities_dir, filename), "w") as f:
+                entries_data = [asdict(x) for x in rendered_entity_entries]
+                json.dump(entries_data, f, indent=2)
 
     if output_path.endswith('.zip'):
         output_path = output_path[:-4]

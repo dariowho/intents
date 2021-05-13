@@ -127,7 +127,7 @@ class ExampleUtterance(str):
             TextUtteranceChunk(text="!")
         ]
 
-        TODO: hancle escaping
+        TODO: handle escaping
         """
         parameter_schema = self._intent.parameter_schema()
         result = []
@@ -279,11 +279,17 @@ class EntityEntry:
     value: str
     synonyms: List[str]
 
-def entity_language_data(agent_cls: type, entity_cls: _EntityMetaclass) -> List[EntityEntry]:
+def entity_language_data(agent_cls: type, entity_cls: _EntityMetaclass, language_code: LanguageCode=None) -> Dict[LanguageCode, List[EntityEntry]]:
     language_folder = agent_language_folder(agent_cls)
 
-    # TODO: support other languages
-    language_file = os.path.join(language_folder, "en", f"ENTITY_{entity_cls.name}.yaml")
+    if not language_code:
+        result = {}
+        for language_code in agent_supported_languages(agent_cls):
+            language_data = entity_language_data(agent_cls, entity_cls, language_code)
+            result[language_code] = language_data[language_code]
+        return result
+
+    language_file = os.path.join(language_folder, language_code.value, f"ENTITY_{entity_cls.name}.yaml")
     if not os.path.isfile(language_file):
         raise ValueError(f"Language file not found for entity '{entity_cls.name}'. Expected path: {language_file}.")
     
@@ -303,7 +309,7 @@ def entity_language_data(agent_cls: type, entity_cls: _EntityMetaclass) -> List[
             raise ValueError(f"Invalid language data for entry {entity_cls.name}. Synonims data must always be lists. Synonims data for '{value}': '{synonyms}'")
         entries.append(EntityEntry(value, synonyms))
 
-    return entries
+    return {language_code: entries}
 
 # from example_agent import ExampleAgent
 # from example_agent import smalltalk
