@@ -1,4 +1,0 @@
-responses:
-  default:
-    - text:
-      - Howdy Human, I'm $agent_name

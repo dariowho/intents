@@ -51,10 +51,12 @@ def export(connector: "intents.DialogflowEsConnector", output_path: str, agent_n
         rendered_intent = render_intent(intent, language_data)
         with open(os.path.join(intents_dir, f"{intent.metadata.name}.json"), "w") as f:
             json.dump(asdict(rendered_intent), f, indent=2)
-        rendered_intent_usersays = render_intent_usersays(agent_cls, intent, language_data.example_utterances)
-        with open(os.path.join(intents_dir, f"{intent.metadata.name}_usersays_en.json"), "w") as f:
-            usersays_data = [asdict(x) for x in rendered_intent_usersays]
-            json.dump(usersays_data, f, indent=2)
+        
+        for language_code, language_code_data in language_data.items():
+            rendered_intent_usersays = render_intent_usersays(agent_cls, intent, language_code_data.example_utterances)
+            with open(os.path.join(intents_dir, f"{intent.metadata.name}_usersays_{language_code.value}.json"), "w") as f:
+                usersays_data = [asdict(x) for x in rendered_intent_usersays]
+                json.dump(usersays_data, f, indent=2)
 
     for entity_cls in agent_cls._entities_by_name.values():
         entries = language.entity_language_data(agent_cls, entity_cls)
@@ -95,11 +97,11 @@ def render_agent(connector: "intents.DialogflowEsConnector",  agent_name: str):
 # Intent
 #
 
-def render_intent(intent_cls: _IntentMetaclass, language_data: language.IntentLanguageData):
+def render_intent(intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
     response = df.Response(
         affectedContexts=[df.AffectedContext(c.name, c.lifespan) for c in intent_cls.metadata.output_contexts],
-        parameters=render_parameters(intent_cls, language_data.slot_filling_prompts),
-        messages=render_responses(intent_cls, language_data.responses),
+        parameters=render_parameters(intent_cls, language_data),
+        messages=render_responses(intent_cls, language_data),
         action=intent_cls.metadata.action
     )
 
@@ -113,7 +115,7 @@ def render_intent(intent_cls: _IntentMetaclass, language_data: language.IntentLa
         events=[df.Event(e) for e in intent_cls.metadata.events]
     )
 
-def render_parameters(intent_cls: _IntentMetaclass, slot_filling_prompts: Dict[str, List[str]]):
+def render_parameters(intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
     result = []
     for param_name, param_metadata in intent_cls.parameter_schema().items():
         entity_cls = param_metadata.entity_cls
@@ -121,6 +123,11 @@ def render_parameters(intent_cls: _IntentMetaclass, slot_filling_prompts: Dict[s
             data_type = ENTITY_MAPPINGS[entity_cls].service_name
         else:
             data_type = entity_cls.name
+
+        prompts = []
+        for language_code, language_code_data in language_data.items():
+            for prompt in language_code_data.slot_filling_prompts.get(param_name, []):
+                prompts.append(df.Prompt(value=prompt))
 
         result.append(df.Parameter(
             id=str(uuid1()),
@@ -130,22 +137,30 @@ def render_parameters(intent_cls: _IntentMetaclass, slot_filling_prompts: Dict[s
             value=f"${param_name}",
             defaultValue=param_metadata.default if not param_metadata.required else '',
             isList=param_metadata.is_list,
-            prompts=[df.Prompt(value=p) for p in slot_filling_prompts.get(param_name, {})]
+            prompts=prompts
         ))
     return result
 
-def render_response(response: language.ResponseUtterance):
+def render_response(response: language.ResponseUtterance, language_code: language.LanguageCode):
     if isinstance(response, language.TextResponseUtterance):
         response: language.TextResponseUtterance
         return df.TextResponseMessage(
+            lang=language_code.value,
             speech=response.choices
         )
+    else:
+        raise ValueError(f"Unsupported response type: {response}")
 
-def render_responses(intent_cls: _IntentMetaclass, responses: List[language.ResponseUtterance]):
-    if not responses:
-        return [df.ResponseMessage()]
+def render_responses(intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
+    result = []
+    for language_code, language_code_data in language_data.items():
+        if not language_code_data.responses:
+            result.append(df.ResponseMessage(language_code.value))
+            continue
 
-    return [render_response(r) for r in responses]
+        for r in language_code_data.responses:
+            result.append(render_response(r, language_code))
+    return 
 
 def render_utterance_chunk(chunk: language.UtteranceChunk):
     if isinstance(chunk, language.TextUtteranceChunk):

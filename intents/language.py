@@ -10,6 +10,7 @@ import os
 import re
 import sys
 import logging
+from enum import Enum
 from typing import List, Dict, Union
 from dataclasses import dataclass
 
@@ -21,7 +22,7 @@ from intents.model.entity import _EntityMetaclass
 
 logger = logging.getLogger(__name__)
 
-def agent_language_folder(agent_cls: type):
+def agent_language_folder(agent_cls: type) -> str:
     main_agent_package_name = agent_cls.__module__.split('.')[0]
     main_agent_package = sys.modules[main_agent_package_name]
     if '__path__' not in main_agent_package.__dict__:
@@ -90,6 +91,8 @@ class ExampleUtterance(str):
             EntityUtteranceChunk(entity_cls=Sys.Person, parameter_name="user_name", parameter_value="Guido"),
             TextUtteranceChunk(text="!")
         ]
+
+        TODO: hancle escaping
         """
         parameter_schema = self._intent.parameter_schema()
         result = []
@@ -138,6 +141,38 @@ class TextResponseUtterance(ResponseUtterance):
 
         self.choices = choices
 
+    def __hash__(self):
+        return "".join(self.choices).__hash__()
+
+    def __eq__(self, other):
+        if not isinstance(other, TextResponseUtterance):
+            return False
+        return self.choices == other.choices
+    
+    def __str__(self):
+        return f"<TextResponseUtterance: {self.choices}>"
+
+    def __repr__(self):
+        return str(self)
+
+class LanguageCode(Enum):
+
+    ENGLISH = 'en'
+    ENGLISH_US = 'en_US'
+    ENGLISH_UK = 'en_UK'
+    ITALIAN = 'it'
+    SPANISH = 'es'
+    SPANISH_SPAIN = 'es_ES'
+    SPANISH_LATIN_AMERICA = 'es_LA'
+    GERMAN = 'de'
+    FRENCH = 'fr'
+    DUTCH = 'nl'
+    CHINESE = 'zh'
+    CHINESE_PRC = 'zh_CN'
+    CHINESE_HONG_KONG = 'zh_HK'
+
+LANGUAGE_CODES = [x.value for x in LanguageCode]
+
 @dataclass
 class IntentLanguageData:
     """
@@ -163,11 +198,25 @@ class IntentLanguageData:
     slot_filling_prompts: Dict[str, List[str]]
     responses: List[ResponseUtterance]
 
-def intent_language_data(agent_cls: type, intent_cls: _IntentMetaclass) -> IntentLanguageData:
+def intent_language_data(agent_cls: type, intent_cls: _IntentMetaclass, language_code: LanguageCode=None) -> Dict[LanguageCode, IntentLanguageData]:
     language_folder = agent_language_folder(agent_cls)
 
-    # TODO: support multiple languages
-    language_file = os.path.join(language_folder, "intents", f"{intent_cls.metadata.name}__en.yaml")
+    if not language_code:
+        result = {}
+        for f in os.scandir(language_folder):
+            if f.is_dir() and not f.name.startswith('.')  and not f.name.startswith('_'):
+                if f.name in LANGUAGE_CODES:
+                    language_code = LanguageCode(f.name)
+                    language_data = intent_language_data(agent_cls, intent_cls, language_code)
+                    result[language_code] = language_data[language_code]
+                else:
+                    logger.warning("Unrecognized language code: '%s' (must be one of %s). Skipping language data.", language_code, LANGUAGE_CODES)
+        return result
+
+    if isinstance(language_code, str):
+        language_code = LanguageCode(language_code)
+
+    language_file = os.path.join(language_folder, language_code.value, f"{intent_cls.metadata.name}.yaml")
     if not os.path.isfile(language_file):
         raise ValueError(f"Language file not found for intent '{intent_cls.metadata.name}'. Expected path: {language_file}. Language files are required even if the intent doesn't need language; in this case, use an empty file.")
     
@@ -183,11 +232,13 @@ def intent_language_data(agent_cls: type, intent_cls: _IntentMetaclass) -> Inten
     examples = [ExampleUtterance(s, intent_cls) for s in examples_data]
     responses = _build_responses(responses_data)
 
-    return IntentLanguageData(
+    language_data = IntentLanguageData(
         example_utterances=examples,
         slot_filling_prompts=language_data.get('slot_filling_prompts', {}),
         responses=responses
     )
+
+    return {language_code: language_data}
 
 def _build_responses(responses_data: dict):
     result = []
@@ -220,7 +271,7 @@ def entity_language_data(agent_cls: type, entity_cls: _EntityMetaclass) -> List[
     language_folder = agent_language_folder(agent_cls)
 
     # TODO: support other languages
-    language_file = os.path.join(language_folder, "entities", f"{entity_cls.name}__en.yaml")
+    language_file = os.path.join(language_folder, "en", f"ENTITY_{entity_cls.name}.yaml")
     if not os.path.isfile(language_file):
         raise ValueError(f"Language file not found for entity '{entity_cls.name}'. Expected path: {language_file}.")
     

@@ -157,10 +157,10 @@ class ResponseMessageTypes(Enum):
 
 @dataclass
 class ResponseMessage:
+    lang: str
     type: str = "0" # TODO: use Enum with custom asdict() as string
     title: str = ""
     textToSpeech: str = ""
-    lang: str = LANG
     condition: str = ""
 
 @dataclass
