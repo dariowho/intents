@@ -17,8 +17,7 @@ responses:
 """
 
 class MockIntentClass:
-    class metadata:
-        name: str = 'test_intent'
+    name: str = 'test_intent'
 
     @classmethod
     def parameter_schema(cls):

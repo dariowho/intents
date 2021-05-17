@@ -1,6 +1,7 @@
+import re
 import logging
 import dataclasses
-from dataclasses import dataclass, field
+from dataclasses import dataclass, is_dataclass
 from typing import List, Dict, Any, _GenericAlias
 
 from intents.model import context, event, entity
@@ -26,31 +27,56 @@ class TextFulfillmentMessage(str, FulfillmentMessage):
 #
 
 @dataclass
-class IntentMetadata:
-    name: str
-    input_contexts: List[context._ContextMetaclass] # TODO: model
-    output_contexts: List[context.Context] # TODO: model
-    events: List[str]
-    action: str = None
-    end_of_conversation: bool = False
-    intent_webhook_enabled: bool = False
-    slot_filling_webhook_enabled: bool = False
-
-class _IntentMetaclass(type):
-    # @property
-    # def metadata(cls) -> IntentMetadata:
-    #     if not cls.metadata:
-    #         raise ValueError(f"Intent {cls} has no metadata. You need to register it with @agent.intent before using it")
-    #     return cls.metadata
-    metadata: IntentMetadata = None
-
-@dataclass
 class IntentParameterMetadata:
     name: str
     entity_cls: entity._EntityMetaclass
     is_list: bool
     required: bool
     default: Any
+
+class _IntentMetaclass(type):
+
+    name: str = None
+    input_contexts: List[context._ContextMetaclass] = None
+    output_contexts: List[context.Context] = None
+    events: List[event.Event] = None # TODO: at some point this may contain strings
+
+    def __new__(cls, name, bases, dct):
+        result_cls = super().__new__(cls, name, bases, dct)
+
+        # Do not process Intent base class
+        if name == 'Intent':
+            assert not bases
+            return result_cls
+
+        if not result_cls.name:
+            result_cls.name = _intent_name_from_class(result_cls)
+        else:
+            is_valid, reason = _is_valid_intent_name(result_cls.name)
+            if not is_valid:
+                raise ValueError(f"Invalid intent name '{result_cls.name}': {reason}")
+
+        if not result_cls.input_contexts:
+            result_cls.input_contexts = []
+        if not result_cls.output_contexts:
+            result_cls.output_contexts = []
+
+        # TODO: check that custom parameters don't overlap Intent fields
+        # TODO: check language data
+        # language.intent_language_data(cls, result) # Checks that language data is existing and consistent
+
+        events = [_system_event(result_cls.name)]
+        for event_cls in result_cls.__dict__.get('events', []):
+            events.append(event_cls)
+        result_cls.events = events
+
+        if not is_dataclass(result_cls):
+            result_cls = dataclass(result_cls)
+
+        # Check parameters
+        result_cls.parameter_schema()
+
+        return result_cls
 
 class Intent(metaclass=_IntentMetaclass):
     """
@@ -60,27 +86,10 @@ class Intent(metaclass=_IntentMetaclass):
     TODO: check parameter names: no underscore, no reserved names, max length
     """
 
-    @dataclass
-    class Meta:
-        """
-        This is a simpler form of :class:`IntentMetadata`. It is used to specify
-        optional metadata when creating Intent classes, without interfering with
-        those that are managed by :class:`Agent`.
-
-        TODO: consider merging with IntentMetadata: currently the only
-        Agent-managed fields are "name" and "events"
-        """
-        input_contexts: List[context._ContextMetaclass] = field(default_factory=list)
-        output_contexts: List[context.Context] = field(default_factory=list)
-        additional_events: List[event.Event] = field(default_factory=list)
-
-    # User fills this with desired extra metadata
-    meta: Meta = None
-
-    # :class:`Agent` fills this, integrating Intent.meta with managed fields
-    # TODO: make private, with a @property getter
-    metadata: IntentMetadata = None
-    _df_response = None
+    name: str = None
+    input_contexts: List[context._ContextMetaclass] = None
+    output_contexts: List[context.Context] = None
+    events: List[event.Event] = None # TODO: at some point this may contain strings
 
     # A :class:`ServiceConnector` provides this
     prediction: 'intents.Prediction'
@@ -175,3 +184,40 @@ class Intent(metaclass=_IntentMetaclass):
         result = cls(**parameters)
         result.prediction = prediction
         return result
+
+def _is_valid_intent_name(candidate_name):
+    if re.search(r'[^a-zA-Z_\.]', candidate_name):
+        return False, "must only contain letters, underscore or dot"
+
+    if candidate_name.startswith('.') or candidate_name.startswith('_'):
+        return False, "must start with a letter"
+
+    if "__" in candidate_name:
+        return False, "must not contain __"
+
+    return True, None
+
+def _intent_name_from_class(intent_cls: _IntentMetaclass) -> str:
+    full_name = f"{intent_cls.__module__}.{intent_cls.__name__}"
+    if "__" in full_name:
+        logger.warning("Intent class '%s' contains repeated '_'. This is reserved: repeated underscores will be reduced to one, this may cause unexpected behavior.")
+    full_name = re.sub(r"_+", "_", full_name)
+    return ".".join(full_name.split(".")[-2:])
+
+def _system_event(intent_name: str) -> str:
+    """
+    Generate the default event name that we associate with every intent.
+
+    >>> _event_name('test.intent_name')
+    'E_TEST_INTENT_NAME'
+
+    TODO: This is only used in Dialogflow -> Deprecate and move to DialogflowConnector
+    """
+    event_name = "E_" + intent_name.upper().replace('.', '_')
+    return event.SystemEvent(event_name)
+
+# @dataclass
+# class MyIntent(Intent):
+#     a_param: str
+
+# i = MyIntent(42)

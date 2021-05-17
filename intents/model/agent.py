@@ -10,7 +10,7 @@ from typing import List, Dict, Union
 from dataclasses import dataclass
 
 from intents import language
-from intents.model.intent import Intent, IntentMetadata, _IntentMetaclass
+from intents.model.intent import Intent, _IntentMetaclass
 from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
 from intents.model.context import Context, _ContextMetaclass
 from intents.model.event import _EventMetaclass
@@ -35,23 +35,24 @@ class Agent:
     _events_by_name: Dict[str, _EventMetaclass] = None
 
     @classmethod
-    def intent(cls, name: str):
+    def register_intent(cls, intent_cls: _IntentMetaclass):
         """
         Returns a decorator for Intent subclasses that:
 
         #. Turns the Intent subclass into a `dataclass`
         #. Registers the intent in the Agent object
-        #. Attach metadata to the decorated Intent class
         #. Check language data (examples and responses)
 
         .. code-block:: python
 
-            from my_agent_project import MyAgent
+            class MyAgent(Agent):
+                pass
 
-            @MyAgent.intent('my_test_intent_name')
             class my_test_intent(Intent):
                 a_parameter: str
                 another_parameter: str
+
+            MyAgent.register_intent(my_test_intent)
 
         """
         if not cls.intents or not cls._intents_by_name and not cls._intents_by_event:
@@ -64,51 +65,29 @@ class Agent:
             cls._contexts_by_name = {}
             cls._events_by_name = {}
 
-        name_is_valid, reason = _is_valid_intent_name(name)
-        if not name_is_valid:
-            raise ValueError(f"Invalid name {name}: {reason}")
+        if cls._intents_by_name.get(intent_cls.name):
+            raise ValueError(f"Another intent exists with name {intent_cls.name}: {cls._intents_by_name[intent_cls.name]}")
 
-        if cls._intents_by_name.get(name):
-            raise ValueError(f"Another intent exists with name {name}: {cls._intents_by_name[name]}")
+        # TODO: check conflicting events
+        # event_name = Agent._event_name(name)
+        # if conflicting_intent := cls._intents_by_event.get(event_name):
+        #     raise ValueError(f"Intent name {name} is ambiguous and clashes with {conflicting_intent} ('{conflicting_intent.metadata.name}')")
 
-        event_name = Agent._event_name(name)
-        if conflicting_intent := cls._intents_by_event.get(event_name):
-            raise ValueError(f"Intent name {name} is ambiguous and clashes with {conflicting_intent} ('{conflicting_intent.metadata.name}')")
+        for context_cls in intent_cls.input_contexts:
+            cls._register_context(context_cls)
 
-        def _result_decorator(decorated_cls: _IntentMetaclass):
-            if not decorated_cls.meta:
-                decorated_cls.meta = Intent.Meta()
+        for context in intent_cls.output_contexts:
+            cls._register_context(context)
 
-            for context_cls in decorated_cls.meta.input_contexts:
-                cls._register_context(context_cls)
+        for event_cls in intent_cls.events:
+            cls._register_event(event_cls, intent_cls)
 
-            for context in decorated_cls.meta.output_contexts:
-                cls._register_context(context)
+        for param_name, param_metadata in intent_cls.parameter_schema().items():
+            cls._register_entity(param_metadata.entity_cls, param_name, intent_cls.name)
 
-            events = [event_name]
-            for event_cls in decorated_cls.meta.additional_events:
-                cls._register_event(event_cls, decorated_cls)
-                events.append(event_cls.name)
-
-            intent_metadata = IntentMetadata(
-                name=name,
-                input_contexts=decorated_cls.meta.input_contexts,
-                output_contexts=decorated_cls.meta.output_contexts,
-                events=events
-                # TODO: handle other metadata
-            )
-
-            result = dataclass(decorated_cls)
-            for param_name, param_metadata in result.parameter_schema().items():
-                cls._register_entity(param_metadata.entity_cls, param_name, name)
-            decorated_cls.metadata = intent_metadata
-            cls.intents.append(result)
-            cls._intents_by_name[name] = result
-            cls._intents_by_event[event_name] = result
-            language.intent_language_data(cls, result) # Checks that language data is existing and consistent
-            return result
-
-        return _result_decorator
+        cls.intents.append(intent_cls)
+        cls._intents_by_name[intent_cls.name] = intent_cls
+        cls._intents_by_event[intent_cls.events[0].name] = intent_cls
 
     @classmethod
     def _register_entity(cls, entity_cls: _EntityMetaclass, parameter_name: str, intent_name: str):

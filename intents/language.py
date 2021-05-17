@@ -106,7 +106,7 @@ class ExampleUtterance(str):
     One of the example Utterances of a given Intent.
     """
     
-    # TODO: check for escape characters
+    # TODO: check for escape characters - intent is possibly intent_cls
     def __init__(self, example: str, intent: intents.Intent):
         self._intent = intent
         self.chunks() # Will check parameters
@@ -139,7 +139,7 @@ class ExampleUtterance(str):
                 result.append(TextUtteranceChunk(text=self[last_end:m_start]))
             
             if (parameter_name := m_groups['parameter_name']) not in parameter_schema:
-                raise ValueError(f"Example '{self}' references parameter ${parameter_name}, but intent {self._intent.metadata.name} does not define such parameter.")
+                raise ValueError(f"Example '{self}' references parameter ${parameter_name}, but intent {self._intent.name} does not define such parameter.")
  
             entity_cls = parameter_schema[parameter_name].entity_cls
             result.append(EntityUtteranceChunk(
@@ -228,9 +228,9 @@ def intent_language_data(agent_cls: type, intent_cls: _IntentMetaclass, language
     if isinstance(language_code, str):
         language_code = LanguageCode(language_code)
 
-    language_file = os.path.join(language_folder, language_code.value, f"{intent_cls.metadata.name}.yaml")
+    language_file = os.path.join(language_folder, language_code.value, f"{intent_cls.name}.yaml")
     if not os.path.isfile(language_file):
-        raise ValueError(f"Language file not found for intent '{intent_cls.metadata.name}'. Expected path: {language_file}. Language files are required even if the intent doesn't need language; in this case, use an empty file.")
+        raise ValueError(f"Language file not found for intent '{intent_cls.name}'. Expected path: {language_file}. Language files are required even if the intent doesn't need language; in this case, use an empty file.")
     
     with open(language_file, 'r') as f:
         language_data = yaml.load(f.read(), Loader=yaml.FullLoader)

@@ -99,7 +99,7 @@ class DialogflowEsConnector(ServiceConnector):
         if not language:
             language = self.default_language
 
-        intent_name = intent.metadata.name
+        intent_name = intent.name
         event_name = Agent._event_name(intent_name)
         event_parameters = {}
         for parameter_name in intent.parameter_schema():

@@ -2,14 +2,12 @@
 These intents demonstrate the fundamentals of a Conversation: Intents,
 Entities and Events.
 """
-
 from typing import List
+from dataclasses import dataclass
 
 from intents import Intent, Event, Sys
 
-from example_agent import ExampleAgent
-
-@ExampleAgent.intent('smalltalk.hello')
+@dataclass
 class hello(Intent):
     """
     | User: Hello
@@ -18,7 +16,7 @@ class hello(Intent):
     The **simplest** possible intent: a greetings exchange with no parameters.
     """
 
-@ExampleAgent.intent('smalltalk.user_name.give')
+@dataclass
 class user_name_give(Intent):
     """
     | User: My name is Guido
@@ -29,7 +27,7 @@ class user_name_give(Intent):
     """
     user_name: Sys.Person
 
-@ExampleAgent.intent('smalltalk.agent_name.give')
+@dataclass
 class agent_name_give(Intent):
     """
     | Agent: Howdy Human, my name is $agent_name
@@ -41,7 +39,7 @@ class agent_name_give(Intent):
     """
     agent_name: Sys.Person
 
-@ExampleAgent.intent('smalltalk.user_likes_music')
+@dataclass
 class user_likes_music(Intent):
     """
     | User: I like music
@@ -55,7 +53,7 @@ class user_likes_music(Intent):
     """
     music_genre: Sys.MusicGenre = "Rock 'n' Roll"
 
-@ExampleAgent.intent('smalltalk.greet_friends')
+@dataclass
 class greet_friends(Intent):
     """
     | User: Say hi to my friends Al, John and Jack
@@ -77,10 +75,8 @@ class WelcomeEvent(Event):
     opened the chat.
     """
 
-@ExampleAgent.intent('smalltalk.agent_welcomes_user')
+@dataclass
 class agent_welcomes_user(Intent):
-    meta = Intent.Meta(
-        additional_events=[WelcomeEvent]
-    )
+    events = [WelcomeEvent]
 
     user_name: Sys.Person

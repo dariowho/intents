@@ -1,3 +1,5 @@
+from dataclasses import dataclass
+
 class _EventMetaclass(type):
     
     @property
@@ -22,3 +24,7 @@ class Event(metaclass=_EventMetaclass):
     references it.
     """
     pass
+
+@dataclass
+class SystemEvent(Event):
+    name: str

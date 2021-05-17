@@ -49,12 +49,12 @@ def export(connector: "intents.DialogflowEsConnector", output_path: str, agent_n
     for intent in agent_cls.intents:
         language_data = language.intent_language_data(agent_cls, intent)
         rendered_intent = render_intent(intent, language_data)
-        with open(os.path.join(intents_dir, f"{intent.metadata.name}.json"), "w") as f:
+        with open(os.path.join(intents_dir, f"{intent.name}.json"), "w") as f:
             json.dump(asdict(rendered_intent), f, indent=2)
         
         for language_code, language_code_data in language_data.items():
             rendered_intent_usersays = render_intent_usersays(agent_cls, intent, language_code, language_code_data.example_utterances)
-            filename = f"{intent.metadata.name}_usersays_{language_code.value}.json"
+            filename = f"{intent.name}_usersays_{language_code.value}.json"
             with open(os.path.join(intents_dir, filename), "w") as f:
                 usersays_data = [asdict(x) for x in rendered_intent_usersays]
                 json.dump(usersays_data, f, indent=2)
@@ -106,20 +106,21 @@ def render_agent(connector: "intents.DialogflowEsConnector",  agent_name: str, l
 
 def render_intent(intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
     response = df.Response(
-        affectedContexts=[df.AffectedContext(c.name, c.lifespan) for c in intent_cls.metadata.output_contexts],
+        affectedContexts=[df.AffectedContext(c.name, c.lifespan) for c in intent_cls.output_contexts],
         parameters=render_parameters(intent_cls, language_data),
         messages=render_responses(intent_cls, language_data),
-        action=intent_cls.metadata.action
     )
 
     return df.Intent(
         id=str(uuid1()),
-        name=intent_cls.metadata.name,
-        contexts=[c.name for c in intent_cls.metadata.input_contexts],
+        name=intent_cls.name,
+        contexts=[c.name for c in intent_cls.input_contexts],
         responses=[response],
-        webhookUsed=intent_cls.metadata.intent_webhook_enabled,
-        webhookForSlotFilling=intent_cls.metadata.slot_filling_webhook_enabled,
-        events=[df.Event(e) for e in intent_cls.metadata.events]
+
+        # TODO: re-enable
+        # webhookUsed=intent_cls.metadata.intent_webhook_enabled,
+        # webhookForSlotFilling=intent_cls.metadata.slot_filling_webhook_enabled,
+        events=[df.Event(e.name) for e in intent_cls.events]
     )
 
 def render_parameters(intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):

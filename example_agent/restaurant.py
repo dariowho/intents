@@ -2,8 +2,9 @@
 This Intents demonstrate the use of **Custom Entities**, which are used to
 recognize simple food orders.
 """
+from dataclasses import dataclass
+
 from intents import Intent, Entity, Sys
-from example_agent import ExampleAgent
 
 class PizzaType(Entity):
     """
@@ -11,7 +12,7 @@ class PizzaType(Entity):
     Diavola, etc.
     """
 
-@ExampleAgent.intent("restaurant.order_pizza")
+@dataclass
 class order_pizza(Intent):
     """
     User is ordering a pizza, like "I want two Margherita please"

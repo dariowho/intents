@@ -17,9 +17,6 @@ def _get_toy_agent():
 @patch('intents.language.intent_language_data')
 def test_param_scheme_no_params(mock_language):
 
-    ToyAgent = _get_toy_agent()
-
-    @ToyAgent.intent('no_param_intent')
     class no_param_intent(Intent):
         """Simple Intent with no parameters"""
 
@@ -28,9 +25,6 @@ def test_param_scheme_no_params(mock_language):
 @patch('intents.language.intent_language_data')
 def test_param_scheme_with_params(mock_language):
 
-    ToyAgent = _get_toy_agent()
-
-    @ToyAgent.intent('intent_with_params')
     class intent_with_params(Intent):
         """Intent with parameters"""
         required_param: Sys.Person
@@ -71,11 +65,9 @@ def test_param_scheme_with_params(mock_language):
 
 @patch('intents.language.intent_language_data')
 def test_param_scheme_invalid_list_default(mock_language):
-    ToyAgent = _get_toy_agent()
-
+    
     with pytest.raises(ValueError):
 
-        @ToyAgent.intent('intent_with_invalid_list_default')
         class intent_with_invalid_list_default(Intent):
             """Intent with parameters"""
             optional_list_param: List[Sys.Person] = 42
