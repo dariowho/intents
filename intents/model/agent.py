@@ -5,7 +5,8 @@ defining your own Agent.
 
 import re
 import logging
-from inspect import isclass
+import inspect
+from types import ModuleType
 from typing import List, Dict, Union
 from dataclasses import dataclass
 
@@ -33,6 +34,36 @@ class Agent:
     _entities_by_name: Dict[str, _EntityMetaclass] = None
     _contexts_by_name: Dict[str, _ContextMetaclass] = None
     _events_by_name: Dict[str, _EventMetaclass] = None
+
+    @classmethod
+    def register(cls, resource: Union[_IntentMetaclass, ModuleType]):
+        """
+        Register the given resource in Agent. The resource could be:
+
+        * An :class:`Intent`
+        * A module. In this case, the module is scanned (non recursively) for
+          Intents, and each Intent is added individually
+
+        For instance, this is how you import all the intents that are defined in
+        the `smalltalk` module of `example_itent`:
+
+        .. code-block:: python
+
+            from example_agent import smalltalk
+
+            class MyAgent(Agent):
+                pass
+
+            MyAgent.register(smalltalk)
+
+        """
+        if isinstance(resource, _IntentMetaclass):
+            cls.register_intent(resource)
+
+        elif isinstance(resource, ModuleType):
+            for member_name, member in inspect.getmembers(resource, inspect.isclass):
+                if member.__module__ == resource.__name__ and issubclass(member, Intent):
+                    cls.register_intent(member)
 
     @classmethod
     def register_intent(cls, intent_cls: _IntentMetaclass):
@@ -112,7 +143,7 @@ class Agent:
     def _register_context(cls, context_obj_or_cls: Union[_ContextMetaclass, Context]):
         if isinstance(context_obj_or_cls, Context):
             context_cls = context_obj_or_cls.__class__
-        elif isclass(context_obj_or_cls) and issubclass(context_obj_or_cls, Context):
+        elif inspect.isclass(context_obj_or_cls) and issubclass(context_obj_or_cls, Context):
             context_cls = context_obj_or_cls
         else:
             raise ValueError(f"Context {context_obj_or_cls} is not a Context instance or subclass")

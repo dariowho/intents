@@ -14,11 +14,13 @@ details.
 
 from intents import Agent
 
-from example_agent import smalltalk
+from example_agent import smalltalk, rickroll, restaurant
 
 class ExampleAgent(Agent):
     """
     An example agent that greets its users, and not much more...
     """
 
-ExampleAgent.register_intent(smalltalk.hello)
+ExampleAgent.register(smalltalk)
+ExampleAgent.register(rickroll)
+ExampleAgent.register(restaurant)

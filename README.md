@@ -37,7 +37,7 @@ pip install intents
 Intents are defined like standard Python **dataclasses**:
 
 ```python
-@MyAgent.intent('HelloIntent')
+@dataclass
 class HelloIntent(Intent):
     user_name: Sys.Person = "Guido"
 ```
