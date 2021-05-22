@@ -1,0 +1,6 @@
+[run]
+omit = *_test.py
+
+[report]
+fail_under = 80
+show_missing = True

@@ -10,15 +10,41 @@ from types import ModuleType
 from typing import List, Dict, Union
 from dataclasses import dataclass
 
-from intents import language
 from intents.model.intent import Intent, _IntentMetaclass
 from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
 from intents.model.context import Context, _ContextMetaclass
 from intents.model.event import _EventMetaclass
+from intents import language
 
 logger = logging.getLogger(__name__)
 
-class Agent:
+class _AgentMetaclass(type):
+
+    languages: List[language.LanguageCode] = None
+
+    def __new__(cls, name, bases, dct):
+        result_cls = super().__new__(cls, name, bases, dct)
+        
+        if name == 'Agent':
+            assert not bases
+            return result_cls
+
+        if not result_cls.languages:
+            result_cls.languages = language.agent_supported_languages(result_cls)
+
+        languages = []
+        for lan in result_cls.languages:
+            if isinstance(lan, language.LanguageCode):
+                languages.append(lan)
+            elif isinstance(lan, str):
+                languages.append(language.LanguageCode(lan))
+            else:
+                raise ValueError(f"Unsupported language '{lan}' for Agent '{result_cls}'. Must be a value of 'intents.LanguageCode'")
+        result_cls.languages = languages
+
+        return result_cls
+
+class Agent(metaclass=_AgentMetaclass):
     """
     As the name suggests, Agent is the base class for your Agents
     project.
@@ -27,6 +53,8 @@ class Agent:
     predictions. This is no more the case: consider using Agent instances
     instead of passing `agent_cls` around
     """
+
+    languages: List[language.LanguageCode] = None
 
     intents: List[Intent] = None
     _intents_by_name: Dict[str, Intent] = None
@@ -68,11 +96,8 @@ class Agent:
     @classmethod
     def register_intent(cls, intent_cls: _IntentMetaclass):
         """
-        Returns a decorator for Intent subclasses that:
-
-        #. Turns the Intent subclass into a `dataclass`
-        #. Registers the intent in the Agent object
-        #. Check language data (examples and responses)
+        Register the intent in the Agent class and check that language data is
+        present for all supported languages (examples and responses).
 
         .. code-block:: python
 
@@ -104,6 +129,8 @@ class Agent:
         # if conflicting_intent := cls._intents_by_event.get(event_name):
         #     raise ValueError(f"Intent name {name} is ambiguous and clashes with {conflicting_intent} ('{conflicting_intent.metadata.name}')")
 
+        language.intent_language_data(cls, intent_cls) # TODO: Agent languages only
+
         for context_cls in intent_cls.input_contexts:
             cls._register_context(context_cls)
 
@@ -119,6 +146,7 @@ class Agent:
         cls.intents.append(intent_cls)
         cls._intents_by_name[intent_cls.name] = intent_cls
         cls._intents_by_event[intent_cls.events[0].name] = intent_cls
+
 
     @classmethod
     def _register_entity(cls, entity_cls: _EntityMetaclass, parameter_name: str, intent_name: str):
@@ -204,15 +232,3 @@ class Agent:
         TODO: This is only used in Dialogflow -> Deprecate and move to DialogflowConnector
         """
         return "E_" + intent_name.upper().replace('.', '_')
-
-def _is_valid_intent_name(candidate_name):
-    if re.search(r'[^a-zA-Z_\.]', candidate_name):
-        return False, "must only contain letters, underscore or dot"
-
-    if candidate_name.startswith('.') or candidate_name.startswith('_'):
-        return False, "must start with a letter"
-
-    if "__" in candidate_name:
-        return False, "must not contain __"
-
-    return True, None

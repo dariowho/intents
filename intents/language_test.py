@@ -2,6 +2,7 @@ import os
 import tempfile
 from unittest.mock import patch
 
+from intents import Agent
 from intents import language
 
 TOY_LANGUAGE_FILE = """
@@ -23,8 +24,8 @@ class MockIntentClass:
     def parameter_schema(cls):
         return {}
 
-class MockAgentClass:
-    pass
+class MockAgentClass(Agent):
+    languages = ['en']
 
 def _toy_language_folder(dir_name, intent_name, languages=('en',)):
     for lang in languages:
@@ -40,7 +41,7 @@ def test_intent_data_all_languages():
             return tmp_dir
 
         with patch('intents.language.agent_language_folder', mock_agent_language_folder):
-            result = language.intent_language_data(None, MockIntentClass)
+            result = language.intent_language_data(MockAgentClass, MockIntentClass)
 
     assert language.LanguageCode.ENGLISH in result
     assert isinstance(result[language.LanguageCode.ENGLISH], language.IntentLanguageData)

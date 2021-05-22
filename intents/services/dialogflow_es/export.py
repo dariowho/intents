@@ -40,7 +40,7 @@ def export(connector: "intents.DialogflowEsConnector", output_path: str, agent_n
     os.makedirs(entities_dir)
 
     with open(os.path.join(output_dir, 'agent.json'), 'w') as f:
-        languages = language.agent_supported_languages(agent_cls)
+        languages = agent_cls.languages
         json.dump(asdict(render_agent(connector, agent_name, languages)), f, indent=2)
 
     with open(os.path.join(output_dir, 'package.json'), 'w') as f:

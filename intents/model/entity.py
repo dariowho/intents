@@ -1,11 +1,24 @@
-from typing import Any
+from typing import Any, List, Dict
 from dataclasses import dataclass
 
 class _EntityMetaclass(type):
 
-    @property
-    def name(cls):
-        return cls.__name__
+    name: str = None
+    custom_language_data: Dict["language.LanguageCode", List["language.EntityEntry"]] = None
+
+    def __new__(cls, name, bases, dct):
+        result_cls = super().__new__(cls, name, bases, dct)
+
+        # Do not process Intent base class
+        if name in ['Entity', 'EntityMixin', 'SystemEntityMixin']:
+            # TODO: check if user isn't defining "class Entity(intents.Entity)" for
+            # some reason
+            return result_cls
+
+        if not result_cls.name:
+            result_cls.name = result_cls.__name__
+
+        return result_cls
 
     @property
     def metadata(cls) -> "Entity.Meta":
@@ -38,6 +51,8 @@ class EntityMixin(metaclass=_EntityMetaclass):
         return cls(match)
 
 class Entity(str, EntityMixin):
+
+    name: str = None
 
     @dataclass
     class Meta:

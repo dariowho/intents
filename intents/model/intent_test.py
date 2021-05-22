@@ -1,29 +1,19 @@
 from typing import List
 from dataclasses import field
-from unittest.mock import patch
 
 import pytest
 
-from intents import Agent, Intent, Sys
+from intents import Intent, Sys
 from intents.model.intent import IntentParameterMetadata
 
-def _get_toy_agent():
-
-    class ToyAgent(Agent):
-        pass
-
-    return ToyAgent
-
-@patch('intents.language.intent_language_data')
-def test_param_scheme_no_params(mock_language):
+def test_param_scheme_no_params():
 
     class no_param_intent(Intent):
         """Simple Intent with no parameters"""
 
     assert no_param_intent.parameter_schema() == {}
 
-@patch('intents.language.intent_language_data')
-def test_param_scheme_with_params(mock_language):
+def test_param_scheme_with_params():
 
     class intent_with_params(Intent):
         """Intent with parameters"""
@@ -63,8 +53,7 @@ def test_param_scheme_with_params(mock_language):
         ),
     }
 
-@patch('intents.language.intent_language_data')
-def test_param_scheme_invalid_list_default(mock_language):
+def test_param_scheme_invalid_list_default():
     
     with pytest.raises(ValueError):
 

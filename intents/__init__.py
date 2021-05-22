@@ -18,4 +18,6 @@ from intents.model.context import Context
 from intents.model.event import Event
 from intents.model.agent import Agent
 
+from intents.language import LanguageCode
+
 from intents.services.dialogflow_es.connector import DialogflowEsConnector

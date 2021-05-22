@@ -1,6 +1,8 @@
 # Intents ⛺
 
 [![Documentation Status](https://readthedocs.org/projects/intents/badge/?version=latest)](https://intents.readthedocs.io/en/latest/?badge=latest)
+[![codecov](https://codecov.io/gh/dariowho/intents/branch/master/graph/badge.svg?token=XAVLW70J8S)](https://codecov.io/gh/dariowho/intents)
+[![PyPI version](https://badge.fury.io/py/intents.svg)](https://badge.fury.io/py/intents)
 
 **Intents** is a Python library to define and operate Dialogflow Agents with a simple,
 code-first approach.
@@ -90,8 +92,10 @@ Documentation will be created in the `docs/_build/` folder.
 
 ### Test
 
-The project's test suite can be run as follows:
+Unit tests are managed with `pytest`:
 
     poetry run pytest
 
-Note that the coverage is currently very low.
+To produce a full coverage report:
+
+    poetry run pytest --cov=intents --cov-report xml --cov-report html

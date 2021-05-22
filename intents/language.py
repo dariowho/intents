@@ -44,7 +44,7 @@ LANGUAGE_CODES = [x.value for x in LanguageCode]
 # Agent
 #
 
-def agent_language_folder(agent_cls: type) -> str:
+def agent_language_folder(agent_cls: "agent._AgentMetaclass") -> str:
     main_agent_package_name = agent_cls.__module__.split('.')[0]
     main_agent_package = sys.modules[main_agent_package_name]
     if '__path__' not in main_agent_package.__dict__:
@@ -59,7 +59,7 @@ def agent_language_folder(agent_cls: type) -> str:
 
     return language_folder
 
-def agent_supported_languages(agent_cls: type) -> List[LanguageCode]:
+def agent_supported_languages(agent_cls: "agent._AgentMetaclass") -> List[LanguageCode]:
     result = []
     
     language_folder = agent_language_folder(agent_cls)
@@ -215,12 +215,12 @@ class IntentLanguageData:
     slot_filling_prompts: Dict[str, List[str]]
     responses: List[ResponseUtterance]
 
-def intent_language_data(agent_cls: type, intent_cls: _IntentMetaclass, language_code: LanguageCode=None) -> Dict[LanguageCode, IntentLanguageData]:
+def intent_language_data(agent_cls: "agent._AgentMetaclass", intent_cls: _IntentMetaclass, language_code: LanguageCode=None) -> Dict[LanguageCode, IntentLanguageData]:
     language_folder = agent_language_folder(agent_cls)
 
     if not language_code:
         result = {}
-        for language_code in agent_supported_languages(agent_cls):
+        for language_code in agent_cls.languages:
             language_data = intent_language_data(agent_cls, intent_cls, language_code)
             result[language_code] = language_data[language_code]
         return result
@@ -279,12 +279,20 @@ class EntityEntry:
     value: str
     synonyms: List[str]
 
-def entity_language_data(agent_cls: type, entity_cls: _EntityMetaclass, language_code: LanguageCode=None) -> Dict[LanguageCode, List[EntityEntry]]:
+def entity_language_data(agent_cls: "agent._AgentMetaclass", entity_cls: _EntityMetaclass, language_code: LanguageCode=None) -> Dict[LanguageCode, List[EntityEntry]]:
+    # Custom language data
+    if entity_cls.custom_language_data:
+        # TODO: check custom language data
+        if language_code:
+            return {language_code: entity_cls.custom_language_data[language_code]}
+        else:
+            return entity_cls.custom_language_data
+    
     language_folder = agent_language_folder(agent_cls)
 
     if not language_code:
         result = {}
-        for language_code in agent_supported_languages(agent_cls):
+        for language_code in agent_cls.languages:
             language_data = entity_language_data(agent_cls, entity_cls, language_code)
             result[language_code] = language_data[language_code]
         return result
@@ -292,7 +300,7 @@ def entity_language_data(agent_cls: type, entity_cls: _EntityMetaclass, language
     language_file = os.path.join(language_folder, language_code.value, f"ENTITY_{entity_cls.name}.yaml")
     if not os.path.isfile(language_file):
         raise ValueError(f"Language file not found for entity '{entity_cls.name}'. Expected path: {language_file}.")
-    
+
     with open(language_file, 'r') as f:
         language_data = yaml.load(f.read(), Loader=yaml.FullLoader)
 

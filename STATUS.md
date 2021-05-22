@@ -23,7 +23,7 @@ Here we report how individual Dialogflow features are currently supported in *In
 | Platform Text/Rich Responses     | 🔴     |                    |
 | Custom Payload Responses         | 🔴     |                    |
 | Agent Webhook Settings           | 🔴     |                    |
-| Multi-Language Agents            | 🔴     |                    |
+| Multi-Language Agents            | 🟢     |                    |
 
 ## Rich Agent definition
 
