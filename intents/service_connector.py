@@ -1,6 +1,9 @@
 """
 Service Connectors connect *Intents* Agent definitions with cloud services such
-as Dialogflow ES. They are used to operate with the cloud version of the Agent,
+as Dialogflow, Lex or Azure Bot Services. Currently, only one connector is
+provided with this library, and this is :mod:`intents.services.dialogflow_es.connector`.
+
+Service Connectors are used to operate with the cloud version of the Agent,
 and specifically to:
 
 * Export an :class:`intents.Agent` in a format that is natively readable by the

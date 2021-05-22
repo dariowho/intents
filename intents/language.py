@@ -4,7 +4,11 @@ Python package. The package is expected to have a `language` folder at its top
 level, containing language resources for intents and entities, in the for of
 YAML files.
 
-TODO: expand
+.. warning::
+
+    Documentation about language format is being written and currently is not
+    available. The best option at the moment is to look at language resources for
+    the example agent at https://github.com/dariowho/intents/tree/master/example_agent/language.
 """
 import os
 import re

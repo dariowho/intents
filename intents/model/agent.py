@@ -1,6 +1,10 @@
 """
-Here we provide the :class:`Agent` base class. You will subclass it when
-defining your own Agent.
+The :class:`Agent` base class is the entry point of your project. You will
+subclass it when defining your own Agent, and will later :meth:`Agent.register`
+Intent classes and other resources into it.
+
+Once the Agent is defined, you will connect it to a cloud service with a
+:class:`ServiceConnector`, to make prediction and trigger requests.
 """
 
 import re
@@ -46,12 +50,35 @@ class _AgentMetaclass(type):
 
 class Agent(metaclass=_AgentMetaclass):
     """
-    As the name suggests, Agent is the base class for your Agents
-    project.
+    As the name suggests, Agent is the base class that models an Agent
+    definition within the *Intents* framework.
 
-    TODO: Agents used to be instantiated with connection parameters to make
-    predictions. This is no more the case: consider using Agent instances
-    instead of passing `agent_cls` around
+    Typically, you will define a single Agent class in your project, that could
+    be as simple as this:
+
+    .. code-block:: python
+
+        from intents import Agent
+
+        class MyAgent(Agent):
+            \"\"\"A little docstring for your Agent\"\"\"
+
+    You can optionally define the languages that you intend to support.
+    *Intents* will look for language resources based on the `language` class
+    variable:
+
+    .. code-block:: python
+
+        class MyAgent(Agent):
+            \"\"\"A little docstring for your Agent\"\"\"
+            languages = ["en", "it"]
+
+    Languages are values from :class:`intents.language.LanguageCode`. If omitted,
+    *Intents* will discover language resources by itself.
+
+    You won't do much more with your *Agent* class, other than registering
+    intents and resources with :meth:`Agent.register`, or passing it to a
+    :class:`ServiceConnector` to make predictions.
     """
 
     languages: List[language.LanguageCode] = None
@@ -84,6 +111,8 @@ class Agent(metaclass=_AgentMetaclass):
 
             MyAgent.register(smalltalk)
 
+        Note that together with the Intent, Agent will register all the
+        resources that are linked to it, such as Entities, Events and Contexts.
         """
         if isinstance(resource, _IntentMetaclass):
             cls.register_intent(resource)
@@ -100,6 +129,8 @@ class Agent(metaclass=_AgentMetaclass):
         present for all supported languages (examples and responses).
 
         .. code-block:: python
+
+            from intents import Agent, Intent
 
             class MyAgent(Agent):
                 pass
@@ -206,20 +237,23 @@ class Agent(metaclass=_AgentMetaclass):
         existing_intent = cls._intents_by_event[event_cls.name]
         raise ValueError(f"Event '{event_cls.name}' is alreadt associated to Intent '{existing_intent}'. An Event can only be associated with 1 intent. (differenciation by input contexts is not supported yet)")
 
-    def save_session(self):
-        """
-        Store the current session (most importantly, the list of active
-        contexts) to a persisted storage.
-        """
-        raise NotImplementedError("Context persistence is unsupported yet")
+    # def save_session(self):
+    #     """
+    #     Store the current session (most importantly, the list of active
+    #     contexts) to a persisted storage.
+    #     """
+    #     raise NotImplementedError("Context persistence is unsupported yet")
 
-    def load_session(self):
-        """
-        Load session information (most importantly, the list of active contexts),
-        in a format that can be used by :meth:`Agent.predict` to restore the
-        state before prediction.
-        """
-        raise NotImplementedError("Context persistence is unsupported yet")
+    # def load_session(self):
+    #     """
+    #     Load session information (most importantly, the list of active contexts),
+    #     in a format that can be used by :meth:`Agent.predict` to restore the
+    #     state before prediction.
+    #     """
+    #     raise NotImplementedError("Context persistence is unsupported yet")
+
+    def _pylint_hack(self):
+        raise NotImplementedError()
 
     @staticmethod
     def _event_name(intent_name: str) -> str:

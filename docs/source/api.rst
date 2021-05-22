@@ -1,25 +1,62 @@
-API
-===
+API Reference
+=============
 
 Model
 -----
 
-These base classes are the building blocks of your Agents.
+Agent
+^^^^^
 
 .. automodule:: intents.model.agent
    :members:
 
+Intent
+^^^^^^
+
 .. automodule:: intents.model.intent
    :members:
+
+Entity
+^^^^^^
 
 .. automodule:: intents.model.entity
    :members:
 
+Context
+^^^^^^^
+
 .. automodule:: intents.model.context
    :members:
 
-Export
-------
+Language
+--------
 
-.. automodule:: intents.services.dialogflow_es.export
+.. automodule:: intents.language
    :members:
+
+Service Connector
+-----------------
+
+.. automodule:: intents.service_connector
+   :members:
+
+Dialogflow ES
+-------------
+
+.. Connector
+.. ^^^^^^^^^
+
+.. automodule:: intents.services.dialogflow_es.connector
+   :members:
+
+.. Export
+.. ^^^^^^
+
+.. .. automodule:: intents.services.dialogflow_es.export
+..    :members:
+
+.. Auth
+.. ^^^^
+
+.. .. automodule:: intents.services.dialogflow_es.auth
+..    :members:

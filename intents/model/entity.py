@@ -1,3 +1,22 @@
+"""
+Entities are special chunks of text in the User utterances, that are recognized
+and extratcted as parameters during predictions. For instance, in an utterance like
+*"My name is John"* we most likely want to match *"John"* as a Person Entity.
+
+Two types of Entities exist:
+
+* **System entities** are built-in types that most chatbot frameworks will
+  recognize (names, cities, numbers, emails, ...). These are modelled in
+  :class:`Sys`.
+* **Custom entities** are user-defined entity types, that typically consist in a
+  list of possible values and their synonims. For instance, a `PizzaType` custom entity
+  will have values like *"margherita"*, *"marinara"*, *"diavola"* and so on, and each
+  of these may define some synonims; this way, in an utterance like *"I want a
+  pepperoni pizza"*, the *"pepperoni"* chunk can be recognized as a `PizzaType`
+  parameter, and mapped to its correct name, which is *"diavola"*. Custom entities
+  are defined by extending the :class:`Entity` base class.
+"""
+
 from typing import Any, List, Dict
 from dataclasses import dataclass
 
@@ -51,13 +70,40 @@ class EntityMixin(metaclass=_EntityMetaclass):
         return cls(match)
 
 class Entity(str, EntityMixin):
+    """
+    Custom Entities are defined by users to match parameters that are specific
+    to the Agent's domain. This is done by extending this class:
+
+    .. code-block:: python
+
+        from dataclasses import dataclass
+        from intents import Intent, Entity
+
+        class PizzaType(Entity):
+            \"\"\"One of the pizza types that a Customer can order\"\"\" 
+
+        @dataclass
+        class customer_orders_pizza(Intent):
+            \"\"\"A little docstring for my Intent\"\"\"
+
+            pizza_type: PizzaType
+
+    Language resources are expected for the `PizzaType` Entity. Like Intents,
+    these will be looked up from the folder where the :class:`Agent` main class
+    is defined, and specifically in
+    `language/<LANGUAGE-CODE>/ENTITY_PizzaType.yaml`. More details in
+    :mod:`intents.language`.
+    """
 
     name: str = None
 
     @dataclass
     class Meta:
         """
-        This class is used to set user-controlled Entity parameters
+        This class is used to set user-controlled Entity parameters.
+
+        **NOTE**: usage of Meta is experimental, it may be removed in upcoming
+        releases. 
         """
         regex_entity: bool = False
         automated_expansion: bool = False
@@ -72,6 +118,24 @@ class SystemEntityMixin(EntityMixin):
     """
 
 class Sys:
+    """
+    This is a container class, that defines all the system entities that are
+    supported in the *Intents* framework. You can use system entities just like
+    this:
+    
+    .. code-block:: python
+
+        from dataclasses import dataclass
+        from intents import Intent, Sys
+
+        @dataclass
+        class user_says_name(Intent):
+            \"\"\"A little docstring for my Intent\"\"\"
+
+            user_name: Sys.Person
+
+    **NOTE**: This class is still work in progress.
+    """
 
     class Any(str, SystemEntityMixin):
         """

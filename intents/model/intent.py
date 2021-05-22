@@ -1,3 +1,17 @@
+"""
+:class:`Intent` classes are, intuitively, the core of the *Intents* framework.
+
+An **intent** is a categorical representation of the User intention in a single
+conversation turn. For instance, utterances like "I want a pizza", "I'd like to
+order a pizza" and such, could be mapped to a single `order_pizza` intent.
+
+Your agent will typically define a number of *intents*, representing all the
+types of messages the Agent can understand and answer to. This is done by
+defining :class:`Intent` sub-classes and their language resources (see
+:mod:`intents.language`), and registering them to an :class:`intents.Agent`
+class with :meth:`intents.Agent.register`.
+"""
+
 import re
 import logging
 import dataclasses
@@ -83,8 +97,60 @@ class Intent(metaclass=_IntentMetaclass):
     Represents a predicted intent. This is also used as a base class for the
     intent classes that model a Dialogflow Agent in Python code.
 
-    TODO: check parameter names: no underscore, no reserved names, max length
+    In its simplest form, an Intent can be defined as follows:
+
+    .. code-block:: python
+
+        from intents import Intent
+
+        class user_says_hello(Intent):
+            \"\"\"A little docstring for my Intent\"\"\"
+
+    *Intents* will then look for language resources in the folder where your
+    Agent class is defined, and specifically in
+    `language/<LANGUAGE-CODE>/user_says_hello.yaml`. More details in
+    :mod:`intents.language`.
+
+    Intents can be more complex than this, for instance:
+
+    .. code-block:: python
+
+        from dataclasses import dataclass
+        from intents import Intent, Sys
+
+        @dataclass
+        class user_says_hello(Intent):
+            \"\"\"A little docstring for my Intent\"\"\"
+
+            user_name: Sys.Person
+
+            name = "hello_custom_name"
+            input_contexts = [a_context]
+            input_contexts = [a_context(2), another_context(1)]
+
+    This Intent has a custom name (i.e. will appear as "hello_custom_name" when
+    exported to Dialogflow), will be predicted only when `a_context` is active,
+    and will spawn `a_context`, lasting 2 conversation turns, and
+    `another_context` lasting only 1 conversation turn.
+
+    Most importantly, this intent has a `user_name` **parameter** of type
+    `Sys.Person`. With adequate examples in its language file, it will be able
+    to match utterances like "Hello, my name is John", tagging "John" as an
+    Entity. When a connector is instantiated, predictions will look like this:
+
+    >>> predicted = connector.predict("My name is John")
+    user_says_hello(user_name="John")
+    >>> predicted.user_name
+    "John"
+    >>> predicted.fulfillment_text
+    "Hi John, I'm Agent"
+
+    Last, we notice the **@dataclass** decorator. This isn't really needed for
+    the Intent to work, but adding it will have your IDE recognize the Intent
+    class as a dataclass: you want autocomplete and static type checking when
+    working with hundreds of intents in the same project.
     """
+    # TODO: check parameter names: no underscore, no reserved names, max length
 
     name: str = None
     input_contexts: List[context._ContextMetaclass] = None

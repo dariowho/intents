@@ -115,8 +115,8 @@ Cloud Agent. Session information can also be set when the Connector is created.
 
 .. code-block:: python
 
-    dialogflow = DialogflowEsConnector('service_account.json', ExampleAgent, default_session='user-id-ada')
+    dialogflow = DialogflowEsConnector('service_account.json', ExampleAgent, default_session='user-id-bob')
     dialogflow.predict("My name is Bob")
 
-Note that `any-session-id` is a string of your choice that identifies the
-current conversation. If you omit the parameter, it will be generated randomly.
+Note that `user-id-ada` and `user-id-ada` are arbitrary strings that identifies the
+current conversation. If `default_session` is omitted, a random string will be generated.

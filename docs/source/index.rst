@@ -37,9 +37,9 @@ Documentation Content
    :maxdepth: 2
 
    quickstart
+   api
    example_agent
    STATUS.md
-   api
 
 
 Indices and tables
