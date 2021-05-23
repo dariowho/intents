@@ -1,0 +1,9 @@
+examples:
+  - Recommend me a hotel
+  - Do you have a hotel to suggest?
+  - Do you know of any good hotel?
+
+responses:
+  default:
+    - text:
+      - Placeholder response

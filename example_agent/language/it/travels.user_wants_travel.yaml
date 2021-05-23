@@ -1,0 +1,17 @@
+examples:
+  - Vorrei viaggiare
+  - Mi piacerebbe viaggiare
+  - Vorrei fare un viaggio
+
+responses:
+  default:
+    - text:
+      - Ok, posso mandarti la foto di un treno, o consigliarti un hotel
+      - Molto bene, se vuoi posso consigliarti un hotel, o mandarti la foto di un treno
+  rich:
+    - text:
+      - Anche a me piace viaggiare! Come posso aiutarti?
+      - Che bello viaggiare, posso esserti di aiuto?
+    - quick_replies:
+      - Consigliami un hotel
+      - Manda foto di posti

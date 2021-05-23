@@ -1,0 +1,12 @@
+examples:
+  - Consigliami un hotel
+  - Consigliami un albergo
+  - Raccomandami un albergo
+  - Conosci qualche buon hotel?
+  - C'e' qualche hotel che consiglieresti?
+  - Hai un albergo da consigliare?
+
+responses:
+  default:
+    - text:
+      - Risposta placeholder

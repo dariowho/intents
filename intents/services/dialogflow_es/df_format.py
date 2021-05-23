@@ -152,6 +152,9 @@ class Parameter:
 
 class ResponseMessageTypes(Enum):
     TEXT = "0"
+    CARD = "1"
+    QUICK_REPLIES = "2"
+    IMAGE = "3"
 
 @dataclass
 class ResponseMessage:
@@ -160,11 +163,20 @@ class ResponseMessage:
     title: str = ""
     textToSpeech: str = ""
     condition: str = ""
+    platform: str = None # TODO: model different platforms
+
 
 @dataclass
 class TextResponseMessage(ResponseMessage):
     speech: List[str] = ""
     type: str = "0"   # TODO: make constant, included in asdict()
+
+@dataclass
+class QuickRepliesResponseMessage(ResponseMessage):
+    replies: List[str] = field(default_factory=list)
+    title: str = "Quick Replies"
+    type: str = "2"   # TODO: make constant, included in asdict()
+
 
 @dataclass
 class Response:

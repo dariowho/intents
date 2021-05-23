@@ -37,10 +37,12 @@ def _toy_language_folder(dir_name, intent_name, languages=('en',)):
 def test_intent_data_all_languages():
     with tempfile.TemporaryDirectory() as tmp_dir:
         _toy_language_folder(tmp_dir, 'test_intent', ['en'])
-        def mock_agent_language_folder(agent_cls):
-            return tmp_dir
+        class mock_agent_language_module:
+            @staticmethod
+            def agent_language_folder(agent_cls):
+                return tmp_dir
 
-        with patch('intents.language.agent_language_folder', mock_agent_language_folder):
+        with patch('intents.language.intent_language.agent_language', mock_agent_language_module):
             result = language.intent_language_data(MockAgentClass, MockIntentClass)
 
     assert language.LanguageCode.ENGLISH in result
@@ -51,9 +53,14 @@ def test_intent_data_all_languages():
         language.ExampleUtterance("Hello", MockIntentClass)
     ]
     assert result[language.LanguageCode.ENGLISH].slot_filling_prompts == {}
-    assert result[language.LanguageCode.ENGLISH].responses == [
-        language.TextResponseUtterance(["Greetings, human :)", "Hi human!"])
-    ]
+    assert result[language.LanguageCode.ENGLISH].responses == {
+        language.IntentResponseGroup.DEFAULT: [
+            language.TextIntentResponse(["Greetings, human :)", "Hi human!"])
+        ]
+    }
 
 # def test_intent_data_skips_private_folders():
+#     ...
+
+# def test_intent_data_rich_response_group():
 #     ...

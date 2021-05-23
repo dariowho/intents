@@ -1,5 +1,5 @@
 """
-Here we implement :class:`DialogflowEsConnector`, the instance of
+Here we implement :class:`DialogflowEsConnector`, the implementation of
 :class:`ServiceConnector` that allows Agents to operate on Dialogflow.
 """
 import logging

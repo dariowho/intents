@@ -1,83 +1,18 @@
-"""
-Utilities to manage the Agent's language resources. An Agent is defined as a
-Python package. The package is expected to have a `language` folder at its top
-level, containing language resources for intents and entities, in the for of
-YAML files.
-
-.. warning::
-
-    Documentation about language format is being written and currently is not
-    available. The best option at the moment is to look at language resources for
-    the example agent at https://github.com/dariowho/intents/tree/master/example_agent/language.
-"""
 import os
 import re
-import sys
-import logging
 from enum import Enum
-from typing import List, Dict, Union
 from dataclasses import dataclass
+from typing import List, Dict, Union
 
 import yaml
 
 import intents
-from intents.model.intent import _IntentMetaclass
+from intents.language import agent_language, LanguageCode
 from intents.model.entity import _EntityMetaclass
-
-logger = logging.getLogger(__name__)
-
-class LanguageCode(Enum):
-
-    ENGLISH = 'en'
-    ENGLISH_US = 'en_US'
-    ENGLISH_UK = 'en_UK'
-    ITALIAN = 'it'
-    SPANISH = 'es'
-    SPANISH_SPAIN = 'es_ES'
-    SPANISH_LATIN_AMERICA = 'es_LA'
-    GERMAN = 'de'
-    FRENCH = 'fr'
-    DUTCH = 'nl'
-    CHINESE = 'zh'
-    CHINESE_PRC = 'zh_CN'
-    CHINESE_HONG_KONG = 'zh_HK'
-
-LANGUAGE_CODES = [x.value for x in LanguageCode]
+from intents.model.intent import _IntentMetaclass
 
 #
-# Agent
-#
-
-def agent_language_folder(agent_cls: "agent._AgentMetaclass") -> str:
-    main_agent_package_name = agent_cls.__module__.split('.')[0]
-    main_agent_package = sys.modules[main_agent_package_name]
-    if '__path__' not in main_agent_package.__dict__:
-        # TODO: try workdir or something...
-        logger.warning("Agent %s doesn't seem to be defined within a package. Language data will not be loaded.", agent_cls)
-        return [], []
-
-    agent_folder = main_agent_package.__path__[0]
-    language_folder = os.path.join(agent_folder, 'language')
-    if not os.path.isdir(language_folder):
-        raise ValueError(f"No language folder found for agent {agent_cls} (expected: {language_folder})")
-
-    return language_folder
-
-def agent_supported_languages(agent_cls: "agent._AgentMetaclass") -> List[LanguageCode]:
-    result = []
-    
-    language_folder = agent_language_folder(agent_cls)
-    for f in os.scandir(language_folder):
-        if f.is_dir() and not f.name.startswith('.')  and not f.name.startswith('_'):
-            if f.name in LANGUAGE_CODES:
-                result.append(LanguageCode(f.name))
-            else:
-                logger.warning("Unrecognized language code: '%s' (must be one of %s). Skipping language data.", f.name, LANGUAGE_CODES)
-        
-    return result
-
-#
-# Intent Language Data
+# Example Utterances
 #
 
 class UtteranceChunk:
@@ -160,12 +95,26 @@ class ExampleUtterance(str):
 
         return result
 
-class ResponseUtterance:
+#
+# Responses
+#
+
+class IntentResponseGroup(Enum):
+    """
+    Intent responses are divided in groups. The same intent can be answered with
+    a set of plain-text responses (:var:`IntentResponseGroup.DEFAULT`), or with
+    rich content (:var:`IntentResponseGroup.RICH`) that includes cards, images
+    and quick replies.
+    """
+    DEFAULT = "default"
+    RICH = "rich"
+
+class IntentResponse:
     """
     One of the Response Utterances of a given Intent.
     """
 
-class TextResponseUtterance(ResponseUtterance):
+class TextIntentResponse(IntentResponse):
     """
     A plain text response. The actual response is picked randomly from a pool of
     choices.
@@ -184,12 +133,40 @@ class TextResponseUtterance(ResponseUtterance):
         return "".join(self.choices).__hash__()
 
     def __eq__(self, other):
-        if not isinstance(other, TextResponseUtterance):
+        if not isinstance(other, TextIntentResponse):
             return False
         return self.choices == other.choices
     
     def __str__(self):
-        return f"<TextResponseUtterance: {self.choices}>"
+        return f"<TextIntentResponse: {self.choices}>"
+
+    def __repr__(self):
+        return str(self)
+
+class QuickRepliesIntentResponse(IntentResponse):
+    """
+    A set of Quick Replies that can be used to answer the Intent. Each reply
+    must be shorter than 20 characters.
+    """
+
+    replies: List[str]
+
+    def __init__(self, replies: List[str]):
+        for rep in replies:
+            if len(rep) > 20:
+                raise ValueError(f"Quick Replies must be shorter than 20 chars. Quick reply '{rep}' is {len(rep)} chars long.")
+        self.replies = replies
+
+    def __hash__(self):
+        return "".join(self.replies).__hash__()
+
+    def __eq__(self, other):
+        if not isinstance(other, QuickRepliesIntentResponse):
+            return False
+        return self.replies == other.replies
+    
+    def __str__(self):
+        return f"<QuickRepliesIntentResponse: {self.replies}>"
 
     def __repr__(self):
         return str(self)
@@ -203,13 +180,16 @@ class IntentLanguageData:
     * Slot Filling Prompts
     * Responses
 
-    Example Utterances are the messages that Agent will be trained on to
+    **Example Utterances** are the messages that Agent will be trained on to
     recognize the Intent.
 
-    Responses, intuitively, are the Agent's response messages that will be sent
-    to User once the Intent is recognized.
+    **Responses**, intuitively, are the Agent's response messages that will be sent
+    to User once the Intent is recognized. They are divided in groups: a
+    :var:`IntentResponseGroup.DEFAULT` group (mandatory) can only contain plain
+    text responses. A :var:`IntentResponseGroup.RICH` group can provide intent
+    responses that include cards, images and quick replies.
 
-    Slot Filling Promps are used to solve parameters that couldn't be tagged in
+    **Slot Filling Promps** are used to solve parameters that couldn't be tagged in
     the original message. For instance a `order_pizza` intent may have a
     `pizza_type` parameter. When User asks "I'd like a pizza" we want to fill
     the slot by asking "What type of pizza?". `slot_filling_prompts` will map
@@ -217,10 +197,14 @@ class IntentLanguageData:
     """
     example_utterances: List[ExampleUtterance]
     slot_filling_prompts: Dict[str, List[str]]
-    responses: List[ResponseUtterance]
+    responses: Dict[IntentResponseGroup, List[IntentResponse]]
+
+#
+# Language Data Loader
+#
 
 def intent_language_data(agent_cls: "agent._AgentMetaclass", intent_cls: _IntentMetaclass, language_code: LanguageCode=None) -> Dict[LanguageCode, IntentLanguageData]:
-    language_folder = agent_language_folder(agent_cls)
+    language_folder = agent_language.agent_language_folder(agent_cls)
 
     if not language_code:
         result = {}
@@ -245,8 +229,11 @@ def intent_language_data(agent_cls: "agent._AgentMetaclass", intent_cls: _Intent
     examples_data = language_data.get('examples', [])
     responses_data = language_data.get('responses', [])
 
-    examples = [ExampleUtterance(s, intent_cls) for s in examples_data]
-    responses = _build_responses(responses_data)
+    try:
+        examples = [ExampleUtterance(s, intent_cls) for s in examples_data]
+        responses = _build_responses(responses_data)
+    except Exception as e:
+        raise RuntimeError(f"Failed to load language data for intent {intent_cls.name} (see stacktrace above for root cause).") from e
 
     language_data = IntentLanguageData(
         example_utterances=examples,
@@ -257,80 +244,25 @@ def intent_language_data(agent_cls: "agent._AgentMetaclass", intent_cls: _Intent
     return {language_code: language_data}
 
 def _build_responses(responses_data: dict):
-    result = []
+    result = {}
 
-    platform: str
+    response_group: str
     responses: List[dict]
-    for platform, responses in responses_data.items():
-        if platform != 'default':
-            raise NotImplementedError(f"Unsupported platform '{platform}'. Currently, only 'default' is supported")
+    for response_group, responses in responses_data.items():
+        try:
+            response_group = IntentResponseGroup(response_group)
+        except ValueError as e:
+            raise NotImplementedError(f"Unsupported Response Group '{response_group}' in 'responses'. Currently, only 'default' and 'rich' are supported")
+
+        result[response_group] = []
         for r in responses:
             assert len(r) == 1
             for r_type, r_data in r.items():
-                if r_type != 'text':
+                if r_type == 'text':
+                    result[response_group].append(TextIntentResponse(r_data))
+                elif r_type == 'quick_replies':
+                    result[response_group].append(QuickRepliesIntentResponse(r_data))
+                else:
                     raise NotImplementedError(f"Unsupported response type '{r_type}'. Currently, only 'text' is supported")
-                result.append(TextResponseUtterance(r_data))
-
+                
     return result
-
-#
-# Entities
-#
-
-@dataclass
-class EntityEntry:
-
-    value: str
-    synonyms: List[str]
-
-def entity_language_data(agent_cls: "agent._AgentMetaclass", entity_cls: _EntityMetaclass, language_code: LanguageCode=None) -> Dict[LanguageCode, List[EntityEntry]]:
-    # Custom language data
-    if entity_cls.custom_language_data:
-        # TODO: check custom language data
-        if language_code:
-            return {language_code: entity_cls.custom_language_data[language_code]}
-        else:
-            return entity_cls.custom_language_data
-    
-    language_folder = agent_language_folder(agent_cls)
-
-    if not language_code:
-        result = {}
-        for language_code in agent_cls.languages:
-            language_data = entity_language_data(agent_cls, entity_cls, language_code)
-            result[language_code] = language_data[language_code]
-        return result
-
-    language_file = os.path.join(language_folder, language_code.value, f"ENTITY_{entity_cls.name}.yaml")
-    if not os.path.isfile(language_file):
-        raise ValueError(f"Language file not found for entity '{entity_cls.name}'. Expected path: {language_file}.")
-
-    with open(language_file, 'r') as f:
-        language_data = yaml.load(f.read(), Loader=yaml.FullLoader)
-
-    if not language_data:
-        return []
-
-    entries_data = language_data.get('entries', [])
-    if not isinstance(entries_data, dict):
-        raise ValueError(f"Invalid Entity language data for entity {entity_cls.name}. Entries data must be a dict. Entries data: {entries_data}")
-
-    entries = []
-    for value, synonyms in entries_data.items():
-        if not isinstance(synonyms, list):
-            raise ValueError(f"Invalid language data for entry {entity_cls.name}. Synonims data must always be lists. Synonims data for '{value}': '{synonyms}'")
-        entries.append(EntityEntry(value, synonyms))
-
-    return {language_code: entries}
-
-# from example_agent import ExampleAgent
-# from example_agent import smalltalk
-
-# examples, responses = intent_language_data(ExampleAgent, smalltalk.user_name_give)
-# for e in examples:
-#     print(e.chunks())
-
-# from example_agent import ExampleAgent
-# from example_agent.restaurant import PizzaType
-
-# entity_language_data(ExampleAgent, PizzaType)

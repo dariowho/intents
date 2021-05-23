@@ -1,0 +1,9 @@
+examples:
+  - Send me the picture of a train
+  - Send me a train picture
+  - can you send the picture of a train?
+
+responses:
+  default:
+    - text:
+      - Placeholder response

@@ -10,6 +10,8 @@ from uuid import uuid1
 from typing import List, Dict
 from dataclasses import asdict
 
+from google.cloud.dialogflow_v2 import types as df_types
+
 from intents import language
 from intents.model.intent import _IntentMetaclass
 from intents.model.entity import SystemEntityMixin, _EntityMetaclass
@@ -17,6 +19,8 @@ import intents.services.dialogflow_es.df_format as df
 from intents.services.dialogflow_es.entities import MAPPINGS as ENTITY_MAPPINGS
 
 logger = logging.getLogger(__name__)
+
+RICH_PLATFORM = "slack" # TODO: support other platforms
 
 def export(connector: "intents.DialogflowEsConnector", output_path: str, agent_name="py-agent") -> None:
     """
@@ -149,12 +153,20 @@ def render_parameters(intent_cls: _IntentMetaclass, language_data: Dict[language
         ))
     return result
 
-def render_response(response: language.ResponseUtterance, language_code: language.LanguageCode):
-    if isinstance(response, language.TextResponseUtterance):
-        response: language.TextResponseUtterance
+def render_response(response: language.IntentResponse, language_code: language.LanguageCode, rich: bool):
+    if isinstance(response, language.TextIntentResponse):
+        response: language.TextIntentResponse
         return df.TextResponseMessage(
             lang=language_code.value,
-            speech=response.choices
+            speech=response.choices,
+            platform=RICH_PLATFORM if rich else None
+        )
+    elif isinstance(response, language.QuickRepliesIntentResponse):
+        response: language.QuickRepliesIntentResponse
+        return df.QuickRepliesResponseMessage(
+            lang=language_code.value,
+            replies=response.replies,
+            platform=RICH_PLATFORM
         )
     else:
         raise ValueError(f"Unsupported response type: {response}")
@@ -167,8 +179,12 @@ def render_responses(intent_cls: _IntentMetaclass, language_data: Dict[language.
             result.append(df.ResponseMessage(language_code.value))
             continue
 
-        for r in language_code_data.responses:
-            result.append(render_response(r, language_code))
+        for response_group, responses in language_code_data.responses.items():
+            assert response_group in [language.IntentResponseGroup.DEFAULT, language.IntentResponseGroup.RICH]
+            rich = (response_group == language.IntentResponseGroup.RICH)
+
+            for res in responses:
+                result.append(render_response(res, language_code, rich))
 
     return result
 

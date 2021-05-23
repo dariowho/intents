@@ -6,6 +6,8 @@ particularly:
 * :mod:`smalltalk` shows the fundamentals of Intents and their Parameters
 * :mod:`rickroll` demonstrates how to use Context to restrict intent predictions
 * :mod:`restaurant` shows how to define Custom Entities
+* :mod:`travels` demonstrates the use of rich responses, such as Images, Cards
+  and Quick Replies
 
 Once the topic of interest is located in the docs, it is advisable to look at
 the **source code** of the example Intent definition, to see its implementation
@@ -14,7 +16,7 @@ details.
 
 from intents import Agent
 
-from example_agent import smalltalk, rickroll, restaurant
+from example_agent import smalltalk, rickroll, restaurant, travels
 
 class ExampleAgent(Agent):
     """
@@ -24,3 +26,4 @@ class ExampleAgent(Agent):
 ExampleAgent.register(smalltalk)
 ExampleAgent.register(rickroll)
 ExampleAgent.register(restaurant)
+ExampleAgent.register(travels)
