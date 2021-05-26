@@ -6,12 +6,13 @@ examples:
 responses:
   default:
     - text:
-      - Sure, I can send you the picture of a train, or recommend an hotel
-      - If you like I can recommend you an hotel. Or I can send you the picture of a train
+      - Nice, I can send you holiday pictures, or recommend an hotel
+      - If you like I can recommend you an hotel. Or I can send you some holiday
+        pictures
   rich:
     - text:
       - I like travelling too! How can I help?
       - I also like travels, how can I help you?
     - quick_replies:
       - Recommend an hotel
-      - Send me holiday pics
+      - Send holiday photo

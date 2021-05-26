@@ -1,0 +1,13 @@
+examples:
+  - Send me a holiday picture
+  - Send me a vacation picture
+  - can you send the picture of holidays?
+  - send holiday photo
+  - send a vacation photo
+
+responses:
+  default:
+    - text:
+      - I can, but not on this channel. Use a rich messaging platform such as Slack or Telegram to display rich messages
+  rich:
+    - image: https://loremflickr.com/320/240/holiday

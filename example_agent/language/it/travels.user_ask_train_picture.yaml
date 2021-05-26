@@ -1,9 +1,0 @@
-examples:
-  - Mandami la foto di un treno
-  - Hai foto di treni?
-  - Puoi mandarmi la foto di un treno?
-
-responses:
-  default:
-    - text:
-      - Risposta placeholder

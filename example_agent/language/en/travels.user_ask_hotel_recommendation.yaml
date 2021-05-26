@@ -6,4 +6,10 @@ examples:
 responses:
   default:
     - text:
-      - Placeholder response
+      - How about Hotel Belvedere, in Como?
+  rich:
+    - card:
+        title: Hotel Belvedere
+        subtitle: 📍 Como, IT 💬 (42) 👍 ★★★★☆
+        image: https://loremflickr.com/320/240/holiday
+        link: https://github.com/dariowho/intents

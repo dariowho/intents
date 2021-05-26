@@ -1,0 +1,12 @@
+examples:
+  - Mandami foto delle vacanze
+  - Hai foto di vacanze?
+  - Puoi mandarmi la foto di vacanze?
+  - Foto delle vacanze
+
+responses:
+  default:
+    - text:
+      - Questo e' un canale testuale, ho bisogno di una piattaforma come Slack o Telegram per inviare immagini 
+  rich:
+    - image: https://loremflickr.com/320/240/holiday

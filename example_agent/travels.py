@@ -16,8 +16,8 @@ class user_ask_hotel_recommendation(Intent):
     Agent: -hotel card-
     """
 
-class user_ask_train_picture(Intent):
+class user_ask_holiday_picture(Intent):
     """
-    User: Send me the picture of a train
+    User: Send me a holiday picture
     Agent: -sends picture-
     """

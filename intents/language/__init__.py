@@ -12,7 +12,7 @@ YAML files.
 """
 from intents.language.language_codes import LanguageCode, LANGUAGE_CODES
 from intents.language.agent_language import agent_language_folder, agent_supported_languages
-from intents.language.intent_language import intent_language_data, IntentResponseGroup, IntentResponse, TextIntentResponse, QuickRepliesIntentResponse, IntentLanguageData, ExampleUtterance, UtteranceChunk, TextUtteranceChunk, EntityUtteranceChunk
+from intents.language.intent_language import intent_language_data, IntentResponseGroup, IntentResponse, TextIntentResponse, ImageIntentResponse, QuickRepliesIntentResponse, CardIntentResponse, IntentLanguageData, ExampleUtterance, UtteranceChunk, TextUtteranceChunk, EntityUtteranceChunk
 from intents.language.entity_language import entity_language_data, EntityEntry
 
 # from example_agent import ExampleAgent

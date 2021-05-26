@@ -9,4 +9,10 @@ examples:
 responses:
   default:
     - text:
-      - Risposta placeholder
+      - Che ne dici dell'Hotel Belvedere a Como?
+  rich:
+    - card:
+        title: Hotel Belvedere
+        subtitle: 📍 Como, IT 💬 (42) 👍 ★★★★☆
+        image: https://loremflickr.com/320/240/holiday
+        link: https://github.com/dariowho/intents

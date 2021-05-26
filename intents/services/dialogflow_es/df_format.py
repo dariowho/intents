@@ -177,6 +177,25 @@ class QuickRepliesResponseMessage(ResponseMessage):
     title: str = "Quick Replies"
     type: str = "2"   # TODO: make constant, included in asdict()
 
+@dataclass
+class ImageResponseMessage(ResponseMessage):
+    imageUrl: str = ""
+    title: str = ""
+    type: str = "3"
+
+@dataclass
+class CardResponseMessageButton:
+    text: str
+    postback: str = None
+
+@dataclass
+class CardResponseMessage(ResponseMessage):
+    title: str = ""
+    subtitle: str = ""
+    imageUrl: str = ""
+    buttons: str = None
+    type: str = "1"
+
 
 @dataclass
 class Response:

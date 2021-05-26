@@ -168,6 +168,27 @@ def render_response(response: language.IntentResponse, language_code: language.L
             replies=response.replies,
             platform=RICH_PLATFORM
         )
+    elif isinstance(response, language.ImageIntentResponse):
+        response: language.ImageIntentResponse
+        return df.ImageResponseMessage(
+            lang=language_code.value,
+            imageUrl=response.url,
+            title=response.title if response.title else "",
+            platform=RICH_PLATFORM
+        )
+    elif isinstance(response, language.CardIntentResponse):
+        response: language.CardIntentResponse
+        buttons = None
+        if response.link:
+            buttons = [df.CardResponseMessageButton(text="👁", postback=response.link)]
+        return df.CardResponseMessage(
+            lang=language_code.value,
+            title=response.title,
+            subtitle=response.subtitle,
+            imageUrl=response.image,
+            buttons=buttons,
+            platform=RICH_PLATFORM
+        )
     else:
         raise ValueError(f"Unsupported response type: {response}")
 

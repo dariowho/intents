@@ -114,6 +114,17 @@ class IntentResponse:
     One of the Response Utterances of a given Intent.
     """
 
+    @classmethod
+    def from_yaml(cls, data: dict):
+        """
+        Instantiate an IntentResponse from language data, as it's found in its
+        YAML file. Typically, IntentResponse is a dataclass and `data` is a dict
+        of fields; however specific subclasses may override with custom
+        parameters.
+        """
+        return cls(**data)
+
+@dataclass(frozen=True)
 class TextIntentResponse(IntentResponse):
     """
     A plain text response. The actual response is picked randomly from a pool of
@@ -122,27 +133,33 @@ class TextIntentResponse(IntentResponse):
 
     choices: List[str]
 
-    def __init__(self, choices: Union[str, List[str]]):
-        if not isinstance(choices, list):
-            assert isinstance(choices, str)
-            choices = [choices]
+    @classmethod
+    def from_yaml(cls, data: Union[str, List[str]]):
+        """
+        In the YAML definition a text response can either be a string, as in
 
-        self.choices = choices
+        .. code-block:: yaml
 
-    def __hash__(self):
-        return "".join(self.choices).__hash__()
+            responses:
+              - text: This is a response
 
-    def __eq__(self, other):
-        if not isinstance(other, TextIntentResponse):
-            return False
-        return self.choices == other.choices
-    
-    def __str__(self):
-        return f"<TextIntentResponse: {self.choices}>"
+        Or a list of choices (the output fulfillment message will be chosen
+        randomly among the different options)
 
-    def __repr__(self):
-        return str(self)
+        .. code-block:: yaml
 
+            responses:
+              - text:
+                - This is a response
+                - This is an alternative response
+        """
+        if isinstance(data, str):
+            return cls([data])
+        
+        assert isinstance(data, list)
+        return cls(data)
+
+@dataclass(frozen=True)
 class QuickRepliesIntentResponse(IntentResponse):
     """
     A set of Quick Replies that can be used to answer the Intent. Each reply
@@ -151,25 +168,76 @@ class QuickRepliesIntentResponse(IntentResponse):
 
     replies: List[str]
 
-    def __init__(self, replies: List[str]):
-        for rep in replies:
+    def __post_init__(self):
+        for rep in self.replies:
             if len(rep) > 20:
                 raise ValueError(f"Quick Replies must be shorter than 20 chars. Quick reply '{rep}' is {len(rep)} chars long.")
-        self.replies = replies
 
-    def __hash__(self):
-        return "".join(self.replies).__hash__()
+    @classmethod
+    def from_yaml(cls, data: Union[str, List[str]]):
+        """
+        In the YAML definition a quick replies response can either be a string, as in
 
-    def __eq__(self, other):
-        if not isinstance(other, QuickRepliesIntentResponse):
-            return False
-        return self.replies == other.replies
-    
-    def __str__(self):
-        return f"<QuickRepliesIntentResponse: {self.replies}>"
+        .. code-block:: yaml
 
-    def __repr__(self):
-        return str(self)
+            responses:
+              - quick_replies: Order Pizza
+
+        Or a list of replies, that will be rendered as separate chips
+
+        .. code-block:: yaml
+
+            responses:
+              - quick_replies:
+                - Order Pizza
+                - Order Beer
+        """
+        if isinstance(data, str):
+            return cls([data])
+        
+        assert isinstance(data, list)
+        return cls(data)
+
+@dataclass(frozen=True)
+class ImageIntentResponse(IntentResponse):
+    """
+    A simple image, defined by its URL and an optional title
+    """
+    url: str
+    title: str = None
+
+    @classmethod
+    def from_yaml(cls, data: Union[str, List[str]]):
+        """
+        In the YAML definition an image response can either be a string with the
+        image URL, as in
+
+        .. code-block:: yaml
+
+            responses:
+              - image: https://example.com/image.png
+
+        Or an object with the image URL and a title, as in
+
+        .. code-block:: yaml
+
+            responses:
+              - image:
+                  url: https://example.com/image.png
+                  title: An example image
+        """
+        if isinstance(data, str):
+            return cls(url=data)
+        
+        assert isinstance(data, dict)
+        return cls(**data)
+
+@dataclass(frozen=True)
+class CardIntentResponse(IntentResponse):
+    title: str
+    subtitle: str = None
+    image: str = None
+    link: str = None
 
 @dataclass
 class IntentLanguageData:
@@ -204,44 +272,45 @@ class IntentLanguageData:
 #
 
 def intent_language_data(agent_cls: "agent._AgentMetaclass", intent_cls: _IntentMetaclass, language_code: LanguageCode=None) -> Dict[LanguageCode, IntentLanguageData]:
-    language_folder = agent_language.agent_language_folder(agent_cls)
-
-    if not language_code:
-        result = {}
-        for language_code in agent_cls.languages:
-            language_data = intent_language_data(agent_cls, intent_cls, language_code)
-            result[language_code] = language_data[language_code]
-        return result
-
-    if isinstance(language_code, str):
-        language_code = LanguageCode(language_code)
-
-    language_file = os.path.join(language_folder, language_code.value, f"{intent_cls.name}.yaml")
-    if not os.path.isfile(language_file):
-        raise ValueError(f"Language file not found for intent '{intent_cls.name}'. Expected path: {language_file}. Language files are required even if the intent doesn't need language; in this case, use an empty file.")
-    
-    with open(language_file, 'r') as f:
-        language_data = yaml.load(f.read(), Loader=yaml.FullLoader)
-
-    if not language_data:
-        return IntentLanguageData([], {}, [])
-
-    examples_data = language_data.get('examples', [])
-    responses_data = language_data.get('responses', [])
-
     try:
+        language_folder = agent_language.agent_language_folder(agent_cls)
+
+        if not language_code:
+            result = {}
+            for language_code in agent_cls.languages:
+                language_data = intent_language_data(agent_cls, intent_cls, language_code)
+                result[language_code] = language_data[language_code]
+            return result
+
+        if isinstance(language_code, str):
+            language_code = LanguageCode(language_code)
+
+        language_file = os.path.join(language_folder, language_code.value, f"{intent_cls.name}.yaml")
+        if not os.path.isfile(language_file):
+            raise ValueError(f"Language file not found for intent '{intent_cls.name}'. Expected path: {language_file}. Language files are required even if the intent doesn't need language; in this case, use an empty file.")
+        
+        with open(language_file, 'r') as f:
+            language_data = yaml.load(f.read(), Loader=yaml.FullLoader)
+
+        if not language_data:
+            return IntentLanguageData([], {}, [])
+
+        examples_data = language_data.get('examples', [])
+        responses_data = language_data.get('responses', [])
+
         examples = [ExampleUtterance(s, intent_cls) for s in examples_data]
         responses = _build_responses(responses_data)
+        
+        language_data = IntentLanguageData(
+            example_utterances=examples,
+            slot_filling_prompts=language_data.get('slot_filling_prompts', {}),
+            responses=responses
+        )
+
+        return {language_code: language_data}
     except Exception as e:
         raise RuntimeError(f"Failed to load language data for intent {intent_cls.name} (see stacktrace above for root cause).") from e
 
-    language_data = IntentLanguageData(
-        example_utterances=examples,
-        slot_filling_prompts=language_data.get('slot_filling_prompts', {}),
-        responses=responses
-    )
-
-    return {language_code: language_data}
 
 def _build_responses(responses_data: dict):
     result = {}
@@ -258,10 +327,17 @@ def _build_responses(responses_data: dict):
         for r in responses:
             assert len(r) == 1
             for r_type, r_data in r.items():
+                if response_group == IntentResponseGroup.DEFAULT and r_type != 'text':
+                    raise ValueError(f"Message type {r_type} found in response group 'default'. Only 'text' type is allowed in 'default': please define the additional 'rich' response group to use rich responses.")
+
                 if r_type == 'text':
-                    result[response_group].append(TextIntentResponse(r_data))
+                    result[response_group].append(TextIntentResponse.from_yaml(r_data))
                 elif r_type == 'quick_replies':
-                    result[response_group].append(QuickRepliesIntentResponse(r_data))
+                    result[response_group].append(QuickRepliesIntentResponse.from_yaml(r_data))
+                elif r_type == 'image':
+                    result[response_group].append(ImageIntentResponse.from_yaml(r_data))
+                elif r_type == 'card':
+                    result[response_group].append(CardIntentResponse.from_yaml(r_data))
                 else:
                     raise NotImplementedError(f"Unsupported response type '{r_type}'. Currently, only 'text' is supported")
                 
