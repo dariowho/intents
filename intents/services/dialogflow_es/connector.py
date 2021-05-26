@@ -3,8 +3,8 @@ Here we implement :class:`DialogflowEsConnector`, the implementation of
 :class:`ServiceConnector` that allows Agents to operate on Dialogflow.
 """
 import logging
-from typing import Union
 from dataclasses import dataclass
+from typing import Union, Iterable
 
 import google.auth.credentials
 from google.cloud.dialogflow_v2.types import TextInput, QueryInput, EventInput
@@ -21,6 +21,8 @@ from intents.services.dialogflow_es import entities as df_entities
 from intents.services.dialogflow_es import export as df_export
 
 logger = logging.getLogger(__name__)
+
+RICH_RESPONSE_PLATFORMS = ["telegram", "facebook", "slack", "line", "hangouts"]
 
 # Dialogflow makes use of Protobuffer for its data structures, and protobuf may be
 # tricky to deal with. For instance, `MessageToDict` will convert snake_case to
@@ -47,6 +49,7 @@ class DialogflowEsConnector(ServiceConnector):
     """
 
     entity_mappings = df_entities.MAPPINGS
+    rich_platforms: Iterable[str]
 
     _credentials: google.auth.credentials.Credentials
     _session_client: SessionsClient
@@ -56,12 +59,24 @@ class DialogflowEsConnector(ServiceConnector):
         google_credentials: Union[str, google.auth.credentials.Credentials],
         agent_cls: type(Agent),
         default_session: str = None,
-        default_language: str = "en"
+        default_language: str = "en",
+        rich_platforms: Iterable[str] = ("telegram",)
     ):
+        """
+        :param google_credentials: Path to service account JSON credentials, or
+        a Credentials object
+        :param agent_cls: The Agent to connect
+        :param default_session: An arbitrary string to identify the conversation
+        during predictions. Will be generated randomly if None
+        :param dedefault_language: Default language to use during predictions
+        :param rich_platforms: Platforms to include when exporting Rich response messages
+        """
         super().__init__(agent_cls, default_session=default_session,
                          default_language=default_language)
         self._credentials = resolve_credentials(google_credentials)
         self._session_client = SessionsClient(credentials=self._credentials)
+        assert all([p in RICH_RESPONSE_PLATFORMS for p in rich_platforms])
+        self.rich_platforms = rich_platforms
 
     @property
     def gcp_project_id(self) -> str:

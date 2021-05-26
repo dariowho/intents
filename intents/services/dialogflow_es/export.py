@@ -7,8 +7,8 @@ import shutil
 import logging
 import tempfile
 from uuid import uuid1
-from typing import List, Dict
 from dataclasses import asdict
+from typing import List, Dict, Iterable
 
 from google.cloud.dialogflow_v2 import types as df_types
 
@@ -19,8 +19,6 @@ import intents.services.dialogflow_es.df_format as df
 from intents.services.dialogflow_es.entities import MAPPINGS as ENTITY_MAPPINGS
 
 logger = logging.getLogger(__name__)
-
-RICH_PLATFORM = "slack" # TODO: support other platforms
 
 def export(connector: "intents.DialogflowEsConnector", output_path: str, agent_name="py-agent") -> None:
     """
@@ -52,7 +50,7 @@ def export(connector: "intents.DialogflowEsConnector", output_path: str, agent_n
 
     for intent in agent_cls.intents:
         language_data = language.intent_language_data(agent_cls, intent)
-        rendered_intent = render_intent(intent, language_data)
+        rendered_intent = render_intent(connector, intent, language_data)
         with open(os.path.join(intents_dir, f"{intent.name}.json"), "w") as f:
             json.dump(asdict(rendered_intent), f, indent=2)
         
@@ -108,11 +106,11 @@ def render_agent(connector: "intents.DialogflowEsConnector",  agent_name: str, l
 # Intent
 #
 
-def render_intent(intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
+def render_intent(connector: "DialogflowEsConnector", intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
     response = df.Response(
         affectedContexts=[df.AffectedContext(c.name, c.lifespan) for c in intent_cls.output_contexts],
         parameters=render_parameters(intent_cls, language_data),
-        messages=render_responses(intent_cls, language_data),
+        messages=render_responses(intent_cls, language_data, connector.rich_platforms),
     )
 
     return df.Intent(
@@ -153,20 +151,23 @@ def render_parameters(intent_cls: _IntentMetaclass, language_data: Dict[language
         ))
     return result
 
-def render_response(response: language.IntentResponse, language_code: language.LanguageCode, rich: bool):
+def render_response(response: language.IntentResponse, language_code: language.LanguageCode, platform: str):
+    """
+    platform: None = "Default"
+    """
     if isinstance(response, language.TextIntentResponse):
         response: language.TextIntentResponse
         return df.TextResponseMessage(
             lang=language_code.value,
             speech=response.choices,
-            platform=RICH_PLATFORM if rich else None
+            platform=platform
         )
     elif isinstance(response, language.QuickRepliesIntentResponse):
         response: language.QuickRepliesIntentResponse
         return df.QuickRepliesResponseMessage(
             lang=language_code.value,
             replies=response.replies,
-            platform=RICH_PLATFORM
+            platform=platform
         )
     elif isinstance(response, language.ImageIntentResponse):
         response: language.ImageIntentResponse
@@ -174,7 +175,7 @@ def render_response(response: language.IntentResponse, language_code: language.L
             lang=language_code.value,
             imageUrl=response.url,
             title=response.title if response.title else "",
-            platform=RICH_PLATFORM
+            platform=platform
         )
     elif isinstance(response, language.CardIntentResponse):
         response: language.CardIntentResponse
@@ -187,12 +188,12 @@ def render_response(response: language.IntentResponse, language_code: language.L
             subtitle=response.subtitle,
             imageUrl=response.image,
             buttons=buttons,
-            platform=RICH_PLATFORM
+            platform=platform
         )
     else:
         raise ValueError(f"Unsupported response type: {response}")
 
-def render_responses(intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
+def render_responses(intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData], rich_platforms: Iterable[str]):
     result = []
 
     for language_code, language_code_data in language_data.items():
@@ -202,10 +203,14 @@ def render_responses(intent_cls: _IntentMetaclass, language_data: Dict[language.
 
         for response_group, responses in language_code_data.responses.items():
             assert response_group in [language.IntentResponseGroup.DEFAULT, language.IntentResponseGroup.RICH]
-            rich = (response_group == language.IntentResponseGroup.RICH)
+            if response_group == language.IntentResponseGroup.RICH:
+                platforms_to_render = rich_platforms
+            else:
+                platforms_to_render = (None,) # Dialogflow will put the response in "Default" when platform=None
 
             for res in responses:
-                result.append(render_response(res, language_code, rich))
+                for platform in platforms_to_render:
+                    result.append(render_response(res, language_code, platform))
 
     return result
 
