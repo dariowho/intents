@@ -14,11 +14,11 @@ from google.protobuf.json_format import MessageToDict
 
 from intents import Agent, Intent
 from intents.service_connector import ServiceConnector, Prediction
-from intents.model.intent import TextFulfillmentMessage
 from intents.services.dialogflow_es.auth import resolve_credentials
 from intents.services.dialogflow_es.util import dict_to_protobuf
 from intents.services.dialogflow_es import entities as df_entities
 from intents.services.dialogflow_es import export as df_export
+from intents.services.dialogflow_es.response_format import build_response_message
 
 logger = logging.getLogger(__name__)
 
@@ -103,7 +103,7 @@ class DialogflowEsConnector(ServiceConnector):
             session=session_path,
             query_input=query_input
         )
-        df_response = df_result._pb
+        df_response = df_result
         
         prediction = _df_response_to_prediction(df_response)
         return self._prediction_to_intent(prediction)
@@ -139,7 +139,7 @@ class DialogflowEsConnector(ServiceConnector):
             session=session_path,
             query_input=query_input
         )
-        df_response = result._pb
+        df_response = result
 
         prediction = _df_response_to_prediction(df_response)
         return self._prediction_to_intent(prediction)
@@ -153,10 +153,14 @@ class DialogflowEsConnector(ServiceConnector):
             raise ValueError(f"Prediction returned intent '{prediction.intent_name}', but this was not found in Agent definition. Make sure to restore a latest Agent export from `services.dialogflow_es.export.export()`. If the problem persists, please file a bug on the Intents repository.")
         return intent_class.from_prediction(prediction)
 
+#
+# Response to prediction
+#
+
 def _df_response_to_prediction(df_response: DetectIntentResponse) -> DialogflowPrediction:
     fulfillment_messages = []
     for message in df_response.query_result.fulfillment_messages:
-        fulfillment_messages.append(_build_response_message(message))
+        fulfillment_messages.append(build_response_message(message))
 
     return DialogflowPrediction(  # pylint: disable=abstract-class-instantiated
         intent_name=df_response.query_result.intent.display_name,
@@ -170,43 +174,3 @@ def _df_response_to_prediction(df_response: DetectIntentResponse) -> DialogflowP
         fulfillment_text=df_response.query_result.fulfillment_text,
         df_response=df_response
     )
-
-
-def _build_response_message(protobuf):
-    """
-    Build a fulfillment message from a protobuf structure, as it is found in a
-    protobuf response (`query_result.fulfillment_messages`)
-    """
-    if protobuf.HasField('text'):
-        return _build_text_fulfillment_message(protobuf)
-    else:
-        raise ValueError("Unsupported Fulfillment Message: %s", protobuf)
-
-
-def _build_text_fulfillment_message(protobuf):
-    """
-    Build a Text Fulfillment Message from the protobuf equivalent of the
-    following dict:
-
-    ```
-    {
-        "text": {
-            "text": [
-                "Hello, Human"
-            ]
-        }
-    }
-    ```
-
-    https://cloud.google.com/dialogflow/es/docs/reference/rpc/google.cloud.dialogflow.v2#text
-
-    We ignore, the fact that `text` is defined as a list: Dialogflow responses
-    only have one.
-    """
-    text_list = protobuf.text.text
-    if len(text_list) == 0:
-        return TextFulfillmentMessage('')
-    if len(text_list) > 1:
-        logger.warning(
-            'Text Dialogflow response contains more than one text option, only the first will be considered: %s', protobuf)
-    return TextFulfillmentMessage(protobuf.text.text[0])

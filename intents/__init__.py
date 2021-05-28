@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List
 
-__version__ = "0.1.dev1"
+__version__ = "0.1.dev2"
 
 class SessionEntity:
 
@@ -19,5 +19,3 @@ from intents.model.event import Event
 from intents.model.agent import Agent
 
 from intents.language import LanguageCode
-
-from intents.services.dialogflow_es.connector import DialogflowEsConnector

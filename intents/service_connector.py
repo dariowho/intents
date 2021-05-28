@@ -193,7 +193,7 @@ class ServiceConnector(ABC):
         #. Send predict() request, with existing session contexts
         #. Return the right `Intent` subclass
 
-        >>> from intents import DialogflowEsConnector
+        >>> from intents.services import DialogflowEsConnector
         >>> from example_agent import ExampleAgent
         >>> df = DialogflowEsConnector('/path/to/service-account.json', ExampleAgent)
         >>> df_result = df.predict("Hi, my name is Guido")
@@ -213,7 +213,7 @@ class ServiceConnector(ABC):
         When `session` or `language` are None, `predict` will use the default
         values that are specified in :meth:`__init__`.
 
-        >>> from intents import DialogflowEsConnector
+        >>> from intents.services import DialogflowEsConnector
         >>> from example_agent import ExampleAgent, smalltalk
         >>> df = DialogflowEsConnector('/path/to/service-account.json', ExampleAgent)
         >>> df_result = df.trigger(smalltalk.agent_name_give(agent_name='Alice'))
@@ -236,7 +236,7 @@ class ServiceConnector(ABC):
         """
 
 # from example_agent import ExampleAgent, smalltalk
-# from intents import DialogflowEsConnector
+# from intents.services import DialogflowEsConnector
 # df = DialogflowEsConnector('/home/dario/lavoro/dialogflow-agents/_tmp_agents/learning-dialogflow-5827a2d16c34.json', ExampleAgent)
 # df.export('TMP_AGENT.zip')
 # df_result = df.predict("Hi, my name is Guido")

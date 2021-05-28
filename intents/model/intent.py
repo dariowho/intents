@@ -19,22 +19,9 @@ from dataclasses import dataclass, is_dataclass
 from typing import List, Dict, Any, _GenericAlias
 
 from intents.model import context, event, entity
+# from intents import language
 
 logger = logging.getLogger(__name__)
-
-#
-# Fulfillment Messages
-#
-
-class FulfillmentMessage:
-    """
-    This is a base class for Intent Fulfillment Messages
-    """
-
-class TextFulfillmentMessage(str, FulfillmentMessage):
-    """
-    This is a simple text fulfillment message.
-    """
 
 #
 # Intent
@@ -172,7 +159,7 @@ class Intent(metaclass=_IntentMetaclass):
     def fulfillment_text(self) -> str:
         return self.prediction.fulfillment_text
 
-    def fulfillment_messages(self) -> List[FulfillmentMessage]:
+    def fulfillment_messages(self) -> List["language.IntentResponse"]:
         return self.prediction.fulfillment_messages
 
     # def fulfillment_messages(self, platform: FulfillmentMessagePlatform=None) -> List[FulfillmentMessage]:

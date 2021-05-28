@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "intents"
-version = "0.1.dev1"
+version = "0.1.dev2"
 description = "Define and operate Dialogflow Agents with a simple, code-first, approach"
 authors = ["Dario <dario.chi@inventati.org>"]
 license = "Apache-2.0"

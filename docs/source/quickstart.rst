@@ -18,7 +18,7 @@ The idea is to create your own Agent Python package: it will be a requirement of
 your Fulfillment project, or part of it.
 
 For now, let's start from the :ref:`Example Agent` that is included in the
-library's repo (https://github.com/dariowho/intents/example_agent). You can use
+library's repo (https://github.com/dariowho/intents/tree/master/example_agent). You can use
 it straight away, or explore it and adapt it at your taste.
 
 .. code-block:: python
@@ -48,7 +48,7 @@ the same Agent on different services). To use Dialogflow we need a specific
 
 .. code-block:: python
     
-    from intents import DialogflowEsConnector
+    from intents.services import DialogflowEsConnector
     dialogflow = DialogflowEsConnector('/path/to/your/service_account.json', ExampleAgent)
 
 Upload to Cloud Agent
