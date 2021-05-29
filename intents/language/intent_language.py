@@ -6,10 +6,8 @@ from typing import List, Dict, Union
 
 import yaml
 
-import intents
 from intents.language import agent_language, LanguageCode
 from intents.model.entity import _EntityMetaclass
-from intents.model.intent import _IntentMetaclass
 
 #
 # Example Utterances
@@ -46,11 +44,11 @@ class ExampleUtterance(str):
     """
     
     # TODO: check for escape characters - intent is possibly intent_cls
-    def __init__(self, example: str, intent: intents.Intent):
+    def __init__(self, example: str, intent: "intents.Intent"):
         self._intent = intent
         self.chunks() # Will check parameters
     
-    def __new__(cls, example: str, intent: intents.Intent):
+    def __new__(cls, example: str, intent: "intents.Intent"):
         return super().__new__(cls, example)
 
     def chunks(self):
@@ -271,7 +269,11 @@ class IntentLanguageData:
 # Language Data Loader
 #
 
-def intent_language_data(agent_cls: "agent._AgentMetaclass", intent_cls: _IntentMetaclass, language_code: LanguageCode=None) -> Dict[LanguageCode, IntentLanguageData]:
+def intent_language_data(
+    agent_cls: "intents.model.agent._AgentMetaclass",
+    intent_cls: "intents.model.intent._IntentMetaclass",
+    language_code: LanguageCode=None
+) -> Dict[LanguageCode, IntentLanguageData]:
     try:
         language_folder = agent_language.agent_language_folder(agent_cls)
 

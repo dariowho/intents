@@ -4,7 +4,7 @@ Here we report how individual Dialogflow features are currently supported in *In
 
 ## Basic Agent Definition
 
-| Feature                          | State  | Note               |
+| Feature                          | Status | Note               |
 |----------------------------------|--------|--------------------|
 | Entity declaration               | 🟢     |                    |
 | Intent declaration               | 🟢     |                    |
@@ -20,14 +20,14 @@ Here we report how individual Dialogflow features are currently supported in *In
 | List Parameters                  | 🟢     |                    |
 | Required Parameters with prompts | 🟢     |                    |
 | Default Text Responses           | 🟢     |                    |
-| Platform Text/Rich Responses     | 🔴     |                    |
+| Platform Text/Rich Responses     | 🟢     |                    |
 | Custom Payload Responses         | 🔴     |                    |
 | Agent Webhook Settings           | 🔴     |                    |
 | Multi-Language Agents            | 🟢     |                    |
 
 ## Rich Agent definition
 
-| Feature                          | State  | Note |
+| Feature                          | Status | Note |
 |----------------------------------|--------|------|
 | Follow-up Intent Shortcut        | 🔴     |      |
 | Intent Flow Graphs               | 🔴     |      |
@@ -36,7 +36,7 @@ Here we report how individual Dialogflow features are currently supported in *In
 
 ## Cloud Sync
 
-| Feature                                | State  | Note |
+| Feature                                | Status | Note |
 |----------------------------------------|--------|------|
 | Export Agent to ZIP                    | 🟢     |      |
 | Upload Agent to existing Cloud project | 🔴     |      |
@@ -45,7 +45,7 @@ Here we report how individual Dialogflow features are currently supported in *In
 
 ## Prediction Client
 
-| Feature                       | State  | Note |
+| Feature                       | Status | Note |
 |-------------------------------|--------|------|
 | Predict Intent                | 🟢     |      |
 | Trigger Intent                | 🟢     |      |

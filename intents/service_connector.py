@@ -21,6 +21,7 @@ from dataclasses import dataclass
 from intents import Intent, Agent
 from intents.model.intent import IntentParameterMetadata
 from intents.model.entity import SystemEntityMixin, _EntityMetaclass
+from intents.language import IntentResponse, IntentResponseGroup
 
 class EntityMapping(ABC):
     """
@@ -126,7 +127,7 @@ class Prediction(ABC):
     confidence: str
     contexts: dict
     parameters_dict: dict
-    fulfillment_messages: dict
+    fulfillment_messages: Dict[IntentResponseGroup, List[IntentResponse]]
     fulfillment_text: str = None
 
     @property

@@ -19,7 +19,7 @@ from dataclasses import dataclass, is_dataclass
 from typing import List, Dict, Any, _GenericAlias
 
 from intents.model import context, event, entity
-# from intents import language
+from intents import language
 
 logger = logging.getLogger(__name__)
 
@@ -159,19 +159,25 @@ class Intent(metaclass=_IntentMetaclass):
     def fulfillment_text(self) -> str:
         return self.prediction.fulfillment_text
 
-    def fulfillment_messages(self) -> List["language.IntentResponse"]:
-        return self.prediction.fulfillment_messages
+    def fulfillment_messages(
+        self,
+        response_group: "language.IntentResponseGroup"=language.IntentResponseGroup.RICH
+    ) -> List["language.IntentResponse"]:
+        """
+        Return a list of fulfillment messages that are suitable for the given
+        Response Group. The following scenarios may happen:
 
-    # def fulfillment_messages(self, platform: FulfillmentMessagePlatform=None) -> List[FulfillmentMessage]:
-    #     if not platform:
-    #         platform = FulfillmentMessagePlatform.PLATFORM_UNSPECIFIED
+        * :class:`language.IntentResponseGroup.DEFAULT` is requested -> Message
+          in the `DEFAULT` group will be returned
+        * :class:`language.IntentResponseGroup.RICH` is requested
+        ** `RICH` messages are defined -> `RICH` messages are returned
+        ** No `RICH` message is defined -> `DEFAULT` messages are returned
+        """
+        if response_group == language.IntentResponseGroup.RICH and \
+           not self.prediction.fulfillment_messages.get(response_group):
+            response_group = language.IntentResponseGroup.DEFAULT
 
-    #     result_per_platform = defaultdict(list)
-    #     for m in self._prediction.fulfillment_messages:
-    #         m_platform = FulfillmentMessagePlatform(m.platform)
-    #         result_per_platform[m_platform].append(build_response_message(m))
-
-    #     return result_per_platform[platform]
+        return self.prediction.fulfillment_messages.get(response_group, [])
 
     @classmethod
     def parameter_schema(cls) -> Dict[str, IntentParameterMetadata]:

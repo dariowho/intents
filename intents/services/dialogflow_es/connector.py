@@ -18,7 +18,7 @@ from intents.services.dialogflow_es.auth import resolve_credentials
 from intents.services.dialogflow_es.util import dict_to_protobuf
 from intents.services.dialogflow_es import entities as df_entities
 from intents.services.dialogflow_es import export as df_export
-from intents.services.dialogflow_es.response_format import build_response_message
+from intents.services.dialogflow_es.response_format import intent_responses, build_response_message
 
 logger = logging.getLogger(__name__)
 
@@ -158,19 +158,16 @@ class DialogflowEsConnector(ServiceConnector):
 #
 
 def _df_response_to_prediction(df_response: DetectIntentResponse) -> DialogflowPrediction:
-    fulfillment_messages = []
-    for message in df_response.query_result.fulfillment_messages:
-        fulfillment_messages.append(build_response_message(message))
-
     return DialogflowPrediction(  # pylint: disable=abstract-class-instantiated
         intent_name=df_response.query_result.intent.display_name,
         parameters_dict=MessageToDict(
-            df_response.query_result.parameters),  # TODO: check types
+            df_response._pb.query_result.parameters
+        ),  # TODO: check types
         # TODO: model
         contexts=[MessageToDict(c)
-                  for c in df_response.query_result.output_contexts],
+                  for c in df_response._pb.query_result.output_contexts],
         confidence=df_response.query_result.intent_detection_confidence,
-        fulfillment_messages=fulfillment_messages,
+        fulfillment_messages=intent_responses(df_response),
         fulfillment_text=df_response.query_result.fulfillment_text,
         df_response=df_response
     )

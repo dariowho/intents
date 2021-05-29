@@ -109,4 +109,4 @@ def intent_responses(df_response: df_types.DetectIntentResponse) -> Dict[IntentR
             group = IntentResponseGroup.RICH
 
         result[group].append(build_response_message(message))
-    return result
+    return dict(result)
