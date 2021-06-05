@@ -4,7 +4,7 @@ Here we implement :class:`DialogflowEsConnector`, the implementation of
 """
 import logging
 from dataclasses import dataclass
-from typing import Union, Iterable
+from typing import Union, Iterable, Dict
 
 import google.auth.credentials
 from google.cloud.dialogflow_v2.types import TextInput, QueryInput, EventInput
@@ -41,6 +41,10 @@ class DialogflowPrediction(Prediction):
 
     entity_mappings = df_entities.MAPPINGS
 
+@dataclass
+class DialogflowWebhookConfiguration:
+    url: str
+    headers: Dict[str, str]
 
 class DialogflowEsConnector(ServiceConnector):
     """
@@ -58,9 +62,10 @@ class DialogflowEsConnector(ServiceConnector):
         self,
         google_credentials: Union[str, google.auth.credentials.Credentials],
         agent_cls: type(Agent),
-        default_session: str = None,
-        default_language: str = "en",
-        rich_platforms: Iterable[str] = ("telegram",)
+        default_session: str=None,
+        default_language: str="en",
+        rich_platforms: Iterable[str]=("telegram",),
+        webhook_configuration: DialogflowWebhookConfiguration=None
     ):
         """
         :param google_credentials: Path to service account JSON credentials, or
@@ -69,7 +74,9 @@ class DialogflowEsConnector(ServiceConnector):
         :param default_session: An arbitrary string to identify the conversation
         during predictions. Will be generated randomly if None
         :param dedefault_language: Default language to use during predictions
-        :param rich_platforms: Platforms to include when exporting Rich response messages
+        :param rich_platforms: Platforms to include when exporting Rich response
+        messages
+        :param webhook_configuration: Webhook connection parameters
         """
         super().__init__(agent_cls, default_session=default_session,
                          default_language=default_language)
@@ -77,6 +84,7 @@ class DialogflowEsConnector(ServiceConnector):
         self._session_client = SessionsClient(credentials=self._credentials)
         assert all([p in RICH_RESPONSE_PLATFORMS for p in rich_platforms])
         self.rich_platforms = rich_platforms
+        self.webhook_configuration = webhook_configuration
 
     @property
     def gcp_project_id(self) -> str:

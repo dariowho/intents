@@ -5,13 +5,8 @@
 [![HEAD version](https://badgen.net/badge/head/v0.1.dev2/blue)](https://badgen.net/badge/head/v0.1.dev2/blue)
 [![PyPI version](https://badge.fury.io/py/intents.svg)](https://badge.fury.io/py/intents)
 
-**Intents** is a Python library to define and operate Dialogflow Agents with a simple,
+**Intents** is a unofficial Python library to define and operate Dialogflow Agents with a simple,
 code-first approach.
-
-> **disclaimer**: this project is not affiliated, associated, authorized,
-> endorsed by, or in any way officially connected with Dialogflow. The names
-> Dialogflow, Google, as well as related names, marks, emblems and images are
-> registered trademarks of their respective owners.
 
 ## Project status
 
@@ -70,33 +65,6 @@ print(predicted.fulfillment_text)                     # "Hello Mario"
 
 For a complete working example, check out the included [Example Agent](example_agent/). Also, *Intents* **documentation** is published at https://intents.readthedocs.io/ 📚
 
-## Develop
+## Disclaimer
 
-### Setup
-
-Dependencies are managed with Poetry
-(https://python-poetry.org/docs/#installation). This is how you setup your
-environment:
-
-    poetry install
-
-### Build Documentation
-
-This project is documented using Sphinx. This is how you build the documentation site:
-
-```sh
-cd docs/
-poetry run make html
-```
-
-Documentation will be created in the `docs/_build/` folder.
-
-### Test
-
-Unit tests are managed with `pytest`:
-
-    poetry run pytest
-
-To produce a full coverage report:
-
-    poetry run pytest --cov=intents --cov-report xml --cov-report html
+*This project is not affiliated, associated, authorized, endorsed by, or in any way officially connected with Dialogflow. The names Dialogflow, Google, as well as related names, marks, emblems and images are registered trademarks of their respective owners.*

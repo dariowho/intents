@@ -170,6 +170,7 @@ class Intent(metaclass=_IntentMetaclass):
         * :class:`language.IntentResponseGroup.DEFAULT` is requested -> Message
           in the `DEFAULT` group will be returned
         * :class:`language.IntentResponseGroup.RICH` is requested
+
         ** `RICH` messages are defined -> `RICH` messages are returned
         ** No `RICH` message is defined -> `DEFAULT` messages are returned
         """
