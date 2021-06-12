@@ -155,6 +155,7 @@ class ResponseMessageTypes(Enum):
     CARD = "1"
     QUICK_REPLIES = "2"
     IMAGE = "3"
+    CUSTOM = "4"
 
 @dataclass
 class ResponseMessage:
@@ -193,8 +194,13 @@ class CardResponseMessage(ResponseMessage):
     title: str = ""
     subtitle: str = ""
     imageUrl: str = ""
-    buttons: str = None
+    buttons: List[CardResponseMessageButton] = None
     type: str = "1"
+
+@dataclass
+class CustomPayloadResponseMessage(ResponseMessage):
+    payload: Dict[str, dict] = field(default_factory=dict)
+    type: str = "4"
 
 
 @dataclass

@@ -1,0 +1,18 @@
+examples:
+  - Dov'è la stazione?
+  - Dove si trova la stazione dei treni
+  - Dove posso prendere il treno?
+
+responses:
+  default:
+    - text:
+      - La stazione è in Piazza Duca D'Aosta, Milano
+      - La stazione centrale si trova in Piazza Duca D'Aosta, Milano
+  rich:
+    - text:
+      - La stazione è in Piazza Duca D'Aosta, Milano
+    - custom:
+        custom_location:
+          latitude: 45.484907
+          longitude: 9.203299
+          name: Piazza Duca D'Aosta, Milano

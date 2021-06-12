@@ -14,7 +14,7 @@ This project is still in early development stage, its API could change without
 notice. This is a broad overview of the features that are planned and their
 completion status.
 
-| Feature           | State  | Note                                                                                |
+| Feature           | Status | Note                                                                                |
 |-------------------|--------|-------------------------------------------------------------------------------------|
 | [Agent Definition](STATUS.md#agent-definition)  | 🟡     | Can define basic Intents, with examples, parameters and responses                   |
 | [Cloud Sync](STATUS.md#cloud-sync)        | 🟡     | Can export Agent to a valid Dialogflow ZIP. Cannot yet manage Google Cloud Projects |
@@ -37,6 +37,7 @@ Intents are defined like standard Python **dataclasses**:
 ```python
 @dataclass
 class HelloIntent(Intent):
+    """A little docstring for my Intent class"""
     user_name: Sys.Person = "Guido"
 ```
 

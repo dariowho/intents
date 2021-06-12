@@ -190,6 +190,15 @@ def render_response(response: language.IntentResponse, language_code: language.L
             buttons=buttons,
             platform=platform
         )
+    elif isinstance(response, language.CustomPayloadIntentResponse):
+        response: language.CustomPayloadIntentResponse
+        return df.CustomPayloadResponseMessage(
+            lang=language_code.value,
+            payload={
+                response.name: response.payload
+            },
+            platform=platform
+        )
     else:
         raise ValueError(f"Unsupported response type: {response}")
 

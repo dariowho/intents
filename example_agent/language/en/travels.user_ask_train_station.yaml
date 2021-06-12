@@ -1,0 +1,17 @@
+examples:
+  - Where is the train station?
+  - Where's the train station
+  - Where is the station?
+
+responses:
+  default:
+    - text:
+      - The address of the Central Station is "Piazza Duca D'Aosta, Milano"
+  rich:
+    - text:
+      - The address of the Central Station is "Piazza Duca D'Aosta, Milano"
+    - custom:
+        custom_location:
+          latitude: 45.484907
+          longitude: 9.203299
+          name: Piazza Duca D'Aosta, Milano

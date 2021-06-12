@@ -14,5 +14,6 @@ responses:
       - I like travelling too! How can I help?
       - I also like travels, how can I help you?
     - quick_replies:
-      - Recommend an hotel
+      - Recommend a hotel
       - Send holiday photo
+      - Where the station?

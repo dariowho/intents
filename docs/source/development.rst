@@ -42,6 +42,17 @@ This project is documented using Sphinx. This is how you build the documentation
 
 Documentation will be created in the `docs/_build/` folder.
 
+Read the Docs
+-------------
+
+Documentatio is published on *Read the Docs* via their default integration. As
+Poetry is not available in *Read the Docs* build environment, a **requirements**
+file must be provided. The build script is configured to read `readthedocs.txt`
+for this purpose.
+
+When adding a new requirement, remember to run `poetry run pip freeze > readthedocs.txt` to 
+make sure docs are built correctly.  
+
 Test
 ----
 

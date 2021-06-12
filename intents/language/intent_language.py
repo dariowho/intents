@@ -237,6 +237,49 @@ class CardIntentResponse(IntentResponse):
     image: str = None
     link: str = None
 
+@dataclass(frozen=True)
+class CustomPayloadIntentResponse(IntentResponse):
+    """
+    Custom Payloads are objects with arbitrary fields, they are supported by
+    Dialogflow in every response group, including "Default". Currently they can
+    only be defined in the YAML as free form payloads; support for marshalling
+    or generation from code is expected in future developments.
+    """
+
+    name: str
+    payload: dict
+
+    @classmethod
+    def from_yaml(cls, data: Dict[str, dict]):
+        """
+        In the YAML definition a custom payload is defined as follows
+
+        .. code-block:: yaml
+
+            responses:
+              - custom:
+                  custom_location:
+                    latitude: 45.484907
+                    longitude: 9.203299
+                    name: Piazza Duca D'Aosta, Milano
+
+        NOTE: while not currently enforced, consistency is expected between
+        payload names and their fields. Future versions of the library will
+        marshal custom payloads against dataclass schemas.
+        """
+        if not isinstance(data, dict):
+            raise ValueError(f"A custom payload is expected to be a dict in the form 'payload_name: {{\"foo\": \"bar\"}}. Found: {data}")
+        if len(data) != 1:
+            raise ValueError(f"A custom payload is expected to contain a single key representing the payload name, mapping to its value (e.g. 'location: {{\"latitude\": 42, ...}}'). Found {len(data)} keys: {data.keys()}")
+
+        payload_name = list(data.keys())[0]
+        payload_content = list(data.values())[0]
+
+        if not isinstance(payload_content, dict):
+            raise ValueError(f"Custom payloads are expected to be dictionaries. {payload_name} has value: {payload_content}")
+
+        return CustomPayloadIntentResponse(payload_name, payload_content)
+
 @dataclass
 class IntentLanguageData:
     """
@@ -322,8 +365,8 @@ def _build_responses(responses_data: dict):
     for response_group, responses in responses_data.items():
         try:
             response_group = IntentResponseGroup(response_group)
-        except ValueError as e:
-            raise NotImplementedError(f"Unsupported Response Group '{response_group}' in 'responses'. Currently, only 'default' and 'rich' are supported")
+        except ValueError as exc:
+            raise NotImplementedError(f"Unsupported Response Group '{response_group}' in 'responses'. Currently, only 'default' and 'rich' are supported") from exc
 
         result[response_group] = []
         for r in responses:
@@ -340,6 +383,8 @@ def _build_responses(responses_data: dict):
                     result[response_group].append(ImageIntentResponse.from_yaml(r_data))
                 elif r_type == 'card':
                     result[response_group].append(CardIntentResponse.from_yaml(r_data))
+                elif r_type == 'custom':
+                    result[response_group].append(CustomPayloadIntentResponse.from_yaml(r_data))
                 else:
                     raise NotImplementedError(f"Unsupported response type '{r_type}'. Currently, only 'text' is supported")
                 
