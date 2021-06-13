@@ -1,5 +1,5 @@
 import pytest
-from intents.language.intent_language import TextIntentResponse, QuickRepliesIntentResponse, ImageIntentResponse, CardIntentResponse
+from intents.language.intent_language import TextIntentResponse, QuickRepliesIntentResponse, ImageIntentResponse, CardIntentResponse, CustomPayloadIntentResponse
 
 def test_text_intent_response_string():
     text_response_instance = TextIntentResponse(["ciao"])
@@ -44,3 +44,33 @@ def test_image_response_dict():
     image_response_instance = ImageIntentResponse(url="https://example.com/image.png", title="A title")
     image_response_from_yaml = ImageIntentResponse.from_yaml({"url": "https://example.com/image.png", "title": "A title"})
     assert image_response_instance == image_response_from_yaml
+
+def test_custom_payload_response():
+    custom_payload_instance = CustomPayloadIntentResponse("any_name", {"foo": "bar"})
+    custom_payload_from_yaml = CustomPayloadIntentResponse.from_yaml({
+        "any_name": {"foo": "bar"}
+    })
+    assert custom_payload_instance == custom_payload_from_yaml
+
+def test_card_intent_response():
+    card_reponse_instance = CardIntentResponse("Card Title", "a subtitle...")
+    card_reponse_from_yaml = CardIntentResponse.from_yaml({
+        "title": "Card Title",
+        "subtitle":"a subtitle..."
+    })
+    assert card_reponse_instance == card_reponse_from_yaml
+
+def test_custom_payload_not_dict_data():
+    with pytest.raises(ValueError):
+        CustomPayloadIntentResponse.from_yaml("foo")
+
+def test_custom_payload_not_dict_value():
+    with pytest.raises(ValueError):
+        CustomPayloadIntentResponse.from_yaml({"foo": "bar"})
+
+def test_custom_payload_multiple_keys():
+    with pytest.raises(ValueError):
+        CustomPayloadIntentResponse.from_yaml({
+            "any_name": {"foo": "bar"},
+            "another_name": {"not": "allowed"}
+        })

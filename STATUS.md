@@ -21,7 +21,7 @@ Here we report how individual Dialogflow features are currently supported in *In
 | Required Parameters with prompts | 🟢     |                    |
 | Default Text Responses           | 🟢     |                    |
 | Platform Text/Rich Responses     | 🟢     |                    |
-| Custom Payload Responses         | 🔴     |                    |
+| Custom Payload Responses         | 🟢     |                    |
 | Agent Webhook Settings           | 🔴     |                    |
 | Multi-Language Agents            | 🟢     |                    |
 
