@@ -10,8 +10,8 @@ code-first approach.
 
 ## Project status
 
-This project is still in early development stage, its API could change without
-notice. This is a broad overview of the features that are planned and their
+This project is in alpha stage, some API adjustments are to be expected before
+release. This is a broad overview of the features that are planned and their
 completion status.
 
 | Feature           | Status | Note                                                                                |

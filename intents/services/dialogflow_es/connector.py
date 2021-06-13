@@ -59,9 +59,9 @@ class DialogflowEsConnector(ServiceConnector):
 
     The Connector can now be used, mainly to
 
-    * Export the Agent with :meth:`DialogflowConnector.export`
-    * Predict an utterance with :meth:`DialogflowConnector.predict`
-    * Trigger an Intent with :meth:`DialogflowConnector.trigger`
+    * Export the Agent with :meth:`DialogflowEsConnector.export`
+    * Predict an utterance with :meth:`DialogflowEsConnector.predict`
+    * Trigger an Intent with :meth:`DialogflowEsConnector.trigger`
     """
 
     entity_mappings = df_entities.MAPPINGS

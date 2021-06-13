@@ -24,3 +24,10 @@ Custom Entities: Restaurant
 
 .. automodule:: example_agent.restaurant
    :members:
+
+Rich Responses: Travels
+---------------------------
+
+.. automodule:: example_agent.travels
+   :members:
+   

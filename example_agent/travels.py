@@ -6,24 +6,24 @@ from intents import Intent
 
 class user_wants_travel(Intent):
     """
-    User: I want to travel
-    Agent: How can I help? + **-quick replies-**
+    | User: I want to travel
+    | Agent: How can I help? + **-quick replies-**
     """
 
 class user_ask_hotel_recommendation(Intent):
     """
-    User: Recommend me a hotel
-    Agent: **-hotel card-**
+    | User: Recommend me a hotel
+    | Agent: **-hotel card-**
     """
 
 class user_ask_holiday_picture(Intent):
     """
-    User: Send me a holiday picture
-    Agent: **-picture-**
+    | User: Send me a holiday picture
+    | Agent: **-picture-**
     """
 
 class user_ask_train_station(Intent):
     """
-    User: Where is the train station?
-    Agent: Address + **-custom payload (location)-**
+    | User: Where is the train station?
+    | Agent: Address + **-custom payload (location)-**
     """

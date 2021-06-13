@@ -188,11 +188,8 @@ class ServiceConnector(ABC):
         language. When `session` or `language` are None, `predict` will use the
         default values that are specified in :meth:`__init__`.
 
-        *predict* will:
-
-        #. Load persisted session if configured (to be implemented)
-        #. Send predict() request, with existing session contexts
-        #. Return the right `Intent` subclass
+        *predict* will return an instance of `Intent`, representing the intent
+        as it was predicted by the service.
 
         >>> from intents.services import DialogflowEsConnector
         >>> from example_agent import ExampleAgent
