@@ -10,8 +10,6 @@ from uuid import uuid1
 from dataclasses import asdict
 from typing import List, Dict, Iterable
 
-from google.cloud.dialogflow_v2 import types as df_types
-
 from intents import language
 from intents.model.intent import _IntentMetaclass
 from intents.model.entity import SystemEntityMixin, _EntityMetaclass
@@ -89,9 +87,14 @@ def render_agent(connector: "intents.DialogflowEsConnector",  agent_name: str, l
         # TODO: include Google Assistant configuration
     )
 
-    webhook = df.AgentWebhook(
-        # TODO: include Webhook configuration
-    )
+    if connector.webhook_configuration:
+        webhook = df.AgentWebhook(
+            available=True,
+            url=connector.webhook_configuration.url,
+            headers=connector.webhook_configuration.headers
+        )
+    else:
+        webhook = df.AgentWebhook()
 
     languages = [l.value for l in languages]
     return df.Agent(
@@ -277,6 +280,7 @@ def render_entity_entries(entity_cls: _EntityMetaclass, entries: List[language.E
     return result
 
 # from example_agent import ExampleAgent
-# from intents.services import DialogflowEsConnector
-# df = DialogflowEsConnector('/home/dario/lavoro/dialogflow-agents/_tmp_agents/learning-dialogflow-5827a2d16c34.json', ExampleAgent)
+# from intents.services import DialogflowEsConnector, WebhookConfiguration
+# webhook = WebhookConfiguration('https://www.google.com/', {"X-Foo": "bar"})
+# df = DialogflowEsConnector('/home/dario/lavoro/dialogflow-agents/_tmp_agents/learning-dialogflow-5827a2d16c34.json', ExampleAgent, webhook_configuration=webhook)
 # df.export('/home/dario/lavoro/dialogflow-agents/TMP_AGENT.zip')

@@ -67,6 +67,7 @@ class AgentWebhook:
     username: str = ""
     headers: Dict[str, str] = field(default_factory=dict)
     available: bool = False
+    useForDomains: bool = False
     cloudFunctionsEnabled: bool = False
     cloudFunctionsInitialized: bool = False
 

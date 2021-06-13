@@ -3,7 +3,7 @@ Here we implement :class:`DialogflowEsConnector`, the implementation of
 :class:`ServiceConnector` that allows Agents to operate on Dialogflow.
 """
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Union, Iterable, Dict
 
 import google.auth.credentials
@@ -18,7 +18,8 @@ from intents.services.dialogflow_es.auth import resolve_credentials
 from intents.services.dialogflow_es.util import dict_to_protobuf
 from intents.services.dialogflow_es import entities as df_entities
 from intents.services.dialogflow_es import export as df_export
-from intents.services.dialogflow_es.response_format import intent_responses, build_response_message
+from intents.services.dialogflow_es.response_format import intent_responses
+from intents.services.commons import WebhookConfiguration
 
 logger = logging.getLogger(__name__)
 
@@ -41,19 +42,31 @@ class DialogflowPrediction(Prediction):
 
     entity_mappings = df_entities.MAPPINGS
 
-@dataclass
-class DialogflowWebhookConfiguration:
-    url: str
-    headers: Dict[str, str]
-
 class DialogflowEsConnector(ServiceConnector):
     """
-    This is an implementation of :class:`ServiceConnector` that enable Agents to
-    work as Dialogflow projects
+    This is an implementation of :class:`ServiceConnector` that enables Agents to
+    work as Dialogflow projects.
+
+    An Agent can be connected to Dialogflow by providing its :class:`Agent`
+    class and service account credentials for the the Google Cloud project
+    that hosts the Dialogflow ES agent:
+
+    .. code-block:: python
+
+        from example_agent import ExampleAgent
+        from intents.services import DialogflowEsConnector
+        df = DialogflowEsConnector('/path/to/your/service-account-credentials.json', ExampleAgent)
+
+    The Connector can now be used, mainly to
+
+    * Export the Agent with :meth:`DialogflowConnector.export`
+    * Predict an utterance with :meth:`DialogflowConnector.predict`
+    * Trigger an Intent with :meth:`DialogflowConnector.trigger`
     """
 
     entity_mappings = df_entities.MAPPINGS
     rich_platforms: Iterable[str]
+    webhook_configuration: WebhookConfiguration
 
     _credentials: google.auth.credentials.Credentials
     _session_client: SessionsClient
@@ -65,7 +78,7 @@ class DialogflowEsConnector(ServiceConnector):
         default_session: str=None,
         default_language: str="en",
         rich_platforms: Iterable[str]=("telegram",),
-        webhook_configuration: DialogflowWebhookConfiguration=None
+        webhook_configuration: WebhookConfiguration=None
     ):
         """
         :param google_credentials: Path to service account JSON credentials, or
@@ -81,8 +94,8 @@ class DialogflowEsConnector(ServiceConnector):
         super().__init__(agent_cls, default_session=default_session,
                          default_language=default_language)
         self._credentials = resolve_credentials(google_credentials)
-        self._session_client = SessionsClient(credentials=self._credentials)
         assert all([p in RICH_RESPONSE_PLATFORMS for p in rich_platforms])
+        self._session_client = SessionsClient(credentials=self._credentials)
         self.rich_platforms = rich_platforms
         self.webhook_configuration = webhook_configuration
 
@@ -112,7 +125,7 @@ class DialogflowEsConnector(ServiceConnector):
             query_input=query_input
         )
         df_response = df_result
-        
+
         prediction = _df_response_to_prediction(df_response)
         return self._prediction_to_intent(prediction)
 
