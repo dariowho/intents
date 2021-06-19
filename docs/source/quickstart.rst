@@ -54,15 +54,15 @@ the same Agent on different services). To use Dialogflow we need a specific
 Upload to Cloud Agent
 ---------------------
 
-Let's **export** our example agent into a Dialogflow ZIP file:
+Let's **upload** our example agent into our Dialogflow project:
 
 .. code-block:: python
     
-    dialogflow.export('/anywhere/you/like/EXPORTED_EXAMPLE_AGENT.zip')
+    dialogflow.upload()
 
-All is left to do, is to **restore** the Agent from your Dialogflow ES Console
-(*Settings > Export and Import > Restore*). And it's done: your Python Agent
-definition is translated into a working Dialogflow Agent.
+This translate your Python Agent definition in Dialogflow ES format, and uploads
+it into its cloud projects: you will find it in your Dialogflow console at
+dialogflow.cloud.google.com
 
 Make predictions
 ----------------
@@ -120,3 +120,12 @@ Cloud Agent. Session information can also be set when the Connector is created.
 
 Note that `user-id-ada` and `user-id-ada` are arbitrary strings that identifies the
 current conversation. If `default_session` is omitted, a random string will be generated.
+
+What now?
+---------
+
+Now that you know the basics, you can either:
+
+* Explore the included :ref:`Example Agent`, that describes all the available
+  features of the framework
+* Dive deep into the :ref:`API Reference` to learn the finest details.
