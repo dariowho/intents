@@ -4,7 +4,7 @@ subclass it when defining your own Agent, and will later :meth:`Agent.register`
 Intent classes and other resources into it.
 
 Once the Agent is defined, you will connect it to a cloud service with a
-:class:`ServiceConnector`, to make prediction and trigger requests.
+:class:`Connector`, to make prediction and trigger requests.
 """
 
 import re
@@ -78,7 +78,7 @@ class Agent(metaclass=_AgentMetaclass):
 
     You won't do much more with your *Agent* class, other than registering
     intents and resources with :meth:`Agent.register`, or passing it to a
-    :class:`ServiceConnector` to make predictions.
+    :class:`Connector` to make predictions.
     """
 
     languages: List[language.LanguageCode] = None

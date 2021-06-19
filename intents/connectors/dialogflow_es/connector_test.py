@@ -2,7 +2,7 @@ from unittest.mock import patch
 
 from google.cloud.dialogflow_v2.types import DetectIntentResponse
 
-from intents.services.dialogflow_es.connector import DialogflowEsConnector
+from intents.connectors.dialogflow_es.connector import DialogflowEsConnector
 from intents import language
 from example_agent import ExampleAgent, travels
 
@@ -15,11 +15,11 @@ df_response_quick_replies = DetectIntentResponse.deserialize(df_response_quick_r
 
 # TODO: one with parameters and contexts
 
-@patch("intents.services.dialogflow_es.connector.resolve_credentials")
-@patch("intents.services.dialogflow_es.connector.EventInput")
-@patch("intents.services.dialogflow_es.connector.QueryInput")
-@patch("intents.services.dialogflow_es.connector.TextInput")
-@patch("intents.services.dialogflow_es.connector.SessionsClient")
+@patch("intents.connectors.dialogflow_es.connector.resolve_credentials")
+@patch("intents.connectors.dialogflow_es.connector.EventInput")
+@patch("intents.connectors.dialogflow_es.connector.QueryInput")
+@patch("intents.connectors.dialogflow_es.connector.TextInput")
+@patch("intents.connectors.dialogflow_es.connector.SessionsClient")
 def test_predict(mock_df_client_class, *args):
     # TODO: this relies on the consistency between mock prediction and
     # ExampleAgent

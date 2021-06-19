@@ -100,8 +100,8 @@ class ExampleUtterance(str):
 class IntentResponseGroup(Enum):
     """
     Intent responses are divided in groups. The same intent can be answered with
-    a set of plain-text responses (:var:`IntentResponseGroup.DEFAULT`), or with
-    rich content (:var:`IntentResponseGroup.RICH`) that includes cards, images
+    a set of plain-text responses (:const:`IntentResponseGroup.DEFAULT`), or with
+    rich content (:const:`IntentResponseGroup.RICH`) that includes cards, images
     and quick replies.
     """
     DEFAULT = "default"
@@ -294,8 +294,8 @@ class IntentLanguageData:
 
     **Responses**, intuitively, are the Agent's response messages that will be sent
     to User once the Intent is recognized. They are divided in groups: a
-    :var:`IntentResponseGroup.DEFAULT` group (mandatory) can only contain plain
-    text responses. A :var:`IntentResponseGroup.RICH` group can provide intent
+    :const:`IntentResponseGroup.DEFAULT` group (mandatory) can only contain plain
+    text responses. A :const:`IntentResponseGroup.RICH` group can provide intent
     responses that include cards, images and quick replies.
 
     **Slot Filling Promps** are used to solve parameters that couldn't be tagged in

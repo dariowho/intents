@@ -1,2 +1,0 @@
-from intents.services.commons import WebhookConfiguration
-from intents.services.dialogflow_es.connector import DialogflowEsConnector

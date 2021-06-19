@@ -13,8 +13,8 @@ from typing import List, Dict, Iterable
 from intents import language
 from intents.model.intent import _IntentMetaclass
 from intents.model.entity import SystemEntityMixin, _EntityMetaclass
-import intents.services.dialogflow_es.agent_format as df
-from intents.services.dialogflow_es.entities import MAPPINGS as ENTITY_MAPPINGS
+import intents.connectors.dialogflow_es.agent_format as df
+from intents.connectors.dialogflow_es.entities import MAPPINGS as ENTITY_MAPPINGS
 
 logger = logging.getLogger(__name__)
 
@@ -280,7 +280,7 @@ def render_entity_entries(entity_cls: _EntityMetaclass, entries: List[language.E
     return result
 
 # from example_agent import ExampleAgent
-# from intents.services import DialogflowEsConnector, WebhookConfiguration
+# from intents.connectors import DialogflowEsConnector, WebhookConfiguration
 # webhook = WebhookConfiguration('https://www.google.com/', {"X-Foo": "bar"})
 # df = DialogflowEsConnector('/home/dario/lavoro/dialogflow-agents/_tmp_agents/learning-dialogflow-5827a2d16c34.json', ExampleAgent, webhook_configuration=webhook)
 # df.export('/home/dario/lavoro/dialogflow-agents/TMP_AGENT.zip')

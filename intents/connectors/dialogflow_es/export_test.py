@@ -2,7 +2,7 @@ import os
 import tempfile
 
 from example_agent import ExampleAgent
-from intents.services.dialogflow_es import export
+from intents.connectors.dialogflow_es import export
 
 class MockDialogflowConnector:
 

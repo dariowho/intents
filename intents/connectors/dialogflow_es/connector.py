@@ -1,6 +1,6 @@
 """
 Here we implement :class:`DialogflowEsConnector`, the implementation of
-:class:`ServiceConnector` that allows Agents to operate on Dialogflow.
+:class:`Connector` that allows Agents to operate on Dialogflow.
 """
 import logging
 from dataclasses import dataclass, field
@@ -13,13 +13,13 @@ from google.cloud.dialogflow_v2.types import DetectIntentResponse
 from google.protobuf.json_format import MessageToDict
 
 from intents import Agent, Intent
-from intents.service_connector import ServiceConnector, Prediction
-from intents.services.dialogflow_es.auth import resolve_credentials
-from intents.services.dialogflow_es.util import dict_to_protobuf
-from intents.services.dialogflow_es import entities as df_entities
-from intents.services.dialogflow_es import export as df_export
-from intents.services.dialogflow_es.response_format import intent_responses
-from intents.services.commons import WebhookConfiguration
+from intents.service_connector import Connector, Prediction
+from intents.connectors.dialogflow_es.auth import resolve_credentials
+from intents.connectors.dialogflow_es.util import dict_to_protobuf
+from intents.connectors.dialogflow_es import entities as df_entities
+from intents.connectors.dialogflow_es import export as df_export
+from intents.connectors.dialogflow_es.response_format import intent_responses
+from intents.connectors.commons import WebhookConfiguration
 
 logger = logging.getLogger(__name__)
 
@@ -42,9 +42,9 @@ class DialogflowPrediction(Prediction):
 
     entity_mappings = df_entities.MAPPINGS
 
-class DialogflowEsConnector(ServiceConnector):
+class DialogflowEsConnector(Connector):
     """
-    This is an implementation of :class:`ServiceConnector` that enables Agents to
+    This is an implementation of :class:`Connector` that enables Agents to
     work as Dialogflow projects.
 
     An Agent can be connected to Dialogflow by providing its :class:`Agent`
@@ -54,7 +54,7 @@ class DialogflowEsConnector(ServiceConnector):
     .. code-block:: python
 
         from example_agent import ExampleAgent
-        from intents.services import DialogflowEsConnector
+        from intents.connectors import DialogflowEsConnector
         df = DialogflowEsConnector('/path/to/your/service-account-credentials.json', ExampleAgent)
 
     The Connector can now be used, mainly to
@@ -62,6 +62,13 @@ class DialogflowEsConnector(ServiceConnector):
     * Export the Agent with :meth:`DialogflowEsConnector.export`
     * Predict an utterance with :meth:`DialogflowEsConnector.predict`
     * Trigger an Intent with :meth:`DialogflowEsConnector.trigger`
+
+    :param google_credentials: Path to service account JSON credentials, or a Credentials object
+    :param agent_cls: The Agent to connect
+    :param default_session: An arbitrary string to identify the conversation during predictions. Will be generated randomly if None
+    :param dedefault_language: Default language to use during predictions
+    :param rich_platforms: Platforms to include when exporting Rich response messages
+    :param webhook_configuration: Webhook connection parameters
     """
 
     entity_mappings = df_entities.MAPPINGS
@@ -80,17 +87,6 @@ class DialogflowEsConnector(ServiceConnector):
         rich_platforms: Iterable[str]=("telegram",),
         webhook_configuration: WebhookConfiguration=None
     ):
-        """
-        :param google_credentials: Path to service account JSON credentials, or
-        a Credentials object
-        :param agent_cls: The Agent to connect
-        :param default_session: An arbitrary string to identify the conversation
-        during predictions. Will be generated randomly if None
-        :param dedefault_language: Default language to use during predictions
-        :param rich_platforms: Platforms to include when exporting Rich response
-        messages
-        :param webhook_configuration: Webhook connection parameters
-        """
         super().__init__(agent_cls, default_session=default_session,
                          default_language=default_language)
         self._credentials = resolve_credentials(google_credentials)

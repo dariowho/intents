@@ -144,7 +144,7 @@ class Intent(metaclass=_IntentMetaclass):
     output_contexts: List[context.Context] = None
     events: List[event.Event] = None # TODO: at some point this may contain strings
 
-    # A :class:`ServiceConnector` provides this
+    # A :class:`Connector` provides this
     prediction: 'intents.Prediction'
 
     @property
@@ -235,6 +235,9 @@ class Intent(metaclass=_IntentMetaclass):
         #. Match parameters givent the Intent schema
         #. Instantiate the Intent
         #. Set the `prediction` field on the instantiated Intent.
+
+        Note that this method is mostly for internal use, *connectors* will call
+        it for you.
         """
         try:
             parameters = prediction.parameters(cls.parameter_schema())
@@ -270,14 +273,7 @@ def _system_event(intent_name: str) -> str:
 
     >>> _event_name('test.intent_name')
     'E_TEST_INTENT_NAME'
-
-    TODO: This is only used in Dialogflow -> Deprecate and move to DialogflowConnector
     """
+    # TODO: This is only used in Dialogflow -> Deprecate and move to DialogflowConnector
     event_name = "E_" + intent_name.upper().replace('.', '_')
     return event.SystemEvent(event_name)
-
-# @dataclass
-# class MyIntent(Intent):
-#     a_param: str
-
-# i = MyIntent(42)

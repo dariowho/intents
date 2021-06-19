@@ -1,17 +1,18 @@
 """
-Service Connectors connect *Intents* Agent definitions with cloud services such
-as Dialogflow, Lex or Azure Bot Services. Currently, only one connector is
-provided with this library, and this is :mod:`intents.services.dialogflow_es.connector`.
+Connectors allow *Intents* Agent definitions to operate with real cloud services
+such as Dialogflow, Lex or Azure Bot Services. Currently, only one connector is
+provided with this library, and this is for Dialogflow ES:
+:mod:`intents.connectors.dialogflow_es.connector`.
 
-Service Connectors are used to operate with the cloud version of the Agent,
-and specifically to:
+Connectors are used to operate with the cloud version of the Agent, and
+specifically to:
 
 * Export an :class:`intents.Agent` in a format that is natively readable by the
   Service
 * Predict User messages on the Cloud Agent
 * Trigger Intents on the Cloud Agent
 
-More details can be found in the :class:`ServiceConnector` interface.
+More details can be found in the :class:`Connector` interface.
 """
 from uuid import uuid1
 from abc import ABC, abstractmethod
@@ -31,7 +32,7 @@ class EntityMapping(ABC):
     directly to its type (e.g. "3" -> `Number(3)`). However, prediction services
     such as Dialogflow may define system entities of structured types; a notable
     example is Dialogflow's *sys.person* entity, which is returned as `{"name":
-    "John"}` and thus needs to be mapped to `Person("John")`.
+    "John"}` and therefore needs custom logic to be mapped to `Person("John")`.
 
     Another notable scenario is Date/Time objects. A mapping can be used to
     convert time strings from the Service format to python objects.
@@ -62,7 +63,7 @@ class EntityMapping(ABC):
     @abstractmethod
     def from_service(self, service_data: Any) -> SystemEntityMixin:
         """
-        Converts the Service representation of an Entity (typically the value
+        De-serialize the Service representation of an Entity (typically the value
         that is returned at prediction time) to an instance of one of the internal Entity
         classes in :class:`intents.model.entities`
         """
@@ -70,7 +71,7 @@ class EntityMapping(ABC):
     @abstractmethod
     def to_service(self, entity: SystemEntityMixin) -> Any:
         """
-        Converts a System Entity instance into a Service representation (typically,
+        Serialize a System Entity instance into a Service representation (typically,
         to be sent as a parameter of a trigger request)
 
         TODO: this is currently not used (string values are passed straight to
@@ -160,7 +161,7 @@ class Prediction(ABC):
                 result[param_name] = mapping.from_service(param_value)
         return result
 
-class ServiceConnector(ABC):
+class Connector(ABC):
 
     agent_cls: type(Agent)
     default_session: str
@@ -191,7 +192,7 @@ class ServiceConnector(ABC):
         *predict* will return an instance of `Intent`, representing the intent
         as it was predicted by the service.
 
-        >>> from intents.services import DialogflowEsConnector
+        >>> from intents.connectors import DialogflowEsConnector
         >>> from example_agent import ExampleAgent
         >>> df = DialogflowEsConnector('/path/to/service-account.json', ExampleAgent)
         >>> df_result = df.predict("Hi, my name is Guido")
@@ -211,7 +212,7 @@ class ServiceConnector(ABC):
         When `session` or `language` are None, `predict` will use the default
         values that are specified in :meth:`__init__`.
 
-        >>> from intents.services import DialogflowEsConnector
+        >>> from intents.connectors import DialogflowEsConnector
         >>> from example_agent import ExampleAgent, smalltalk
         >>> df = DialogflowEsConnector('/path/to/service-account.json', ExampleAgent)
         >>> df_result = df.trigger(smalltalk.agent_name_give(agent_name='Alice'))
@@ -232,10 +233,3 @@ class ServiceConnector(ABC):
 
         :param destination: destination path of the exported Agent
         """
-
-# from example_agent import ExampleAgent, smalltalk
-# from intents.services import DialogflowEsConnector
-# df = DialogflowEsConnector('/home/dario/lavoro/dialogflow-agents/_tmp_agents/learning-dialogflow-5827a2d16c34.json', ExampleAgent)
-# df.export('TMP_AGENT.zip')
-# df_result = df.predict("Hi, my name is Guido")
-# df_result = df.trigger(smalltalk.agent_name_give(agent_name='Alice'))

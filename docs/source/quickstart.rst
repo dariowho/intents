@@ -48,7 +48,7 @@ the same Agent on different services). To use Dialogflow we need a specific
 
 .. code-block:: python
     
-    from intents.services import DialogflowEsConnector
+    from intents.connectors import DialogflowEsConnector
     dialogflow = DialogflowEsConnector('/path/to/your/service_account.json', ExampleAgent)
 
 Upload to Cloud Agent

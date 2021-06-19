@@ -34,8 +34,14 @@ Language
 .. automodule:: intents.language
    :members:
 
-Service Connector
------------------
+.. automodule:: intents.language.intent_language
+   :members:
+
+.. automodule:: intents.language.entity_language
+   :members:
+
+Connector Interface
+-------------------
 
 .. automodule:: intents.service_connector
    :members:
@@ -46,17 +52,17 @@ Dialogflow ES
 .. Connector
 .. ^^^^^^^^^
 
-.. automodule:: intents.services.dialogflow_es.connector
+.. automodule:: intents.connectors.dialogflow_es.connector
    :members:
 
 .. Export
 .. ^^^^^^
 
-.. .. automodule:: intents.services.dialogflow_es.export
+.. .. automodule:: intents.connectors.dialogflow_es.export
 ..    :members:
 
 .. Auth
 .. ^^^^
 
-.. .. automodule:: intents.services.dialogflow_es.auth
+.. .. automodule:: intents.connectors.dialogflow_es.auth
 ..    :members:

@@ -2,7 +2,7 @@ from google.cloud.dialogflow_v2.types import DetectIntentResponse
 from google.cloud.dialogflow_v2 import types as df_types
 
 from intents.language import IntentResponseGroup, TextIntentResponse, QuickRepliesIntentResponse, CardIntentResponse
-from intents.services.dialogflow_es.response_format import DialogflowTextResponse, \
+from intents.connectors.dialogflow_es.response_format import DialogflowTextResponse, \
     DialogflowQuickRepliesResponse, \
     DialogflowCardResponse, \
     intent_responses
