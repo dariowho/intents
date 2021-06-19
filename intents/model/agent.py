@@ -182,7 +182,7 @@ class Agent(metaclass=_AgentMetaclass):
     @classmethod
     def _register_entity(cls, entity_cls: _EntityMetaclass, parameter_name: str, intent_name: str):
         if not issubclass(entity_cls, EntityMixin):
-            raise ValueError(f"Invalid type '{entity_cls}' for parameter '{parameter_name}' in Intent '{intent_name}': must be an Entity. Try 'intents.Sys.Any' if you are unsure.")
+            raise ValueError(f"Invalid type '{entity_cls}' for parameter '{parameter_name}' in Intent '{intent_name}': must be an Entity. Try system entities such as 'intents.Sys.Integer', or define your own custom entity.")
 
         if issubclass(entity_cls, SystemEntityMixin):
             return

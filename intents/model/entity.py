@@ -16,7 +16,7 @@ Two types of Entities exist:
   parameter, and mapped to its correct name, which is *"diavola"*. Custom entities
   are defined by extending the :class:`Entity` base class.
 """
-
+import datetime
 from typing import Any, List, Dict
 from dataclasses import dataclass
 
@@ -137,10 +137,37 @@ class Sys:
     **NOTE**: This class is still work in progress.
     """
 
-    class Any(str, SystemEntityMixin):
+    # class Any(str, SystemEntityMixin):
+    #     """
+    #     Matches any non-empty input
+    #
+    #     NOTE: Sys.Any is tricky: not all prediction services support it, and
+    #     the ones that do (including Dialoglfow) often misbehave when using it.
+    #     """
+
+    class Date(datetime.date, SystemEntityMixin):
         """
-        Matches any non-empty input
+        Matches a date as a Python :class:`datetime.date` object
         """
+
+        @staticmethod
+        def from_py_date(py_date: datetime.date):
+            """
+            Clone the given :class:`datetime.date` object into a `Sys.Date` object
+            """
+            return Sys.Date(py_date.year, py_date.month, py_date.day)
+
+    class Time(datetime.time, SystemEntityMixin):
+        """
+        Matches a time reference as a Python :class:`datetime.time` object
+        """
+
+        @staticmethod
+        def from_py_time(py_time: datetime.time):
+            """
+            Clone the given :class:`datetime.time` object into a `Sys.Time` object
+            """
+            return Sys.Time(py_time.hour, py_time.minute, py_time.second, tzinfo=py_time.tzinfo)
 
     class Integer(int, SystemEntityMixin):
         """

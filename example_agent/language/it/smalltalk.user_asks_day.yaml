@@ -1,0 +1,13 @@
+examples:
+  - Che giorno è $date{oggi}?
+  - Che giorno sarà $date{domani}?
+  - Che giorno era $date{ieri}?
+
+slot_filling_prompts:
+  date:
+    - Quando?
+
+responses:
+  default:
+    - text:
+      - Sarebbe il $date

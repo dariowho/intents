@@ -150,10 +150,11 @@ class DialogflowEsConnector(Connector):
         intent_name = intent.name
         event_name = Agent._event_name(intent_name)
         event_parameters = {}
-        for parameter_name in intent.parameter_schema():
-            if parameter_name in intent.__dict__:
-                event_parameters[parameter_name] = intent.__dict__[
-                    parameter_name]
+        for param_name, param_metadata in intent.parameter_schema().items():
+            param_mapping = df_entities.MAPPINGS[param_metadata.entity_cls]
+            if param_name in intent.__dict__:
+                param_value = intent.__dict__[param_name]
+                event_parameters[param_name] = param_mapping.to_service(param_value)
 
         logger.info("Triggering event '%s' in session '%s' with parameters: %s",
                     event_name, session, event_parameters)

@@ -68,6 +68,32 @@ class greet_friends(Intent):
     """
     friend_names: List[Sys.Person]
 
+@dataclass
+class user_asks_day(Intent):
+    """
+    | User: What day is it?
+    | Agent: When?
+    | User: today
+    | Agent: That would be 2021-06-19
+
+    This is equivalent to :class:`greet_friends`; they are both intents with a
+    required parameter that is prompted to User when missing in the original
+    utterance.
+    
+    One peculiarity of this one is the use of **Sys.Date**: prediction services
+    are able to turn spoken time references ("today", "last week", "in a month",
+    ...) into absolute values.
+
+    The `date` parameter is automatically casted to a python
+    :class:`datetime.date` object when this Intent is predicted
+    (:class:`Sys.Date` inherits from :class:`datetime.date`):
+
+    >>> predicted = connector.predict("What day will be tomorrow?")
+    >>> predicted.date
+    Sys.Date(2021, 6, 20)
+    """
+    date: Sys.Date
+
 class WelcomeEvent(Event):
     """
     This models an external event that is meant to be sent directly to the
@@ -77,6 +103,11 @@ class WelcomeEvent(Event):
 
 @dataclass
 class agent_welcomes_user(Intent):
+    """
+    This is an intent that is triggered by a custom event. It covers the (rare)
+    case in which an external component wants to trigger this Intent by sending
+    a `WELCOMEEVENT` Event trigger directly to Dialogflow.
+    """
     events = [WelcomeEvent]
 
     user_name: Sys.Person

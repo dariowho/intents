@@ -33,9 +33,11 @@ class EntityMapping(ABC):
     such as Dialogflow may define system entities of structured types; a notable
     example is Dialogflow's *sys.person* entity, which is returned as `{"name":
     "John"}` and therefore needs custom logic to be mapped to `Person("John")`.
+    This is modelled in :class:`intents.connectors.dialogflow_es.entities.PersonEntityMapping`.
 
     Another notable scenario is Date/Time objects. A mapping can be used to
-    convert time strings from the Service format to python objects.
+    convert time strings from the Service format to python objects. For
+    Dialogflow ES, this is modelled in  :class:`intents.connectors.dialogflow_es.entities.DateTimeEntityMapping`.
     """
 
     @property
@@ -44,9 +46,9 @@ class EntityMapping(ABC):
         """
         This is the internal entity type that is being mapped.
 
-        >>> mapping = StringEntityMapping(Sys.Any, 'sys.any')
+        >>> mapping = StringEntityMapping(Sys.Integer, 'sys.number-integer')
         >>> mapping.entity_cls
-        Sys.Any
+        Sys.Integer
         """
 
     @property
@@ -55,9 +57,9 @@ class EntityMapping(ABC):
         """
         This is the name of the Entity in the Prediction Service domain.
 
-        >>> mapping = StringEntityMapping(Sys.Any, 'sys.any')
+        >>> mapping = StringEntityMapping(Sys.Integer, 'sys.number-integer')
         >>> mapping.service_name
-        'sys.any'
+        'sys.number-integer'
         """
 
     @abstractmethod
@@ -102,10 +104,10 @@ class ServiceEntityMappings(dict):
     are added:
 
     * Dict-like access to retrieve a mapping given its internal type (e.g.
-      `mappings[Sys.Any]`)
+      `mappings[Sys.Integer]`)
     * Consistency check: a mapping list must cover all the entities defined in
       the framework (TODO)
-    * Shortcut to define StringEntityMappings like `(Sys.Any, 'sys.any')` (TODO)
+    * Shortcut to define StringEntityMappings like `(Sys.Integer, 'sys.number-integer')` (TODO)
     """
 
     @classmethod
@@ -153,12 +155,16 @@ class Prediction(ABC):
                 raise ValueError(f"Found parameter {param_name} in Service Prediction, but Intent class does not define it.")
             param_metadata = schema[param_name]
             mapping = self.entity_mappings[param_metadata.entity_cls]
-            if param_metadata.is_list:
-                if not isinstance(param_value, list):
-                    raise ValueError(f"Parameter {param_name} is defined as List, but returned value is not of 'list' type: {param_value}")
-                result[param_name] = [mapping.from_service(x) for x in param_value]
-            else:
-                result[param_name] = mapping.from_service(param_value)
+            try:
+                if param_metadata.is_list:
+                    if not isinstance(param_value, list):
+                        raise ValueError(f"Parameter {param_name} is defined as List, but returned value is not of 'list' type: {param_value}")
+                    result[param_name] = [mapping.from_service(x) for x in param_value]
+                else:
+                    result[param_name] = mapping.from_service(param_value)
+            except Exception as exc:
+                raise RuntimeError(f"Failed to match parameter '{param_name}' with value '{param_value}' against schema {schema}. See source exception above for details.") from exc
+
         return result
 
 class Connector(ABC):
@@ -228,7 +234,7 @@ class Connector(ABC):
         """
         Upload the connected Agent to the Prediction Service.
         """
-        
+
     @abstractmethod
     def export(self, destination: str):
         """

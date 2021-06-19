@@ -196,9 +196,9 @@ class Intent(metaclass=_IntentMetaclass):
                     raise ValueError(f"Invalid typing '{param_field.type}' for parameter '{param_field.name}'. Only 'List' is supported.")
 
                 if len(param_field.type.__dict__.get('__args__')) != 1:
-                    raise ValueError(f"Invalid List modifier '{param_field.type}' for parameter '{param_field.name}'. Must define exactly one inner type (e.g. 'List[Sys.Any]')")
+                    raise ValueError(f"Invalid List modifier '{param_field.type}' for parameter '{param_field.name}'. Must define exactly one inner type (e.g. 'List[Sys.Integer]')")
                 
-                # From here on, check the inner type (e.g. List[Sys.any] -> Sys.Any)
+                # From here on, check the inner type (e.g. List[Sys.Integer] -> Sys.Integer)
                 entity_cls = param_field.type.__dict__.get('__args__')[0]
                 is_list = True
             else:

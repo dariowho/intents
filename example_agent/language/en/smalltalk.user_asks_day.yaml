@@ -1,0 +1,14 @@
+examples:
+  - What day is it?
+  - What day is it $date{today}?
+  - What day will be $date{tomorrow}?
+  - What day was $date{yesterday}?
+
+slot_filling_prompts:
+  date:
+    - When?
+
+responses:
+  default:
+    - text:
+      - That would be $date
