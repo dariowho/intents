@@ -2,7 +2,7 @@
 
 [![Documentation Status](https://readthedocs.org/projects/intents/badge/?version=latest)](https://intents.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/dariowho/intents/branch/master/graph/badge.svg?token=XAVLW70J8S)](https://codecov.io/gh/dariowho/intents)
-[![HEAD version](https://badgen.net/badge/head/v0.1alhpa1/blue)](https://badgen.net/badge/head/v0.1alhpa1/blue)
+[![HEAD version](https://badgen.net/badge/head/v0.1a1/blue)](https://badgen.net/badge/head/v0.1a1/blue)
 [![PyPI version](https://badge.fury.io/py/intents.svg)](https://badge.fury.io/py/intents)
 
 **Intents** is a unofficial Python library to define and operate Dialogflow Agents with a simple,
