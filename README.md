@@ -10,17 +10,8 @@ code-first approach.
 
 ## Project status
 
-This project is in alpha stage, some API adjustments are to be expected before
-release. This is a broad overview of the features that are planned and their
-completion status.
-
-| Feature           | Status | Note                                                                                |
-|-------------------|--------|-------------------------------------------------------------------------------------|
-| [Agent Definition](STATUS.md#agent-definition)  | 🟢     | Can define basic Intents, with examples, parameters and responses                   |
-| [Cloud Sync](STATUS.md#cloud-sync)        | 🟡     | Can export Agent to a valid Dialogflow ZIP. Cannot yet manage Google Cloud Projects |
-| [Prediction client](STATUS.md#prediction-client) | 🟡     | Can act as a client for predictions and triggers. Cannot receive webhook requests         |
-
-A more detailed view of the single features is reported in [STATUS.md](STATUS.md)
+This project is in **alpha** stage, some API adjustments are to be expected before
+release. A detailed view of available features can be found in [STATUS.md](STATUS.md)
 
 ## Install
 
@@ -56,10 +47,12 @@ responses:
       - Nice to meet you, $user_name
 ```
 
-Agents can be automatically **exported** into Cloud Dialogflow projects; *Intents* will act transparently as a prediction client:
+Agents can be **uploaded** into Dialogflow ES projects directly from code; *Intents* will act transparently as a prediction client:
 
 ```python
 df = DialogflowEsConnector('/path/to/service-account.json', MyAgent)
+df.upload()  # You will find it in your Dialogflow Console
+
 predicted = df.predict("Hi there, my name is Mario")  # HelloIntent(user_name="Mario")
 print(predicted.fulfillment_text)                     # "Hello Mario"
 ```

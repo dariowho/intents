@@ -1,6 +1,10 @@
 # Project Status
 
-Here we report how individual Dialogflow features are currently supported in *Intents*.
+Here we report how individual Dialogflow features are currently supported in
+*Intents*.
+
+colors: 🟢 complete, 🟡 partial, 🔴 missing, ⚪ not planned
+
 
 ## Basic Agent Definition
 
@@ -12,11 +16,11 @@ Here we report how individual Dialogflow features are currently supported in *In
 | Custom Events                    | 🟢     |                    |
 | Examples Utterances              | 🟢     |                    |
 | Example Utterances with Entities | 🟢     |                    |
-| Action                           | ⚪     | Not planned        |
-| Parameters with System Entities  | 🟡     | Only some entities |
+| Action                           | ⚪     |                    |
+| Parameters with System Entities  | 🟢     | Only some entities |
 | Parameters with Custom Entities  | 🟢     |                    |
-| Extended System Entities         | ⚪     | Not planned        |
-| Session Entities                 | ⚪     | Not planned        |
+| Extended System Entities         | ⚪     |                    |
+| Session Entities                 | ⚪     |                    |
 | List Parameters                  | 🟢     |                    |
 | Required Parameters with prompts | 🟢     |                    |
 | Default Text Responses           | 🟢     |                    |

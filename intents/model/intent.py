@@ -121,16 +121,14 @@ class Intent(metaclass=_IntentMetaclass):
     `another_context` lasting only 1 conversation turn.
 
     Most importantly, this intent has a `user_name` **parameter** of type
-    `Sys.Person`. With adequate examples in its language file, it will be able
-    to match utterances like "Hello, my name is John", tagging "John" as an
-    Entity. When a connector is instantiated, predictions will look like this:
+    :class:`Sys.Person` (check out :class:`intents.model.entity.Sys` for available system
+    entities). With adequate examples in its language file, it will be able to
+    match utterances like "Hello, my name is John", tagging "John" as an Entity.
+    When a connector is instantiated, predictions will look like this:
 
     >>> predicted = connector.predict("My name is John")
-    user_says_hello(user_name="John")
-    >>> predicted.user_name
-    "John"
-    >>> predicted.fulfillment_text
-    "Hi John, I'm Agent"
+    user_says_hello(user_name="John") predicted.user_name "John"
+    predicted.fulfillment_text "Hi John, I'm Agent"
 
     Last, we notice the **@dataclass** decorator. This isn't really needed for
     the Intent to work, but adding it will have your IDE recognize the Intent
@@ -171,8 +169,8 @@ class Intent(metaclass=_IntentMetaclass):
           in the `DEFAULT` group will be returned
         * :class:`language.IntentResponseGroup.RICH` is requested
 
-        ** `RICH` messages are defined -> `RICH` messages are returned
-        ** No `RICH` message is defined -> `DEFAULT` messages are returned
+            * `RICH` messages are defined -> `RICH` messages are returned
+            * No `RICH` message is defined -> `DEFAULT` messages are returned
         """
         if response_group == language.IntentResponseGroup.RICH and \
            not self.prediction.fulfillment_messages.get(response_group):

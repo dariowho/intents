@@ -4,6 +4,10 @@ such as Dialogflow, Lex or Azure Bot Services. Currently, only one connector is
 provided with this library, and this is for Dialogflow ES:
 :mod:`intents.connectors.dialogflow_es.connector`.
 
+.. note::
+
+    Details about the Connector interface are only useful if you need to develop your own Service Connector (please consider raising a pull request if this is the case). If you just need to use the included Dialogflow Connector you can jump to its documentation page right away: :mod:`intents.connectors.dialogflow_es.connector`
+
 Connectors are used to operate with the cloud version of the Agent, and
 specifically to:
 
@@ -209,6 +213,10 @@ class Connector(ABC):
         "Hi Guido, I'm Bot"
         >>> df_result.confidence
         0.86
+
+        :param message: The User message to predict
+        :param session: Any string identifying a conversation
+        :param language: A ISO 639-1 language code (e.g. "en")
         """
 
     @abstractmethod
@@ -227,6 +235,10 @@ class Connector(ABC):
         "Howdy Human, I'm Alice"
         >>> df_result.confidence
         1.0
+
+        :param intent: The Intent instance to trigger
+        :param session: Any string identifying a conversation
+        :param language: A ISO 639-1 language code (e.g. "en")
         """
 
     @abstractmethod

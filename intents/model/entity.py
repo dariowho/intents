@@ -134,7 +134,10 @@ class Sys:
 
             user_name: Sys.Person
 
-    **NOTE**: This class is still work in progress.
+    **NOTE**: This class can be expanded to contain more sophisticated entities,
+    such as time intervals, amounts with measurement units and such. These may
+    not be natively supported on every prediction service: some attention is
+    needed to ensure portability.
     """
 
     # class Any(str, SystemEntityMixin):
@@ -153,7 +156,8 @@ class Sys:
         @staticmethod
         def from_py_date(py_date: datetime.date):
             """
-            Clone the given :class:`datetime.date` object into a `Sys.Date` object
+            Clone the given :class:`datetime.date` object into a `Sys.Date`
+            object. This is mostly for internal use.
             """
             return Sys.Date(py_date.year, py_date.month, py_date.day)
 
@@ -165,7 +169,8 @@ class Sys:
         @staticmethod
         def from_py_time(py_time: datetime.time):
             """
-            Clone the given :class:`datetime.time` object into a `Sys.Time` object
+            Clone the given :class:`datetime.time` object into a `Sys.Time`
+            object. This is mostly for internal use.
             """
             return Sys.Time(py_time.hour, py_time.minute, py_time.second, tzinfo=py_time.tzinfo)
 
@@ -181,6 +186,31 @@ class Sys:
         Note that in Dialogflow this is returned as an Object (e.g. `{"name":
         "John"}`), while here we define `Person` as a String. The Dialogflow
         module defines proper entity mappings to handle the conversion.
+        """
+
+    class Email(str, SystemEntityMixin):
+        """
+        Any standard email address
+        """
+
+    class PhoneNumber(str, SystemEntityMixin):
+        """
+        Any standard phone number
+        """
+
+    class Color(str, SystemEntityMixin):
+        """
+        Words describing colors
+        """
+
+    class Language(str, SystemEntityMixin):
+        """
+        Language names
+        """
+
+    class Url(str, SystemEntityMixin):
+        """
+        Any standard URL
         """
 
     class MusicArtist(str, SystemEntityMixin):

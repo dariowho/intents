@@ -1,3 +1,54 @@
+"""
+**Intent** language files have the following structure:
+
+.. code-block:: yaml
+
+    examples:
+      - an example utterance
+      - another example utterance
+      - an example utterance with $foo{42} as a numeric parameter
+
+    slot_filling_prompts:
+      foo:
+        - Tell me the value for "foo"
+
+    responses:
+      default:
+        - text:
+          - A plain text response
+          - An alternative response
+          - Another alternative, referencing $foo as a paramneter
+      rich:
+        - text:
+          - A text response for rich clients
+        - quick_replies:
+          - a reply chip
+          - another reply chip
+
+Let's look at the sections of this file.
+
+* **examples** contain example utterances that will be used to predict the given
+  intent. If your intent has a parameter, it can be referenced as
+  $parameter_name{example value}. You can omit this section if your intent is
+  not meant to be predicted (some intents are trigger-only)
+* **slot_filling_prompt** are used when your intent has a mandatory parameter,
+  and this parameter could not be matched in the user message. These prompts
+  will be used to ask the User about that parameter. You can omit this section
+  if your intent has no mandatory parameters, or if you don't want to define
+  custom prompts.
+* **responses** contain messages that Agent will send to User in response to the
+  Intent. Two response groups are available:
+
+  * **default** can only contain plain-text messages. It is good practice to
+    always provide text-only response for situations where rich ones can't be rendered,
+    such as vocal assistants, smartphone notifications and such. The `text`
+    response type is specified in :class:`TextIntentResponse`
+  * **rich** responses allow some extra types:
+    :class:`QuickRepliesIntentResponse`, :class:`ImageIntentResponse`,
+    :class:`CardIntentResponse` and :class:`CustomPayloadIntentResponse`
+
+"""
+
 import os
 import re
 from enum import Enum
@@ -127,33 +178,34 @@ class TextIntentResponse(IntentResponse):
     """
     A plain text response. The actual response is picked randomly from a pool of
     choices.
+
+    In the YAML definition a text response can either be a string, as in
+
+    .. code-block:: yaml
+
+        responses:
+          default:
+            - text: This is a response
+
+    Or a list of choices (the output fulfillment message will be chosen
+    randomly among the different options)
+
+    .. code-block:: yaml
+
+        responses:
+          default:
+            - text:
+              - This is a response
+              - This is an alternative response
     """
 
     choices: List[str]
 
     @classmethod
     def from_yaml(cls, data: Union[str, List[str]]):
-        """
-        In the YAML definition a text response can either be a string, as in
-
-        .. code-block:: yaml
-
-            responses:
-              - text: This is a response
-
-        Or a list of choices (the output fulfillment message will be chosen
-        randomly among the different options)
-
-        .. code-block:: yaml
-
-            responses:
-              - text:
-                - This is a response
-                - This is an alternative response
-        """
         if isinstance(data, str):
             return cls([data])
-        
+
         assert isinstance(data, list)
         return cls(data)
 
@@ -162,6 +214,22 @@ class QuickRepliesIntentResponse(IntentResponse):
     """
     A set of Quick Replies that can be used to answer the Intent. Each reply
     must be shorter than 20 characters.
+
+    In the YAML definition a quick replies response can either be a string, as in
+
+    .. code-block:: yaml
+
+        rich:
+          - quick_replies: Order Pizza
+
+    Or a list of replies, that will be rendered as separate chips
+
+    .. code-block:: yaml
+
+        rich:
+          - quick_replies:
+            - Order Pizza
+            - Order Beer
     """
 
     replies: List[str]
@@ -173,23 +241,6 @@ class QuickRepliesIntentResponse(IntentResponse):
 
     @classmethod
     def from_yaml(cls, data: Union[str, List[str]]):
-        """
-        In the YAML definition a quick replies response can either be a string, as in
-
-        .. code-block:: yaml
-
-            responses:
-              - quick_replies: Order Pizza
-
-        Or a list of replies, that will be rendered as separate chips
-
-        .. code-block:: yaml
-
-            responses:
-              - quick_replies:
-                - Order Pizza
-                - Order Beer
-        """
         if isinstance(data, str):
             return cls([data])
         
@@ -200,30 +251,29 @@ class QuickRepliesIntentResponse(IntentResponse):
 class ImageIntentResponse(IntentResponse):
     """
     A simple image, defined by its URL and an optional title
+
+    In the YAML definition an image response can either be a string with the
+    image URL, as in
+
+    .. code-block:: yaml
+
+        rich:
+          - image: https://example.com/image.png
+
+    Or an object with the image URL and a title, as in
+
+    .. code-block:: yaml
+
+        rich:
+          - image:
+              url: https://example.com/image.png
+              title: An example image
     """
     url: str
     title: str = None
 
     @classmethod
     def from_yaml(cls, data: Union[str, List[str]]):
-        """
-        In the YAML definition an image response can either be a string with the
-        image URL, as in
-
-        .. code-block:: yaml
-
-            responses:
-              - image: https://example.com/image.png
-
-        Or an object with the image URL and a title, as in
-
-        .. code-block:: yaml
-
-            responses:
-              - image:
-                  url: https://example.com/image.png
-                  title: An example image
-        """
         if isinstance(data, str):
             return cls(url=data)
         
@@ -232,6 +282,22 @@ class ImageIntentResponse(IntentResponse):
 
 @dataclass(frozen=True)
 class CardIntentResponse(IntentResponse):
+    """
+    A simple content card that can be rendered on many platforms.
+
+    In the YAML, this is defined as
+
+    Or an object with the image URL and a title, as in
+
+    .. code-block:: yaml
+
+        rich:
+          - card:
+              title: The card title
+              subtitle: An optional subtitle
+              image: https://example.com/image.jpeg
+              link: https://example.com/
+    """
     title: str
     subtitle: str = None
     image: str = None
@@ -256,7 +322,7 @@ class CustomPayloadIntentResponse(IntentResponse):
 
         .. code-block:: yaml
 
-            responses:
+            rich:
               - custom:
                   custom_location:
                     latitude: 45.484907
