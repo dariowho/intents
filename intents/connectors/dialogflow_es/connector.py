@@ -2,14 +2,17 @@
 Here we implement :class:`DialogflowEsConnector`, the implementation of
 :class:`Connector` that allows Agents to operate on Dialogflow.
 """
+import os
 import logging
+import tempfile
 from dataclasses import dataclass, field
 from typing import Union, Iterable, Dict
 
 import google.auth.credentials
 from google.cloud.dialogflow_v2.types import TextInput, QueryInput, EventInput
 from google.cloud.dialogflow_v2.services.sessions import SessionsClient
-from google.cloud.dialogflow_v2.types import DetectIntentResponse
+from google.cloud.dialogflow_v2.services.agents import AgentsClient
+from google.cloud.dialogflow_v2.types import DetectIntentResponse, RestoreAgentRequest
 from google.protobuf.json_format import MessageToDict
 
 from intents import Agent, Intent
@@ -70,7 +73,6 @@ class DialogflowEsConnector(Connector):
     :param rich_platforms: Platforms to include when exporting Rich response messages
     :param webhook_configuration: Webhook connection parameters
     """
-
     entity_mappings = df_entities.MAPPINGS
     rich_platforms: Iterable[str]
     webhook_configuration: WebhookConfiguration
@@ -105,6 +107,20 @@ class DialogflowEsConnector(Connector):
     def export(self, destination: str):
         agent_name = 'py-' + self.agent_cls.__name__
         return df_export.export(self, destination, agent_name)
+
+    def upload(self):
+        agents_client = AgentsClient(credentials=self._credentials)
+        with tempfile.TemporaryDirectory() as tmp_dir:
+            export_path = os.path.join(tmp_dir, 'agent.zip')
+            self.export(export_path)
+            with open(export_path, 'rb') as f:
+                agent_content = f.read()
+            restore_request = RestoreAgentRequest(
+                parent=f"projects/{self.gcp_project_id}",
+                agent_content=agent_content
+            )
+            agents_client.restore_agent(request=restore_request)
+
 
     def predict(self, message: str, session: str = None, language: str = None) -> Intent:
         if not session:

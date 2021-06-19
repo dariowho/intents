@@ -224,12 +224,20 @@ class Connector(ABC):
         """
 
     @abstractmethod
+    def upload(self):
+        """
+        Upload the connected Agent to the Prediction Service.
+        """
+        
+    @abstractmethod
     def export(self, destination: str):
         """
         Export the connected Agent in a format that can be read and imported
         natively by the Prediction service. For instance, the Dialogflow service
         will produce a ZIP export that can be imported from the Dialogflow
         console.
+
+        Note that you can also directly upload the Agent with :meth:`upload`.
 
         :param destination: destination path of the exported Agent
         """

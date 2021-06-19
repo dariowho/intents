@@ -279,8 +279,3 @@ def render_entity_entries(entity_cls: _EntityMetaclass, entries: List[language.E
         ))
     return result
 
-# from example_agent import ExampleAgent
-# from intents.connectors import DialogflowEsConnector, WebhookConfiguration
-# webhook = WebhookConfiguration('https://www.google.com/', {"X-Foo": "bar"})
-# df = DialogflowEsConnector('/home/dario/lavoro/dialogflow-agents/_tmp_agents/learning-dialogflow-5827a2d16c34.json', ExampleAgent, webhook_configuration=webhook)
-# df.export('/home/dario/lavoro/dialogflow-agents/TMP_AGENT.zip')

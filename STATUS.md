@@ -39,7 +39,7 @@ Here we report how individual Dialogflow features are currently supported in *In
 | Feature                                | Status | Note |
 |----------------------------------------|--------|------|
 | Export Agent to ZIP                    | 🟢     |      |
-| Upload Agent to existing Cloud project | 🔴     |      |
+| Upload Agent to existing Cloud project | 🟢     |      |
 | Sync Language changes from Cloud       | 🔴     |      |
 | Upload agent to a new Cloud project    | 🔴     |      |
 
