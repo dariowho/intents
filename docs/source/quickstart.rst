@@ -7,9 +7,11 @@ show how to connect an Agent to **Dialogflow ES** to make predictions and trigge
 Install
 -------
 
+This documentation refers to the 0.1 *alpha* release of *Intents*:
+
 .. code-block:: sh
 
-    pip install intents
+    pip install intents==0.1a1
 
 Define An Agent
 ---------------
@@ -60,9 +62,9 @@ Let's **upload** our example agent into our Dialogflow project:
     
     dialogflow.upload()
 
-This translate your Python Agent definition in Dialogflow ES format, and uploads
+This translates your Python Agent definition in Dialogflow ES format, and uploads
 it into its cloud projects: you will find it in your Dialogflow console at
-dialogflow.cloud.google.com
+https://dialogflow.cloud.google.com
 
 Make predictions
 ----------------

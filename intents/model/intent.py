@@ -1,6 +1,4 @@
 """
-:class:`Intent` classes are, intuitively, the core of the *Intents* framework.
-
 An **intent** is a categorical representation of the User intention in a single
 conversation turn. For instance, utterances like "I want a pizza", "I'd like to
 order a pizza" and such, could be mapped to a single `order_pizza` intent.
@@ -171,6 +169,19 @@ class Intent(metaclass=_IntentMetaclass):
 
             * `RICH` messages are defined -> `RICH` messages are returned
             * No `RICH` message is defined -> `DEFAULT` messages are returned
+
+        If present, messages in the "rich" group will be returned:
+
+        >>> result.fulfillment_messages()
+        [TextIntentResponse(choices=['I like travelling too! How can I help?']),
+         QuickRepliesIntentResponse(replies=['Recommend a hotel', 'Send holiday photo', 'Where the station?'])]
+         
+        Alternatively, I can ask for plain-text default messages:
+
+        >>> from intents.language import IntentResponseGroup
+        >>> result.fulfillment_messages(IntentResponseGroup.DEFAULT)
+        [TextIntentResponse(choices=['Nice, I can send you holiday pictures, or recommend an hotel'])]
+        
         """
         if response_group == language.IntentResponseGroup.RICH and \
            not self.prediction.fulfillment_messages.get(response_group):

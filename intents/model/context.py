@@ -1,3 +1,9 @@
+"""
+Contexts allow the Agent to interpret utterances differently depending on the
+conversation state. An example of their usage can be found in
+:mod:`example_agent.rickroll`.
+"""
+
 from intents import SessionEntity
 
 class _ContextMetaclass(type):

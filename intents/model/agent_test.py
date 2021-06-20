@@ -20,7 +20,7 @@ def test_register_intent_valid_language_data(mock_language):
     mock_language.LanguageCode = real_LanguageCode
 
     MyAgent = _get_toy_agent()
-    MyAgent.register_intent(smalltalk.hello)
+    MyAgent._register_intent(smalltalk.hello)
 
     assert MyAgent.intents == [smalltalk.hello]
     assert MyAgent._intents_by_name == {'smalltalk.hello': smalltalk.hello}
@@ -42,7 +42,7 @@ def test_register_intent_invalid_language_data(mock_language):
     MyAgent = _get_toy_agent()
     
     with pytest.raises(ValueError):
-        MyAgent.register_intent(smalltalk.hello)
+        MyAgent._register_intent(smalltalk.hello)
 
 @patch('intents.model.agent.language')
 def test_register_intent_registers_entities(mock_language):
@@ -59,7 +59,7 @@ def test_register_intent_registers_entities(mock_language):
         a_param: Sys.Person
         another_param: MyEntity
 
-    MyAgent.register_intent(MyIntent)
+    MyAgent._register_intent(MyIntent)
 
     assert MyAgent.intents == [MyIntent]
     assert MyAgent._intents_by_name == {'my_intent': MyIntent}
@@ -72,7 +72,7 @@ def test_register_intent_registers_entities(mock_language):
         a_param: Sys.Person
         another_param: MyEntity
 
-    MyAgent.register_intent(MyOtherIntent)
+    MyAgent._register_intent(MyOtherIntent)
     assert MyAgent.intents == [MyIntent, MyOtherIntent]
     assert MyAgent._intents_by_name == {'my_intent': MyIntent, 'my_other_intent': MyOtherIntent}
     assert MyAgent._intents_by_event == {'E_MY_INTENT': MyIntent, 'E_MY_OTHER_INTENT': MyOtherIntent}
@@ -91,13 +91,13 @@ def test_register_intent_registers_entities(mock_language):
         another_param: _make_duplicate_entity()
 
     with pytest.raises(ValueError):
-        MyAgent.register_intent(MyInvalidIntent) # Different entities with same name raise Error
+        MyAgent._register_intent(MyInvalidIntent) # Different entities with same name raise Error
 
 @patch('intents.model.agent.language')
 def test_register_module(mock_language):
     mock_language.LanguageCode = real_LanguageCode
     MyAgent = _get_toy_agent()
-    with patch.object(MyAgent, 'register_intent') as mock_register_intent:
+    with patch.object(MyAgent, '_register_intent') as mock_register_intent:
         MyAgent.register(smalltalk)
         mock_register_intent.asssert_has_calls([
             call(MyAgent, smalltalk.hello),

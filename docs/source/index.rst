@@ -5,9 +5,7 @@ code-first approach.
 
 .. warning::
 
-   *Intents* is still in early development stage, its API can change without notice 
-   and this documentation may be inconsistent or incomplete. More details can be 
-   found in *Project Status*.
+   *Intents* is in **alpha** stage, some API adjustments are to be expected before release
 
 Why *Intents*
 =============

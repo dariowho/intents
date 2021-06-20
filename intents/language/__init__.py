@@ -2,7 +2,7 @@
 Language resources are defined separately from intent classes. They are stored
 as plain YAML files in a `language/` folder, aside Agent Python modules; this is
 to be flexible in the relationship with designers and translators, as well as to
-allow some degree of automatism when downloading cloud changes back to the local
+allow some degree of automation when downloading cloud changes back to the local
 Agent definition (this feature is currently not implemented).
 
 Your `language/` folder will contain one subfloder per language (i.e.

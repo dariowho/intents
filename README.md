@@ -5,20 +5,25 @@
 [![HEAD version](https://badgen.net/badge/head/v0.1a1/blue)](https://badgen.net/badge/head/v0.1a1/blue)
 [![PyPI version](https://badge.fury.io/py/intents.svg)](https://badge.fury.io/py/intents)
 
-**Intents** is a unofficial Python library to define and operate Dialogflow Agents with a simple,
-code-first approach.
+**Intents** is an unofficial Python framework to define and operate Dialogflow Agents with a simple,
+code-first approach. Its main benefits are:
 
-## Project status
+* **Agents are Python projects**. You will develop with autocomplete, static type checking
+  and everything you are already used to.
+* **Versioning and CI**. Agents can be versioned on Git, and programmatically
+  deployed just like software.
+* **Human-friendly prediction client**. Much more straightforward than official
+  Python SDK
 
 This project is in **alpha** stage, some API adjustments are to be expected before
 release. A detailed view of available features can be found in [STATUS.md](STATUS.md)
 
 ## Install
 
-*Intents* can be installed as follows:
+*Intents* latest release is 0.1 *alpha*. It can be installed as follows:
 
 ```sh
-pip install intents
+pip install intents==0.1a1
 ```
 
 ## Usage

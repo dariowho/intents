@@ -1,5 +1,5 @@
 """
-Here we implement :class:`DialogflowEsConnector`, the implementation of
+Here we implement :class:`DialogflowEsConnector`, an implementation of
 :class:`Connector` that allows Agents to operate on Dialogflow.
 """
 import os
@@ -39,7 +39,12 @@ RICH_RESPONSE_PLATFORMS = ["telegram", "facebook", "slack", "line", "hangouts"]
 class DialogflowPrediction(Prediction):
     """
     This is an implementation of :class:`Prediction` that comes from Dialogflow.
-    `DialogflowPredictions` are produced internally by :class:`DialogflowEsConnector`
+
+    `DialogflowPredictions` are produced internally by
+    :class:`DialogflowEsConnector`, and automatically used to instantiate
+    Intents in :class:`DialogflowEsConnector.predict` and
+    :class:`DialogflowEsConnector.trigger`. Probably you won't need to manually
+    operate with Predictions.
     """
     df_response: DetectIntentResponse = None
 

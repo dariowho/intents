@@ -72,6 +72,10 @@ class EntityMapping(ABC):
         De-serialize the Service representation of an Entity (typically the value
         that is returned at prediction time) to an instance of one of the internal Entity
         classes in :class:`intents.model.entities`
+
+        :param service_data: A parameter value, as it is returned by the Service
+                             in a prediction/trigger response
+        :return: the parameter value, modelled as one of the System Entity classes
         """
 
     @abstractmethod
@@ -80,11 +84,21 @@ class EntityMapping(ABC):
         Serialize a System Entity instance into a Service representation (typically,
         to be sent as a parameter of a trigger request)
 
-        TODO: this is currently not used (string values are passed straight to
-        prediction services).
+        :param entity: the System Entity to serialize
+        :return: the serialized Entity that can be sent to Service (e.g. in a trigger request)
         """
 
 class StringEntityMapping(EntityMapping):
+    """
+    This is a basic :class:`EntityMapping` that reads values as they are sent
+    by the prediction service (e.g. `"3"` -> `Sys.Integer("3")`), and serializes
+    by simple string conversion (e.g. `Sys.Integer(3)` -> "3").
+
+    The System Entity to use must be defined when instantiating the mapping, for
+    instance:
+
+    >>> StringEntityMapping(Sys.Integer, "sys.number-integer")
+    """
 
     entity_cls: _EntityMetaclass = None
     service_name: str = None
@@ -217,6 +231,7 @@ class Connector(ABC):
         :param message: The User message to predict
         :param session: Any string identifying a conversation
         :param language: A ISO 639-1 language code (e.g. "en")
+        :return: An instance of the predicted Intent class
         """
 
     @abstractmethod
@@ -239,6 +254,7 @@ class Connector(ABC):
         :param intent: The Intent instance to trigger
         :param session: Any string identifying a conversation
         :param language: A ISO 639-1 language code (e.g. "en")
+        :return: An instance of the triggered Intent class
         """
 
     @abstractmethod

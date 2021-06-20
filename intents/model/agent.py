@@ -99,8 +99,26 @@ class Agent(metaclass=_AgentMetaclass):
         * A module. In this case, the module is scanned (non recursively) for
           Intents, and each Intent is added individually
 
-        For instance, this is how you import all the intents that are defined in
-        the `smalltalk` module of `example_itent`:
+        This is how you register a **single intent**:
+
+        .. code-block:: python
+
+            from intents import Agent, Intent
+
+            class MyAgent(Agent):
+                pass
+
+            @dataclass
+            class my_test_intent(Intent):
+                \"\"\"A little docstring for my Intent...\"\"\"
+                a_parameter: str
+                another_parameter: str
+
+            MyAgent.register(my_test_intent)
+
+        Alternatively, you can register a **whole module** containing Intents.
+        This is how you register all the intents that are defined in the
+        `smalltalk` module of `example_agent`:
 
         .. code-block:: python
 
@@ -111,36 +129,25 @@ class Agent(metaclass=_AgentMetaclass):
 
             MyAgent.register(smalltalk)
 
-        Note that together with the Intent, Agent will register all the
-        resources that are linked to it, such as Entities, Events and Contexts.
+        Note that together with each Intent, the Agent will register all of its
+        linked resources, such as Entities, Events and Contexts.
+
+        :param resource: The resource to register (an Intent, or a module
+                         containing Intents)
         """
         if isinstance(resource, _IntentMetaclass):
-            cls.register_intent(resource)
+            cls._register_intent(resource)
 
         elif isinstance(resource, ModuleType):
             for member_name, member in inspect.getmembers(resource, inspect.isclass):
                 if member.__module__ == resource.__name__ and issubclass(member, Intent):
-                    cls.register_intent(member)
+                    cls._register_intent(member)
 
     @classmethod
-    def register_intent(cls, intent_cls: _IntentMetaclass):
+    def _register_intent(cls, intent_cls: _IntentMetaclass):
         """
-        Register the intent in the Agent class and check that language data is
+        Register a single intent in the Agent class and check that language data is
         present for all supported languages (examples and responses).
-
-        .. code-block:: python
-
-            from intents import Agent, Intent
-
-            class MyAgent(Agent):
-                pass
-
-            class my_test_intent(Intent):
-                a_parameter: str
-                another_parameter: str
-
-            MyAgent.register_intent(my_test_intent)
-
         """
         if not cls.intents or not cls._intents_by_name and not cls._intents_by_event:
             assert not cls.intents and not cls._intents_by_name and not cls._intents_by_event
