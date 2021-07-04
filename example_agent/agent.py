@@ -9,10 +9,14 @@ particularly:
 * :mod:`travels` demonstrates the use of rich responses, such as Images, Cards
   and Quick Replies
 
-Once the topic of interest is located in the docs, it is advisable to look at
-the **source code** of the example Intent definition, to see its implementation
-details.
-"""
+.. tip::
+
+    Most of the interesting stuff about the Example Agent comes from its **source code**
+    and may not be shown in documentation pages. Hit the `[source]` link (or browse the
+    full code at https://github.com/dariowho/intents/tree/master/example_agent/) to know
+    more about your topic of interest
+
+  """
 
 from intents import Agent
 

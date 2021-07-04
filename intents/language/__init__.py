@@ -15,7 +15,7 @@ Your `language/` folder will contain one subfloder per language (i.e.
 
 .. tip::
 
-    It may be useful to look at The Example Agent code and language resources (https://github.com/dariowho/intents/tree/master/example_agent/language) to get more insight and information on the format and naming conventions of language files.
+    It may be useful to look at The Example Agent code and language resources (https://github.com/dariowho/intents/tree/master/example_agent/language) to get more insight on the format and naming conventions of language files.
 """
 from intents.language.language_codes import LanguageCode, LANGUAGE_CODES
 from intents.language.agent_language import agent_language_folder, agent_supported_languages

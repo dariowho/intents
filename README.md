@@ -2,7 +2,7 @@
 
 [![Documentation Status](https://readthedocs.org/projects/intents/badge/?version=latest)](https://intents.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/dariowho/intents/branch/master/graph/badge.svg?token=XAVLW70J8S)](https://codecov.io/gh/dariowho/intents)
-[![HEAD version](https://badgen.net/badge/head/v0.1a1/blue)](https://badgen.net/badge/head/v0.1a1/blue)
+[![HEAD version](https://badgen.net/badge/head/v0.1.0/blue)](https://badgen.net/badge/head/v0.1.0/blue)
 [![PyPI version](https://badge.fury.io/py/intents.svg)](https://badge.fury.io/py/intents)
 
 **Intents** is an unofficial Python framework to define and operate Dialogflow Agents with a simple,
@@ -12,18 +12,15 @@ code-first approach. Its main benefits are:
   and everything you are already used to.
 * **Versioning and CI**. Agents can be versioned on Git, and programmatically
   deployed just like software.
-* **Human-friendly prediction client**. Much more straightforward than official
+* **Human-friendly prediction client**. Much more straightforward than the official
   Python SDK
 
-This project is in **alpha** stage, some API adjustments are to be expected before
-release. A detailed view of available features can be found in [STATUS.md](STATUS.md)
+A detailed view of the available features can be found in [STATUS.md](STATUS.md)
 
 ## Install
 
-*Intents* latest release is 0.1 *alpha*. It can be installed as follows:
-
 ```sh
-pip install intents==0.1a1
+pip install intents
 ```
 
 ## Usage
@@ -35,6 +32,7 @@ Intents are defined like standard Python **dataclasses**:
 class HelloIntent(Intent):
     """A little docstring for my Intent class"""
     user_name: Sys.Person = "Guido"
+MyAgent.register(HelloIntent)
 ```
 
 Their **language** resources are stored in separate YAML files:
@@ -48,18 +46,26 @@ responses:
   default:
     text:
       - Hi $user_name
-      - Hello $user_name
+      - Hello $user_name, this is Bot!
       - Nice to meet you, $user_name
 ```
 
-Agents can be **uploaded** into Dialogflow ES projects directly from code; *Intents* will act transparently as a prediction client:
+Agents can be **uploaded** as Dialogflow ES projects directly from code:
 
 ```python
 df = DialogflowEsConnector('/path/to/service-account.json', MyAgent)
 df.upload()  # You will find it in your Dialogflow Console
+```
 
-predicted = df.predict("Hi there, my name is Mario")  # HelloIntent(user_name="Mario")
-print(predicted.fulfillment_text)                     # "Hello Mario"
+*Intents* will act transparently as a **prediction** client:
+
+```python
+>>> predicted = df.predict("Hi there, my name is Mario")
+HelloIntent(user_name="Mario")
+>>> predicted.fulfillment_text
+"Hello Mario, this is Bot!"
+>>> predicted.user_name
+"Mario"
 ```
 
 For a complete working example, check out the included [Example Agent](example_agent/). Also, *Intents* **documentation** is published at https://intents.readthedocs.io/ 📚

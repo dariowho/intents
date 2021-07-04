@@ -3,10 +3,6 @@ Intents ⛺
 **Intents** is an unofficial Python library to define and operate Dialogflow Agents with a simple,
 code-first approach.
 
-.. warning::
-
-   *Intents* is in **alpha** stage, some API adjustments are to be expected before release
-
 Why *Intents*
 =============
 

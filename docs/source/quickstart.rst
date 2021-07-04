@@ -7,11 +7,9 @@ show how to connect an Agent to **Dialogflow ES** to make predictions and trigge
 Install
 -------
 
-This documentation refers to the 0.1 *alpha* release of *Intents*:
-
 .. code-block:: sh
 
-    pip install intents==0.1a1
+    pip install intents
 
 Define An Agent
 ---------------

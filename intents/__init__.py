@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List
 
-__version__ = "0.1a1"
+__version__ = "0.1.0"
 
 class SessionEntity:
 
