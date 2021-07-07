@@ -161,7 +161,7 @@ class ResponseMessageTypes(Enum):
 @dataclass
 class ResponseMessage:
     lang: str
-    type: str = "0" # TODO: use Enum with custom asdict() as string
+    type: str = "0" # TODO: use Enum with helpers.custom_asdict_factory()
     title: str = ""
     textToSpeech: str = ""
     condition: str = ""
@@ -171,19 +171,19 @@ class ResponseMessage:
 @dataclass
 class TextResponseMessage(ResponseMessage):
     speech: List[str] = ""
-    type: str = "0"   # TODO: make constant, included in asdict()
+    type: str = "0"   # TODO: use Enum with helpers.custom_asdict_factory()
 
 @dataclass
 class QuickRepliesResponseMessage(ResponseMessage):
     replies: List[str] = field(default_factory=list)
     title: str = "Quick Replies"
-    type: str = "2"   # TODO: make constant, included in asdict()
+    type: str = "2"   # TODO: use Enum with helpers.custom_asdict_factory()
 
 @dataclass
 class ImageResponseMessage(ResponseMessage):
     imageUrl: str = ""
     title: str = ""
-    type: str = "3"
+    type: str = "3"   # TODO: use Enum with helpers.custom_asdict_factory()
 
 @dataclass
 class CardResponseMessageButton:
@@ -196,12 +196,12 @@ class CardResponseMessage(ResponseMessage):
     subtitle: str = ""
     imageUrl: str = ""
     buttons: List[CardResponseMessageButton] = None
-    type: str = "1"
+    type: str = "1"   # TODO: use Enum with helpers.custom_asdict_factory()
 
 @dataclass
 class CustomPayloadResponseMessage(ResponseMessage):
     payload: Dict[str, dict] = field(default_factory=dict)
-    type: str = "4"
+    type: str = "4"   # TODO: use Enum with helpers.custom_asdict_factory()
 
 
 @dataclass

@@ -5,8 +5,8 @@ Here we implement :class:`DialogflowEsConnector`, an implementation of
 import os
 import logging
 import tempfile
-from dataclasses import dataclass, field
-from typing import Union, Iterable, Dict
+from dataclasses import dataclass
+from typing import Union, Iterable
 
 import google.auth.credentials
 from google.cloud.dialogflow_v2.types import TextInput, QueryInput, EventInput
