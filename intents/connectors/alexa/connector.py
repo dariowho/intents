@@ -4,8 +4,9 @@ Official Request/Response schemas: https://github.com/alexa/alexa-apis-for-pytho
 import json
 
 from intents import Agent, Intent
-from intents.service_connector import Connector
+from intents.service_connector import Connector, ServiceEntityMappings
 from intents.connectors.alexa.export import render
+from intents.connectors.alexa.slot_types import ENTITY_MAPPINGS
 
 class AlexaConnector(Connector):
     """
@@ -14,6 +15,7 @@ class AlexaConnector(Connector):
 
     NOTE: This connector is experimental
     """
+    entity_mappings: ServiceEntityMappings = ENTITY_MAPPINGS
 
     invocation_name: str
 

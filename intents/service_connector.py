@@ -118,14 +118,16 @@ class StringEntityMapping(EntityMapping):
 
 class ServiceEntityMappings(dict):
     """
-    Models a list of entity mappings. In addition to a standard list, two things
+    Models a list of entity mappings, in the form of a dict where the key is a
+    System entity class (inherits from :class:`SystemEntityMixin`) and the value
+    is a :class:`EntityMapping`. In addition to a standard dict, these features
     are added:
 
-    * Dict-like access to retrieve a mapping given its internal type (e.g.
-      `mappings[Sys.Integer]`)
+    * Instantiate from a list of mappings with :meth:`from_list`
     * Consistency check: a mapping list must cover all the entities defined in
       the framework (TODO)
-    * Shortcut to define StringEntityMappings like `(Sys.Integer, 'sys.number-integer')` (TODO)
+    * Shortcut to define StringEntityMappings like `(Sys.Integer,
+      'sys.number-integer')` (TODO)
     """
 
     @classmethod
@@ -206,6 +208,14 @@ class Connector(ABC):
         self.default_session = default_session
         self.default_language = default_language
 
+    @property
+    @abstractmethod
+    def entity_mappings(self) -> ServiceEntityMappings:
+        """
+        A Service Connector must know the Entity Mappings of its Prediction
+        Service. They will be used to lookup entity names during export.
+        """
+
     @abstractmethod
     def predict(self, message: str, session: str=None, language: str=None) -> Intent:
         """
@@ -275,3 +285,18 @@ class Connector(ABC):
 
         :param destination: destination path of the exported Agent
         """
+
+    def _entity_service_name(self, entity_cls: SystemEntityMixin) -> str:
+        """
+        Return the name of the given entity in the specific service; this can be
+        the class name itself, or an :class:`EntityMapping` lookup in the case
+        of System Entities.
+
+        For instance, a :class:`Sys.Person` Entity will need to be looked up in
+        the mappings to find out its service name (`sys.person` in Dialogflow,
+        `AMAZON.Person` in Alexa, and so on). A custom entity (e.g. `PizzaType`)
+        can use its class name instead.
+        """
+        if issubclass(entity_cls, SystemEntityMixin):
+            return self.entity_mappings[entity_cls].service_name
+        return entity_cls.name

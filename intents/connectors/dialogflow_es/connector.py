@@ -16,7 +16,7 @@ from google.cloud.dialogflow_v2.types import DetectIntentResponse, RestoreAgentR
 from google.protobuf.json_format import MessageToDict
 
 from intents import Agent, Intent
-from intents.service_connector import Connector, Prediction
+from intents.service_connector import Connector, Prediction, ServiceEntityMappings
 from intents.connectors.dialogflow_es.auth import resolve_credentials
 from intents.connectors.dialogflow_es.util import dict_to_protobuf
 from intents.connectors.dialogflow_es import entities as df_entities
