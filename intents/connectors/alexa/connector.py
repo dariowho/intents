@@ -3,7 +3,8 @@ Official Request/Response schemas: https://github.com/alexa/alexa-apis-for-pytho
 """
 import json
 
-from intents import Agent, Intent
+from intents import Agent, Intent, Entity
+from intents.language import entity_language
 from intents.service_connector import Connector, ServiceEntityMappings
 from intents.connectors.alexa.export import render
 from intents.connectors.alexa.slot_types import ENTITY_MAPPINGS
@@ -44,3 +45,10 @@ class AlexaConnector(Connector):
 
     def trigger(self, intent: Intent, session: str=None, language: str=None) -> Intent:
         raise NotImplementedError()
+
+    def entity_value_id(self, entity_cls: type(Entity), entity_value: entity_language.EntityEntry):
+        """
+        Entity entries in Alexa have IDs. This is a centralized function to
+        compute them.
+        """
+        return entity_cls.name + entity_value.value

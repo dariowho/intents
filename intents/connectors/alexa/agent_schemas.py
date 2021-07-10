@@ -31,8 +31,20 @@ class LanguageModelIntent:
     samples: List[str] = field(default_factory=list)
 
 @dataclass
+class LanguageModelTypeValueName:
+    value: str
+    synonyms: List[str] = OmitNone()
+
+@dataclass
+class LanguageModelTypeValue:
+    id: str
+    name: LanguageModelTypeValueName
+
+@dataclass
 class LanguageModelType:
-    pass
+    name: str
+    values: List[LanguageModelTypeValue]
+    # TODO: valueSupplier
 
 class FallbackIntentSensitivity(Enum):
     LOW = "LOW"

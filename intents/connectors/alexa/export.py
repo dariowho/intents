@@ -15,10 +15,9 @@ from typing import List, Dict
 from dataclasses import asdict
 
 from intents import Intent
-from intents.model.entity import SystemEntityMixin
-from intents.language import intent_language, intent_language_data, agent_supported_languages, LanguageCode
+from intents.model.entity import Entity
+from intents.language import intent_language, intent_language_data, entity_language, entity_language_data, agent_supported_languages, LanguageCode
 from intents.connectors.alexa import agent_schemas as ask_schema
-from intents.connectors.alexa.slot_types import ENTITY_MAPPINGS
 from intents.helpers import custom_asdict_factory
 
 # TODO: model in framework
@@ -33,6 +32,10 @@ DEFAULT_INTENTS = [
     ),
     ask_schema.LanguageModelIntent(
         name="AMAZON.StopIntent",
+        samples=[]
+    ),
+    ask_schema.LanguageModelIntent(
+        name="AMAZON.NavigateHomeIntent",
         samples=[]
     )
 ]
@@ -59,9 +62,14 @@ def render_interaction_model(connector: "AlexaConnector", lang: LanguageCode) ->
 def render_language_model(connector: "AlexaConnector", lang: LanguageCode) -> ask_schema.LanguageModel:
     return ask_schema.LanguageModel(
         invocationName=connector.invocation_name,
-        intents=[render_intent(i, connector, lang) for i in connector.agent_cls.intents]
+        intents=[render_intent(i, connector, lang) for i in connector.agent_cls.intents],
+        types=[render_slot_type(e, connector, lang) for e in connector.agent_cls._entities_by_name.values()]
         # TODO: complete
     )
+
+#
+# Intent
+#
 
 def render_intent(intent_cls: type(Intent), connector: "AlexaConnector", lang: LanguageCode) -> ask_schema.LanguageModelIntent:
     return ask_schema.LanguageModelIntent(
@@ -100,13 +108,33 @@ def render_intent_samples(intent_cls: type(Intent), connector: "AlexaConnector",
                 rendered_chunks.append("{" + chunk.parameter_name + "}")
             else:
                 raise ValueError(f"Unsupported utterance chunk type {type(chunk)}. This looks like a bug, please file an issue at https://github.com/dariowho/intents")
-            # TODO: render slot references
-            utterance = "".join(rendered_chunks)
-            # TODO: refine, especially for List parameters. Also, "{", "}" and
-            # "_" are only allowed in slot references
-            utterance = re.sub(r"[^a-zA-Z \-\{\}\_\.\']+", '', utterance)
-            result.append(utterance)
+        utterance = "".join(rendered_chunks)
+        # TODO: refine, especially for List parameters. Also, "{", "}" and
+        # "_" are only allowed in slot references
+        utterance = re.sub(r"[^a-zA-Z \-\{\}\_\.\']+", '', utterance)
+        result.append(utterance)
     return result
+
+#
+# Slot Type
+#
+
+def render_slot_type(entity_cls: type(Entity), connector: "AlexaConnector", lang: LanguageCode) -> ask_schema.LanguageModelType:
+    language_data = entity_language_data(connector.agent_cls, entity_cls, lang)
+    language_data = language_data[lang]
+    return ask_schema.LanguageModelType(
+        name=entity_cls.name,
+        values=[render_slot_value(entity_cls, v, connector) for v in language_data]
+    )
+
+def render_slot_value(entity_cls: type(Entity), entity_entry: entity_language.EntityEntry, connector: "AlexaConnector") -> ask_schema.LanguageModelTypeValue:
+    return ask_schema.LanguageModelTypeValue(
+        id=connector.entity_value_id(entity_cls, entity_entry),
+        name=ask_schema.LanguageModelTypeValueName(
+            value=entity_entry.value,
+            synonyms=entity_entry.synonyms
+        )
+    )
 
 # from example_agent.agent import ExampleAgent
 # from intents.connectors.alexa import AlexaConnector

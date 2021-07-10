@@ -3,7 +3,7 @@ examples:
   - I like music
   - I love listening to music
   - I like $music_genre{Reggae} music
-  - I really lile $music_genre{pop} music
+  - I really like $music_genre{pop} music
 
 responses:
   default:
