@@ -73,6 +73,9 @@ class EntityMapping(ABC):
         that is returned at prediction time) to an instance of one of the internal Entity
         classes in :class:`intents.model.entities`
 
+        >>> date_mapping.from_service("2021-07-11")
+        Sys.Date(2021, 7, 11)
+
         :param service_data: A parameter value, as it is returned by the Service
                              in a prediction/trigger response
         :return: the parameter value, modelled as one of the System Entity classes
@@ -83,6 +86,9 @@ class EntityMapping(ABC):
         """
         Serialize a System Entity instance into a Service representation (typically,
         to be sent as a parameter of a trigger request)
+
+        >>> date_mapping.to_service(Sys.Date(2021, 7, 11))
+        "2021-07-11"
 
         :param entity: the System Entity to serialize
         :return: the serialized Entity that can be sent to Service (e.g. in a trigger request)

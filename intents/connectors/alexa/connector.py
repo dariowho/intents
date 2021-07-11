@@ -1,5 +1,14 @@
 """
-Official Request/Response schemas: https://github.com/alexa/alexa-apis-for-python/tree/master/ask-sdk-model/ask_sdk_model
+Official Request/Response schemas:
+https://github.com/alexa/alexa-apis-for-python/tree/master/ask-sdk-model/ask_sdk_model
+
+.. warning::
+
+    Alexa connector is **experimental**, expect some rough edges. Also:
+
+    * `predict` and `trigger` are not implemented
+    * Entities :class:`Sys.Email` and `Sys.Url` are not available in Alexa (regex entites aren't supported either, which makes it difficult to work around this one) 
+
 """
 import json
 
