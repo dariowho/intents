@@ -3,7 +3,7 @@ import datetime
 from enum import Enum
 from intents import Sys
 from intents.service_connector import EntityMapping, StringEntityMapping, ServiceEntityMappings
-from intents.connectors.alexa.dates import parse_alexa_date
+from intents.connectors._experimental.alexa.dates import parse_alexa_date
 
 logger = logging.getLogger(__name__)
 

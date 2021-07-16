@@ -7,7 +7,7 @@ from typing import Dict, List, Union
 from dataclasses import dataclass, field
 
 from intents.helpers import OmitNone
-from intents.connectors.alexa.slot_types import SystemSlotTypes
+from intents.connectors._experimental.alexa.slot_types import SystemSlotTypes
 
 #
 # Language Model

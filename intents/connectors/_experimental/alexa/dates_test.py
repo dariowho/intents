@@ -1,6 +1,6 @@
 from datetime import date
 
-from intents.connectors.alexa import dates
+from intents.connectors._experimental.alexa import dates
 
 def test_specific_date():
     date_from, date_to = dates.parse_alexa_date("2015-11-25")

@@ -5,10 +5,13 @@ Features:
 - [OK] example utterances
 - [OK] example utterances with parameter references
 - [OK] system entity slots
-- [  ] custom entity slots
+- [OK] custom entity slots
 - [  ] plain text responses
 - [  ] input/output contexts
 - [OK] multi language
+
+Note that there are some relevant TODOs in this module (e.g. intent names may be
+ambiguous, punctuation is stripped from utterances, and so on..)
 """
 import re
 from typing import List, Dict
@@ -17,7 +20,7 @@ from dataclasses import asdict
 from intents import Intent
 from intents.model.entity import Entity
 from intents.language import intent_language, intent_language_data, entity_language, entity_language_data, agent_supported_languages, LanguageCode
-from intents.connectors.alexa import agent_schemas as ask_schema
+from intents.connectors._experimental.alexa import agent_schemas as ask_schema
 from intents.helpers import custom_asdict_factory
 
 # TODO: model in framework
@@ -137,9 +140,9 @@ def render_slot_value(entity_cls: type(Entity), entity_entry: entity_language.En
     )
 
 # from example_agent.agent import ExampleAgent
-# from intents.connectors.alexa import AlexaConnector
+# from intents.connectors._experimental.alexa import AlexaConnector
 
 # alexa = AlexaConnector(ExampleAgent, "any invocation")
 # # render(alexa)
 
-# alexa.export("TMP_ALEXA.json")
+# alexa.export("./TMP_ALEXA")

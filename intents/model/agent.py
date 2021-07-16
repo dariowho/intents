@@ -6,7 +6,6 @@ Intent classes and other resources into it.
 Once the Agent is defined, you will connect it to a cloud service with a
 :class:`Connector`, to make prediction and trigger requests.
 """
-
 import re
 import logging
 import inspect
@@ -111,8 +110,8 @@ class Agent(metaclass=_AgentMetaclass):
             @dataclass
             class my_test_intent(Intent):
                 \"\"\"A little docstring for my Intent...\"\"\"
-                a_parameter: str
-                another_parameter: str
+                a_parameter: Sys.Date
+                another_parameter: Sys.Person
 
             MyAgent.register(my_test_intent)
 

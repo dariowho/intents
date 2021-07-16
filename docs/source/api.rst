@@ -57,6 +57,13 @@ Dialogflow ES
 .. automodule:: intents.connectors.dialogflow_es.connector
    :members:
 
+Alexa (experimental)
+--------------------
+
+.. automodule:: intents.connectors._experimental.alexa.connector
+   :members:
+
+
 .. Export
 .. ^^^^^^
 

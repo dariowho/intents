@@ -1,5 +1,5 @@
 from intents import Sys
-from intents.connectors.alexa.slot_types import ENTITY_MAPPINGS
+from intents.connectors._experimental.alexa.slot_types import ENTITY_MAPPINGS
 
 def test_date_mapping():
     entity_type = Sys.Date
