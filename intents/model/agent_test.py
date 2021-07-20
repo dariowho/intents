@@ -1,3 +1,5 @@
+from typing import List
+from dataclasses import dataclass
 from unittest.mock import patch, call
 
 import pytest
@@ -44,6 +46,18 @@ def test_register_intent_invalid_language_data(mock_language):
     with pytest.raises(ValueError):
         MyAgent._register_intent(smalltalk.hello)
 
+@patch('intents.language.intent_language_data')
+def test_register_intent_invalid_param_schema_list_default(mock_language):
+    MyAgent = _get_toy_agent()
+    
+    with pytest.raises(ValueError):
+        @dataclass
+        class intent_with_invalid_list_default(Intent):
+            """Intent with invalid parameter default"""
+            optional_list_param: List[Sys.Person] = 42
+        
+        MyAgent.register(intent_with_invalid_list_default)
+
 @patch('intents.model.agent.language')
 def test_register_intent_registers_entities(mock_language):
     mock_language.LanguageCode = real_LanguageCode
@@ -53,6 +67,7 @@ def test_register_intent_registers_entities(mock_language):
     class MyEntity(Entity):
         pass
 
+    @dataclass
     class MyIntent(Intent):
         name = "my_intent"
 
@@ -66,6 +81,7 @@ def test_register_intent_registers_entities(mock_language):
     assert MyAgent._intents_by_event == {'E_MY_INTENT': MyIntent}
     assert MyAgent._entities_by_name == {'MyEntity': MyEntity}
 
+    @dataclass
     class MyOtherIntent(Intent):
         name = "my_other_intent"
 
@@ -84,6 +100,7 @@ def test_register_intent_registers_entities(mock_language):
             pass
         return MyEntity
 
+    @dataclass
     class MyInvalidIntent(Intent):
         name = "my_invalid_intent"
 

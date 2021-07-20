@@ -1,5 +1,6 @@
 from typing import List
-from dataclasses import field
+from unittest.mock import patch
+from dataclasses import dataclass, field
 
 import pytest
 
@@ -8,15 +9,16 @@ from intents.model.intent import IntentParameterMetadata
 from intents.service_connector import Prediction
 from intents import language
 
-def test_param_scheme_no_params():
+def test_param_schema_no_params():
 
     class no_param_intent(Intent):
         """Simple Intent with no parameters"""
 
-    assert no_param_intent.parameter_schema() == {}
+    assert no_param_intent.parameter_schema == {}
 
 def test_param_scheme_with_params():
 
+    @dataclass
     class intent_with_params(Intent):
         """Intent with parameters"""
         required_param: Sys.Person
@@ -24,7 +26,7 @@ def test_param_scheme_with_params():
         optional_param: Sys.Person = "John"
         optional_list_param: List[Sys.Person] = field(default_factory=lambda: ["Al", "John"])
 
-    assert intent_with_params.parameter_schema() == {
+    assert intent_with_params.parameter_schema == {
         "required_param": IntentParameterMetadata(
             name="required_param",
             entity_cls=Sys.Person,
@@ -63,6 +65,8 @@ def test_param_scheme_invalid_list_default():
             """Intent with parameters"""
             optional_list_param: List[Sys.Person] = 42
 
+        intent_with_invalid_list_default.parameter_schema
+
 def test_fulfillment_messages():
     class MockPredictionImplementation(Prediction):
         @property
@@ -96,3 +100,55 @@ def test_fulfillment_messages():
     assert predicted.fulfillment_messages() == mock_rich_messages
     assert predicted.fulfillment_messages(language.IntentResponseGroup.DEFAULT) == mock_default_messages
     assert predicted.fulfillment_messages(language.IntentResponseGroup.RICH) == mock_rich_messages
+
+def test_deprecated_parameter_schema():
+
+    @dataclass
+    class intent_with_params(Intent):
+        """Intent with parameters"""
+        required_param: Sys.Person
+        required_list_param: List[Sys.Person]
+        optional_param: Sys.Person = "John"
+        optional_list_param: List[Sys.Person] = field(default_factory=lambda: ["Al", "John"])
+
+    # pylint: disable=no-value-for-parameter
+    assert intent_with_params.parameter_schema == intent_with_params.parameter_schema()
+
+def test_parameter_schema_class_property():
+    @dataclass
+    class intent_with_params(Intent):
+        """Intent with parameters"""
+        required_param: Sys.Person
+        required_list_param: List[Sys.Person]
+        optional_param: Sys.Person = "John"
+        optional_list_param: List[Sys.Person] = field(default_factory=lambda: ["Al", "John"])
+        
+    intent_instance = intent_with_params(required_param=None, required_list_param=None)
+    assert intent_with_params.parameter_schema == intent_instance.parameter_schema
+
+def test_dataclass_not_applied_twice():
+    """https://github.com/dariowho/intents/issues/10"""
+    def custom_dataclass(*args, **kwargs):
+        custom_dataclass.dataclass_called += 1
+    custom_dataclass.dataclass_called = 0
+
+    with patch("intents.model.intent.dataclass", custom_dataclass):
+        @custom_dataclass
+        class a_class(Intent):
+            foo: Sys.Integer = 42
+            bar: List[Sys.Integer] = field(default_factory=lambda: [])
+
+        assert custom_dataclass.dataclass_called == 1
+
+def test_warning_if_superclass_not_dataclass():
+    @dataclass
+    class an_intent(Intent):
+        foo: List[Sys.Integer] = field(default_factory=lambda: [])
+
+    class a_sub_intent(an_intent):
+        bar: Sys.Integer = 42
+
+    with pytest.warns(None):
+        @dataclass
+        class a_sub_sub_intent(a_sub_intent):
+            babar: Sys.Integer = 43

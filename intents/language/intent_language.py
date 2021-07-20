@@ -117,7 +117,7 @@ class ExampleUtterance(str):
 
         TODO: handle escaping
         """
-        parameter_schema = self._intent.parameter_schema()
+        parameter_schema = self._intent.parameter_schema
         result = []
         last_end = 0
         for m in RE_EXAMPLE_PARAMETERS.finditer(self):

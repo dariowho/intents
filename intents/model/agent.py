@@ -177,7 +177,7 @@ class Agent(metaclass=_AgentMetaclass):
         for event_cls in intent_cls.events:
             cls._register_event(event_cls, intent_cls)
 
-        for param_name, param_metadata in intent_cls.parameter_schema().items():
+        for param_name, param_metadata in intent_cls.parameter_schema.items():
             cls._register_entity(param_metadata.entity_cls, param_name, intent_cls.name)
 
         cls.intents.append(intent_cls)

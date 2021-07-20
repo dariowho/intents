@@ -130,7 +130,7 @@ def render_intent(connector: "DialogflowEsConnector", intent_cls: _IntentMetacla
 
 def render_parameters(intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
     result = []
-    for param_name, param_metadata in intent_cls.parameter_schema().items():
+    for param_name, param_metadata in intent_cls.parameter_schema.items():
         entity_cls = param_metadata.entity_cls
         # TODO: use Connector._entity_service_name()
         if issubclass(entity_cls, SystemEntityMixin):

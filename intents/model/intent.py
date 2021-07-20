@@ -33,6 +33,39 @@ class IntentParameterMetadata:
     required: bool
     default: Any
 
+class CallableDict(dict):
+    """
+    This is a proxy to handle the deprecation of
+    :meth:`Intent.parameter_schema`, which is now a property. Legacy code may
+    still call it as a method (e.g. `hello_intent.parameter_schema()`), hence we
+    need to support `__call__`, warning User to update his code (e.g. `hello_intent.parameter_schema`) 
+    """
+
+    def __call__(self):
+        logger.warning("'Intent.parameter_schema()' is deprecated, and is now a property. Use 'Intent.parameter_schema` instead. Support will be removed in 0.3")
+        return self
+
+def is_dataclass_strict(obj):
+    """
+    Like :func:`dataclasses.is_dataclass`, but return True only if the class
+    itself was decorated with `@dataclass` (i.e. inheriting from a parent
+    dataclass is not sufficient)
+
+    .. code-block:: python
+
+        @dataclass
+        class a_class:
+            foo: str
+
+        class a_subclass(a_class):
+            bar: str
+
+        is_dataclass(a_subclass)           # True
+        is_dataclass_strict(a_subclass)    # False
+    """
+    cls = obj if isinstance(obj, type) else type(obj)
+    return dataclasses._FIELDS in cls.__dict__
+
 class _IntentMetaclass(type):
 
     name: str = None
@@ -48,7 +81,12 @@ class _IntentMetaclass(type):
             assert not bases
             return result_cls
 
-        if not result_cls.name:
+        for base_cls in bases:
+            if base_cls is not Intent:
+                if not is_dataclass_strict(base_cls):
+                    logger.warning("Intent '%s' is inheriting from non-dataclass '%s'. Did you forget the decorator?", result_cls, base_cls)
+
+        if "name" not in result_cls.__dict__:
             result_cls.name = _intent_name_from_class(result_cls)
         else:
             is_valid, reason = _is_valid_intent_name(result_cls.name)
@@ -69,13 +107,59 @@ class _IntentMetaclass(type):
             events.append(event_cls)
         result_cls.events = events
 
-        if not is_dataclass(result_cls):
-            result_cls = dataclass(result_cls)
-
-        # Check parameters
-        result_cls.parameter_schema()
-
         return result_cls
+
+    @property
+    def parameter_schema(cls) -> Dict[str, IntentParameterMetadata]:
+        """
+        Return a dict representing the Intent parameter definition. A key is a
+        parameter name, a value is a :class:`IntentParameterMetadata` object.
+
+        TODO: consider computing this in metaclass to cache value and check types
+        """
+        if not is_dataclass_strict(cls):
+            logger.warning(f"{cls} is not a dataclass. This may cause unexpected behavior: consider adding a @dataclass decorator to your Intent class.")
+            cls = dataclass(cls)
+
+        result = {}
+        for param_field in cls.__dataclass_fields__.values():
+        # for param_field in cls.__dict__['__dataclass_fields__'].values():
+            # List[...]
+            if isinstance(param_field.type, _GenericAlias):
+                if param_field.type.__dict__.get('_name') != 'List':
+                    raise ValueError(f"Invalid typing '{param_field.type}' for parameter '{param_field.name}'. Only 'List' is supported.")
+
+                if len(param_field.type.__dict__.get('__args__')) != 1:
+                    raise ValueError(f"Invalid List modifier '{param_field.type}' for parameter '{param_field.name}'. Must define exactly one inner type (e.g. 'List[Sys.Integer]')")
+                
+                # From here on, check the inner type (e.g. List[Sys.Integer] -> Sys.Integer)
+                entity_cls = param_field.type.__dict__.get('__args__')[0]
+                is_list = True
+            else:
+                entity_cls = param_field.type
+                is_list = False
+
+            required = True
+            default = None
+            if not isinstance(param_field.default, dataclasses._MISSING_TYPE):
+                required = False
+                default = param_field.default
+            if not isinstance(param_field.default_factory, dataclasses._MISSING_TYPE):
+                required = False
+                default = param_field.default_factory()
+
+            if not required and is_list and not isinstance(default, list):
+                raise ValueError(f"List parameter has non-list default value in intent {cls}: {param_field}")
+
+            result[param_field.name] = IntentParameterMetadata(
+                name=param_field.name,
+                entity_cls=entity_cls,
+                is_list=is_list,
+                required=required,
+                default=default
+            )
+
+        return CallableDict(result)
 
 class Intent(metaclass=_IntentMetaclass):
     """
@@ -128,10 +212,9 @@ class Intent(metaclass=_IntentMetaclass):
     user_says_hello(user_name="John") predicted.user_name "John"
     predicted.fulfillment_text "Hi John, I'm Agent"
 
-    Last, we notice the **@dataclass** decorator. This isn't really needed for
-    the Intent to work, but adding it will have your IDE recognize the Intent
-    class as a dataclass: you want autocomplete and static type checking when
-    working with hundreds of intents in the same project.
+    Last, we notice the **@dataclass** decorator. We require it to be added
+    explicitly, this way IDEs will recognize the Intent class as a dataclass and
+    provide correct hints for names and types.
     """
     # TODO: check parameter names: no underscore, no reserved names, max length
 
@@ -190,53 +273,6 @@ class Intent(metaclass=_IntentMetaclass):
         return self.prediction.fulfillment_messages.get(response_group, [])
 
     @classmethod
-    def parameter_schema(cls) -> Dict[str, IntentParameterMetadata]:
-        """
-        Return a dict representing the Intent parameter definition. A key is a
-        parameter name, a value is a :class:`IntentParameterMetadata` object.
-
-        TODO: consider computing this in metaclass to cache value and check types
-        """
-        result = {}
-        for param_field in cls.__dict__['__dataclass_fields__'].values():
-            # List[...]
-            if isinstance(param_field.type, _GenericAlias):
-                if param_field.type.__dict__.get('_name') != 'List':
-                    raise ValueError(f"Invalid typing '{param_field.type}' for parameter '{param_field.name}'. Only 'List' is supported.")
-
-                if len(param_field.type.__dict__.get('__args__')) != 1:
-                    raise ValueError(f"Invalid List modifier '{param_field.type}' for parameter '{param_field.name}'. Must define exactly one inner type (e.g. 'List[Sys.Integer]')")
-                
-                # From here on, check the inner type (e.g. List[Sys.Integer] -> Sys.Integer)
-                entity_cls = param_field.type.__dict__.get('__args__')[0]
-                is_list = True
-            else:
-                entity_cls = param_field.type
-                is_list = False
-
-            required = True
-            default = None
-            if not isinstance(param_field.default, dataclasses._MISSING_TYPE):
-                required = False
-                default = param_field.default
-            if not isinstance(param_field.default_factory, dataclasses._MISSING_TYPE):
-                required = False
-                default = param_field.default_factory()
-
-            if not required and is_list and not isinstance(default, list):
-                raise ValueError(f"List parameter has non-list default value in intent {cls}: {param_field}")
-
-            result[param_field.name] = IntentParameterMetadata(
-                name=param_field.name,
-                entity_cls=entity_cls,
-                is_list=is_list,
-                required=required,
-                default=default
-            )
-
-        return result
-
-    @classmethod
     def from_prediction(cls, prediction: 'intents.Prediction') -> 'Intent':
         """
         Build an :class:`Intent` class from a :class:`Prediction`. In practice:
@@ -249,13 +285,17 @@ class Intent(metaclass=_IntentMetaclass):
         it for you.
         """
         try:
-            parameters = prediction.parameters(cls.parameter_schema())
+            parameters = prediction.parameters(cls.parameter_schema)
         except ValueError as exc:
             raise ValueError(f"Failed to match parameters for Intent class '{cls}'. Prediction: {prediction}") from exc
 
         result = cls(**parameters)
         result.prediction = prediction
         return result
+
+    @property
+    def parameter_schema(self) -> Dict[str, IntentParameterMetadata]:
+        return self.__class__.parameter_schema
 
 def _is_valid_intent_name(candidate_name):
     if re.search(r'[^a-zA-Z_\.]', candidate_name):
@@ -271,6 +311,8 @@ def _is_valid_intent_name(candidate_name):
 
 def _intent_name_from_class(intent_cls: _IntentMetaclass) -> str:
     full_name = f"{intent_cls.__module__}.{intent_cls.__name__}"
+    if intent_cls.__module__.startswith("_"):
+        full_name = intent_cls.__name__
     if "__" in full_name:
         logger.warning("Intent class '%s' contains repeated '_'. This is reserved: repeated underscores will be reduced to one, this may cause unexpected behavior.")
     full_name = re.sub(r"_+", "_", full_name)

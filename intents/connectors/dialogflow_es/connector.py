@@ -155,7 +155,7 @@ class DialogflowEsConnector(Connector):
         intent_name = intent.name
         event_name = Agent._event_name(intent_name)
         event_parameters = {}
-        for param_name, param_metadata in intent.parameter_schema().items():
+        for param_name, param_metadata in intent.parameter_schema.items():
             param_mapping = df_entities.MAPPINGS[param_metadata.entity_cls]
             if param_name in intent.__dict__:
                 param_value = intent.__dict__[param_name]

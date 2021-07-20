@@ -84,7 +84,7 @@ def render_intent(intent_cls: type(Intent), connector: "AlexaConnector", lang: L
 
 def render_intent_slots(intent_cls: type(Intent), connector: "AlexaConnector") -> List[ask_schema.LanguageModelIntentSlot]:
     result = []
-    for param_name, param_metadata in intent_cls.parameter_schema().items():
+    for param_name, param_metadata in intent_cls.parameter_schema.items():
         entity_cls = param_metadata.entity_cls
         slot_type = connector._entity_service_name(entity_cls)
 

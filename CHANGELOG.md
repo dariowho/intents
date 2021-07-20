@@ -1,6 +1,8 @@
 # v0.2.0 (in development)
 
-* Add basic Alexa connector
+* Add experimental Alexa connector
+* Change `Intent.parameter_schema()` to `Intent.parameter_schema` (with deprecation)
+* Fix double dataclass decorator bug
 
 # v0.1.0
 
