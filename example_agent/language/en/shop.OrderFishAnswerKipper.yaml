@@ -1,0 +1,10 @@
+examples:
+  - Kipper
+  - A kipper
+  - $amount{3} kippers
+
+responses:
+  default:
+    - text:
+      - Kipper, good choice. I'm adding $amount to cart
+      - I like kipper as well. I will add $amount to cart

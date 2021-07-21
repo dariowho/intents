@@ -1,0 +1,10 @@
+examples:
+  - Merluzzo
+  - Il merluzzo
+  - $amount{3} merluzzi
+
+responses:
+  default:
+    - text:
+      - Ottima scelta. Ne aggiungo $amount al carrello
+      - Molto bene, aggiungo al carrello

@@ -1,0 +1,11 @@
+examples:
+  - Vorrei un pesce
+  - Un pesce per favore
+  - $amount{2} pesci per favore
+  - Vorrei $amount{due} pesci grazie
+
+responses:
+  default:
+    - text:
+      - Che tipo di pesce vorresti?
+      - Quale pesce in particolare?

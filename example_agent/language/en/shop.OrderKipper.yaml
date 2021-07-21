@@ -1,0 +1,10 @@
+examples:
+  - I'd like to buy a kipper please
+  - May I have $amount{2} kippers please
+  - I want to buy $amount{3} kippers
+
+responses:
+  default:
+    - text:
+      - Sure, I will add $amount kippers to cart
+      - Alright, $amount kipper added to cart

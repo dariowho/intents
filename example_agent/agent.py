@@ -20,7 +20,7 @@ particularly:
 
 from intents import Agent
 
-from example_agent import smalltalk, rickroll, restaurant, travels
+from example_agent import smalltalk, rickroll, restaurant, travels, shop
 
 class ExampleAgent(Agent):
     """
@@ -31,3 +31,4 @@ ExampleAgent.register(smalltalk)
 ExampleAgent.register(rickroll)
 ExampleAgent.register(restaurant)
 ExampleAgent.register(travels)
+ExampleAgent.register(shop)

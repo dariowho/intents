@@ -4,7 +4,7 @@ from dataclasses import dataclass, field
 
 import pytest
 
-from intents import Intent, Sys
+from intents import Intent, Sys, Entity, follow
 from intents.model.intent import IntentParameterMetadata
 from intents.service_connector import Prediction
 from intents import language
@@ -126,6 +126,29 @@ def test_parameter_schema_class_property():
     intent_instance = intent_with_params(required_param=None, required_list_param=None)
     assert intent_with_params.parameter_schema == intent_instance.parameter_schema
 
+def test_parameter_schema_skips_related_intents():
+    class PaymentMethod(Entity):
+        pass
+
+    @dataclass
+    class ask_pay(Intent):
+        pass
+        
+    @dataclass
+    class confirm_payment(Intent):
+        customer_name: Sys.Person
+        contact_numbers: List[Sys.PhoneNumber]
+        payment_method: PaymentMethod
+
+        parent_ask_pay: ask_pay = follow()
+
+    expected = {
+        'customer_name': IntentParameterMetadata(name='customer_name', entity_cls=Sys.Person, is_list=False, required=True, default=None),
+        'contact_numbers': IntentParameterMetadata(name='contact_numbers', entity_cls=Sys.PhoneNumber, is_list=True, required=True, default=None),
+        'payment_method': IntentParameterMetadata(name='payment_method', entity_cls=PaymentMethod, is_list=False, required=True, default=None)
+    }
+    assert confirm_payment.parameter_schema == expected
+
 def test_dataclass_not_applied_twice():
     """https://github.com/dariowho/intents/issues/10"""
     def custom_dataclass(*args, **kwargs):
@@ -152,3 +175,5 @@ def test_warning_if_superclass_not_dataclass():
         @dataclass
         class a_sub_sub_intent(a_sub_intent):
             babar: Sys.Integer = 43
+
+# def subclass_checks_base_class_parameters():

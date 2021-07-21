@@ -6,7 +6,7 @@ import os
 import logging
 import tempfile
 from dataclasses import dataclass
-from typing import Union, Iterable
+from typing import Set, Union, Iterable
 
 import google.auth.credentials
 from google.cloud.dialogflow_v2.types import TextInput, QueryInput, EventInput
@@ -16,7 +16,8 @@ from google.cloud.dialogflow_v2.types import DetectIntentResponse, RestoreAgentR
 from google.protobuf.json_format import MessageToDict
 
 from intents import Agent, Intent
-from intents.service_connector import Connector, Prediction, ServiceEntityMappings
+from intents.model.relations import related_intents
+from intents.service_connector import Connector, Prediction
 from intents.connectors.dialogflow_es.auth import resolve_credentials
 from intents.connectors.dialogflow_es.util import dict_to_protobuf
 from intents.connectors.dialogflow_es import entities as df_entities
@@ -101,6 +102,7 @@ class DialogflowEsConnector(Connector):
         self._session_client = SessionsClient(credentials=self._credentials)
         self.rich_platforms = rich_platforms
         self.webhook_configuration = webhook_configuration
+        self._need_context_set: Set[type(Intent)] = _build_need_context_set(agent_cls)
 
     @property
     def gcp_project_id(self) -> str:
@@ -192,6 +194,13 @@ class DialogflowEsConnector(Connector):
             raise ValueError(f"Prediction returned intent '{prediction.intent_name}', but this was not found in Agent definition. Make sure to restore a latest Agent export from `services.dialogflow_es.export.export()`. If the problem persists, please file a bug on the Intents repository.")
         return intent_class.from_prediction(prediction)
 
+    def _intent_needs_context(self, intent: Intent) -> bool:
+        return intent in self._need_context_set
+
+    @staticmethod
+    def _context_name(intent: Intent) -> str:
+        return "c_" + intent.name.replace(".", "_") # TODO: refine
+
 #
 # Response to prediction
 #
@@ -210,3 +219,17 @@ def _df_response_to_prediction(df_response: DetectIntentResponse) -> DialogflowP
         fulfillment_text=df_response.query_result.fulfillment_text,
         df_response=df_response
     )
+
+def _build_need_context_set(agent_cls: type(Agent)) -> Set[Intent]:
+    """
+    Return a list of intents that need to spawn a context, based on their
+    relations:
+
+    * If intent *B* follows intent *A*, then intent *A* needs to spawn a context
+    """
+    result = set()
+    for intent in agent_cls.intents:
+        related = related_intents(intent)
+        for parent_intent in related.follow:
+            result.add(parent_intent)
+    return result

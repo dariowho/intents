@@ -47,6 +47,38 @@ def test_register_intent_invalid_language_data(mock_language):
         MyAgent._register_intent(smalltalk.hello)
 
 @patch('intents.language.intent_language_data')
+def test_register_intent_non_unique_parameter(mock_language):
+    @dataclass
+    class an_intent(Intent):
+        foo: Sys.Person
+
+    @dataclass
+    class a_consistent_intent(Intent):
+        foo: Sys.Person
+        bar: Sys.Integer
+
+    @dataclass
+    class an_inconsistent_intent(Intent):
+        foo: Sys.Integer
+        bar: Sys.Integer
+
+    @dataclass
+    class another_inconsistent_intent(Intent):
+        foo: List[Sys.Person]
+
+    class MyAgent(Agent):
+        pass
+
+    MyAgent.register(an_intent)
+    MyAgent.register(a_consistent_intent)
+    
+    with pytest.raises(ValueError):
+        MyAgent.register(an_inconsistent_intent)
+
+    with pytest.raises(ValueError):
+        MyAgent.register(another_inconsistent_intent)
+
+@patch('intents.language.intent_language_data')
 def test_register_intent_invalid_param_schema_list_default(mock_language):
     MyAgent = _get_toy_agent()
     
