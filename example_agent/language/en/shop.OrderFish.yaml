@@ -1,0 +1,13 @@
+examples:
+  - I want a fish
+  - I'd like to buy a fish please
+  - I'd like $amount{2} fishes please
+  - I want $amount{one} fish
+  - I want $amount{two} fishes
+  - Can I buy $amount{three} fishes?
+
+responses:
+  default:
+    - text:
+      - What kind of fish would you like?
+      - What sort of fish do you want?

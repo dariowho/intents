@@ -11,6 +11,7 @@ class with :meth:`intents.Agent.register`.
 """
 
 import re
+import inspect
 import logging
 import dataclasses
 from dataclasses import dataclass, is_dataclass
@@ -125,6 +126,9 @@ class _IntentMetaclass(type):
         for param_field in cls.__dataclass_fields__.values():
         # for param_field in cls.__dict__['__dataclass_fields__'].values():
             # List[...]
+            if inspect.isclass(param_field.type) and issubclass(param_field.type, Intent):
+                continue
+
             if isinstance(param_field.type, _GenericAlias):
                 if param_field.type.__dict__.get('_name') != 'List':
                     raise ValueError(f"Invalid typing '{param_field.type}' for parameter '{param_field.name}'. Only 'List' is supported.")
@@ -138,6 +142,9 @@ class _IntentMetaclass(type):
             else:
                 entity_cls = param_field.type
                 is_list = False
+
+            if not issubclass(entity_cls, entity.EntityMixin):
+                raise ValueError(f"Parameter '{param_field.name}' of intent '{cls.name}' is of type '{entity_cls}', which is not an Entity.")
 
             required = True
             default = None
@@ -211,6 +218,14 @@ class Intent(metaclass=_IntentMetaclass):
     >>> predicted = connector.predict("My name is John")
     user_says_hello(user_name="John") predicted.user_name "John"
     predicted.fulfillment_text "Hi John, I'm Agent"
+
+    .. warning::
+
+        Parameter names are meant to be **unique** within an Agent. That is, the same parameter
+        must always be defined with the same type. This is because 1) Some services (e.g. 
+        `Alexa <https://developer.amazon.com/en-US/docs/alexa/custom-skills/create-the-interaction-model-for-your-skill.html#intent-slot-names>`_)
+        require so. 2) Predictions overwrite parameters in context based on their name: better
+        make sure they are compatible.
 
     Last, we notice the **@dataclass** decorator. We require it to be added
     explicitly, this way IDEs will recognize the Intent class as a dataclass and

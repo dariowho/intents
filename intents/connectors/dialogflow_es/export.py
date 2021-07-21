@@ -13,6 +13,7 @@ from typing import List, Dict, Iterable
 from intents import language
 from intents.model.intent import _IntentMetaclass
 from intents.model.entity import SystemEntityMixin, _EntityMetaclass
+from intents.model.relations import related_intents
 import intents.connectors.dialogflow_es.agent_format as df
 from intents.connectors.dialogflow_es.entities import MAPPINGS as ENTITY_MAPPINGS
 
@@ -109,9 +110,20 @@ def render_agent(connector: "intents.DialogflowEsConnector",  agent_name: str, l
 # Intent
 #
 
+def get_input_contexts(connector: "DialogflowEsConnector", intent_cls: _IntentMetaclass) -> List[str]:
+    return [connector._context_name(i) for i in related_intents(intent_cls).follow]
+
+def get_output_contexts(connector: "DialogflowEsConnector", intent_cls: _IntentMetaclass) -> List[df.AffectedContext]:
+    result = []
+    if connector._intent_needs_context(intent_cls):
+        name = connector._context_name(intent_cls)
+        result.append(df.AffectedContext(name, 5)) # TODO: allow custom lifespan
+    return result
+
 def render_intent(connector: "DialogflowEsConnector", intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
     response = df.Response(
-        affectedContexts=[df.AffectedContext(c.name, c.lifespan) for c in intent_cls.output_contexts],
+        affectedContexts=get_output_contexts(connector, intent_cls),
+        # affectedContexts=[df.AffectedContext(c.name, c.lifespan) for c in intent_cls.output_contexts],
         parameters=render_parameters(intent_cls, language_data),
         messages=render_responses(intent_cls, language_data, connector.rich_platforms),
     )
@@ -119,7 +131,8 @@ def render_intent(connector: "DialogflowEsConnector", intent_cls: _IntentMetacla
     return df.Intent(
         id=str(uuid1()),
         name=intent_cls.name,
-        contexts=[c.name for c in intent_cls.input_contexts],
+        contexts=get_input_contexts(connector, intent_cls),
+        # contexts=[c.name for c in intent_cls.input_contexts],
         responses=[response],
 
         # TODO: re-enable

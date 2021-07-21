@@ -13,13 +13,22 @@ from types import ModuleType
 from typing import List, Dict, Union
 from dataclasses import dataclass
 
-from intents.model.intent import Intent, _IntentMetaclass
+from intents.model.intent import Intent, _IntentMetaclass, IntentParameterMetadata
 from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
 from intents.model.context import Context, _ContextMetaclass
 from intents.model.event import _EventMetaclass
 from intents import language
 
 logger = logging.getLogger(__name__)
+
+@dataclass
+class RegisteredParameter:
+    """
+    Agents register intent parameters. If two intents declare the same parameter
+    name, they must also declare the same type for it. 
+    """
+    metadata: IntentParameterMetadata
+    used_in: List[type(Intent)]
 
 class _AgentMetaclass(type):
 
@@ -88,6 +97,7 @@ class Agent(metaclass=_AgentMetaclass):
     _entities_by_name: Dict[str, _EntityMetaclass] = None
     _contexts_by_name: Dict[str, _ContextMetaclass] = None
     _events_by_name: Dict[str, _EventMetaclass] = None
+    _parameters_by_name: Dict[str, RegisteredParameter] = None
 
     @classmethod
     def register(cls, resource: Union[_IntentMetaclass, ModuleType]):
@@ -157,6 +167,7 @@ class Agent(metaclass=_AgentMetaclass):
             cls._entities_by_name = {}
             cls._contexts_by_name = {}
             cls._events_by_name = {}
+            cls._parameters_by_name = {}
 
         if cls._intents_by_name.get(intent_cls.name):
             raise ValueError(f"Another intent exists with name {intent_cls.name}: {cls._intents_by_name[intent_cls.name]}")
@@ -178,12 +189,34 @@ class Agent(metaclass=_AgentMetaclass):
             cls._register_event(event_cls, intent_cls)
 
         for param_name, param_metadata in intent_cls.parameter_schema.items():
+            cls._register_parameter(param_metadata, intent_cls)
             cls._register_entity(param_metadata.entity_cls, param_name, intent_cls.name)
 
         cls.intents.append(intent_cls)
         cls._intents_by_name[intent_cls.name] = intent_cls
         cls._intents_by_event[intent_cls.events[0].name] = intent_cls
 
+    @classmethod
+    def _register_parameter(cls, param_meta: IntentParameterMetadata, intent_cls: type(Intent)):
+        existing_param: RegisteredParameter = cls._parameters_by_name.get(param_meta.name)
+        if not existing_param:
+            cls._parameters_by_name[param_meta.name] = RegisteredParameter(
+                metadata=param_meta,
+                used_in=[intent_cls]
+            )
+            return
+
+        if param_meta.entity_cls != existing_param.metadata.entity_cls:
+            raise ValueError(f"Parameters with the same name must have the same type. Parameter '{param_meta.name}' " +
+                f"is declared in Intent '{intent_cls.name}' with type '{param_meta.entity_cls}'; however, it was " +
+                f"also declared in Intents '{existing_param.used_in}' with type '{existing_param.metadata.entity_cls}'")
+                
+        if param_meta.is_list and not existing_param.metadata.is_list:
+            raise ValueError(f"Parameters with the same name must have the same type. Parameter '{param_meta.name}' " +
+                f"is declared in Intent '{intent_cls.name}' as a List; however, it was also declared in Intents " +
+                f"'{existing_param.used_in}' as not a List")
+
+        existing_param.used_in.append(intent_cls)
 
     @classmethod
     def _register_entity(cls, entity_cls: _EntityMetaclass, parameter_name: str, intent_name: str):
