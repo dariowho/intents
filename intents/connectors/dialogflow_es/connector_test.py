@@ -4,6 +4,7 @@ from google.cloud.dialogflow_v2.types import DetectIntentResponse
 
 from intents.connectors.dialogflow_es.connector import DialogflowEsConnector
 from intents import language
+from intents.service_connector import Prediction
 from example_agent import ExampleAgent, travels
 
 # A full Dialogflow Response, with
@@ -36,9 +37,9 @@ def test_predict(mock_df_client_class, *args):
 
     df = DialogflowEsConnector('/fake/path/to/credentials.json', ExampleAgent)
     predicted = df.predict("A fake sentence")
-    assert isinstance(predicted, travels.user_wants_travel)
+    assert isinstance(predicted.intent, travels.user_wants_travel)
     assert predicted.fulfillment_text == df_response_quick_replies.query_result.fulfillment_text
-    assert predicted.prediction.fulfillment_messages == {
+    assert predicted.fulfillment_message_dict == {
         language.IntentResponseGroup.DEFAULT: [
             language.TextIntentResponse(choices=["If you like I can recommend you an hotel. Or I can send you some holiday pictures"])
         ],
@@ -47,3 +48,29 @@ def test_predict(mock_df_client_class, *args):
             language.QuickRepliesIntentResponse(replies=["Recommend an hotel", "Send holiday photo"])
         ]
     }
+
+#
+# Prediction
+#
+
+def test_fulfillment_messages():
+    mock_default_messages = [
+        language.TextIntentResponse(choices=["If you like I can recommend you an hotel. Or I can send you some holiday pictures"])
+    ]
+    mock_rich_messages = [
+        language.TextIntentResponse(choices=["I also like travels, how can I help you?"]),
+        language.QuickRepliesIntentResponse(replies=["Recommend an hotel", "Send holiday photo"])
+    ]
+    prediction = Prediction(
+        intent=None,
+        confidence=0.5,
+        fulfillment_message_dict={
+            language.IntentResponseGroup.DEFAULT: mock_default_messages,
+            language.IntentResponseGroup.RICH: mock_rich_messages
+        },
+        fulfillment_text="Fake fulfillment text"
+    )
+
+    assert prediction.fulfillment_messages() == mock_rich_messages
+    assert prediction.fulfillment_messages(language.IntentResponseGroup.DEFAULT) == mock_default_messages
+    assert prediction.fulfillment_messages(language.IntentResponseGroup.RICH) == mock_rich_messages

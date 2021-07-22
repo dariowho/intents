@@ -6,8 +6,6 @@ import pytest
 
 from intents import Intent, Sys, Entity, follow
 from intents.model.intent import IntentParameterMetadata
-from intents.service_connector import Prediction
-from intents import language
 
 def test_param_schema_no_params():
 
@@ -66,40 +64,6 @@ def test_param_scheme_invalid_list_default():
             optional_list_param: List[Sys.Person] = 42
 
         intent_with_invalid_list_default.parameter_schema
-
-def test_fulfillment_messages():
-    class MockPredictionImplementation(Prediction):
-        @property
-        def entity_mappings(self):
-            return None
-
-    mock_default_messages = [
-        language.TextIntentResponse(choices=["If you like I can recommend you an hotel. Or I can send you some holiday pictures"])
-    ]
-    mock_rich_messages = [
-        language.TextIntentResponse(choices=["I also like travels, how can I help you?"]),
-        language.QuickRepliesIntentResponse(replies=["Recommend an hotel", "Send holiday photo"])
-    ]
-    mock_prediction = MockPredictionImplementation(
-        intent_name='fake_intent_name',
-        confidence=0.5,
-        contexts={},
-        parameters_dict={},
-        fulfillment_messages={
-            language.IntentResponseGroup.DEFAULT: mock_default_messages,
-            language.IntentResponseGroup.RICH: mock_rich_messages
-        },
-        fulfillment_text="Fake fulfillment text"
-    )
-
-    class fake_intent(Intent):
-        pass
-
-    predicted = fake_intent.from_prediction(mock_prediction)
-
-    assert predicted.fulfillment_messages() == mock_rich_messages
-    assert predicted.fulfillment_messages(language.IntentResponseGroup.DEFAULT) == mock_default_messages
-    assert predicted.fulfillment_messages(language.IntentResponseGroup.RICH) == mock_rich_messages
 
 def test_deprecated_parameter_schema():
 

@@ -1,6 +1,10 @@
 # v0.2.0 (in development)
 
+This release, like probably many others in 0.x (see [semantic versioning FAQ](https://semver.org/#doesnt-this-discourage-rapid-development-and-fast-iteration)), contains breaking changes. They are reported below.
+
 * Add experimental Alexa connector
+* Add `follow` intent relation
+* Breaking change: predict() and trigger() now return Prediction objects
 * Change `Intent.parameter_schema()` to `Intent.parameter_schema` (with deprecation)
 * Fix double dataclass decorator bug
 
