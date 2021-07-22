@@ -216,8 +216,12 @@ class Intent(metaclass=_IntentMetaclass):
     When a connector is instantiated, predictions will look like this:
 
     >>> predicted = connector.predict("My name is John")
-    user_says_hello(user_name="John") predicted.user_name "John"
-    predicted.fulfillment_text "Hi John, I'm Agent"
+    >>> predicted.intent
+    user_says_hello(user_name="John")
+    >>> predicted.intent.user_name
+    "John"
+    >>> predicted.fulfillment_text
+    "Hi John, I'm Agent"
 
     .. warning::
 
@@ -237,76 +241,6 @@ class Intent(metaclass=_IntentMetaclass):
     input_contexts: List[context._ContextMetaclass] = None
     output_contexts: List[context.Context] = None
     events: List[event.Event] = None # TODO: at some point this may contain strings
-
-    # A :class:`Connector` provides this
-    prediction: 'intents.Prediction'
-
-    @property
-    def confidence(self) -> float:
-        return self.prediction.confidence
-
-    @property
-    def contexts(self) -> list:
-        return self.prediction.contexts
-
-    @property
-    def fulfillment_text(self) -> str:
-        return self.prediction.fulfillment_text
-
-    def fulfillment_messages(
-        self,
-        response_group: "language.IntentResponseGroup"=language.IntentResponseGroup.RICH
-    ) -> List["language.IntentResponse"]:
-        """
-        Return a list of fulfillment messages that are suitable for the given
-        Response Group. The following scenarios may happen:
-
-        * :class:`language.IntentResponseGroup.DEFAULT` is requested -> Message
-          in the `DEFAULT` group will be returned
-        * :class:`language.IntentResponseGroup.RICH` is requested
-
-            * `RICH` messages are defined -> `RICH` messages are returned
-            * No `RICH` message is defined -> `DEFAULT` messages are returned
-
-        If present, messages in the "rich" group will be returned:
-
-        >>> result.fulfillment_messages()
-        [TextIntentResponse(choices=['I like travelling too! How can I help?']),
-         QuickRepliesIntentResponse(replies=['Recommend a hotel', 'Send holiday photo', 'Where the station?'])]
-         
-        Alternatively, I can ask for plain-text default messages:
-
-        >>> from intents.language import IntentResponseGroup
-        >>> result.fulfillment_messages(IntentResponseGroup.DEFAULT)
-        [TextIntentResponse(choices=['Nice, I can send you holiday pictures, or recommend an hotel'])]
-        
-        """
-        if response_group == language.IntentResponseGroup.RICH and \
-           not self.prediction.fulfillment_messages.get(response_group):
-            response_group = language.IntentResponseGroup.DEFAULT
-
-        return self.prediction.fulfillment_messages.get(response_group, [])
-
-    @classmethod
-    def from_prediction(cls, prediction: 'intents.Prediction') -> 'Intent':
-        """
-        Build an :class:`Intent` class from a :class:`Prediction`. In practice:
-
-        #. Match parameters givent the Intent schema
-        #. Instantiate the Intent
-        #. Set the `prediction` field on the instantiated Intent.
-
-        Note that this method is mostly for internal use, *connectors* will call
-        it for you.
-        """
-        try:
-            parameters = prediction.parameters(cls.parameter_schema)
-        except ValueError as exc:
-            raise ValueError(f"Failed to match parameters for Intent class '{cls}'. Prediction: {prediction}") from exc
-
-        result = cls(**parameters)
-        result.prediction = prediction
-        return result
 
     @property
     def parameter_schema(self) -> Dict[str, IntentParameterMetadata]:

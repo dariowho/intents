@@ -21,12 +21,12 @@ More details can be found in the :class:`Connector` interface.
 from uuid import uuid1
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 
 from intents import Intent, Agent
-from intents.model.intent import IntentParameterMetadata
-from intents.model.entity import SystemEntityMixin, _EntityMetaclass
 from intents.language import IntentResponse, IntentResponseGroup
+from intents.model.intent import IntentParameterMetadata, _IntentMetaclass
+from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
 
 class EntityMapping(ABC):
     """
@@ -146,52 +146,79 @@ class ServiceEntityMappings(dict):
         return result
 
 @dataclass
-class Prediction(ABC):
+class Prediction:
     """
-    This class is meant to abstract prediction results from a generic Prediction
-    Service. It uses names from Dialogflow, as it is currently the only
-    supported service
+    One of the core uses of Service Connectors is to predict user utterances, or
+    programmatically trigger intents. This class models the result of such
+    predictions and triggers
     """
-    intent_name: str
-    confidence: str
-    contexts: dict
-    parameters_dict: dict
-    fulfillment_messages: Dict[IntentResponseGroup, List[IntentResponse]]
+    intent: Intent
+    confidence: float
+    fulfillment_message_dict: Dict[IntentResponseGroup, List[IntentResponse]] = field(repr=False)
     fulfillment_text: str = None
 
-    @property
-    @abstractmethod
-    def entity_mappings(self) -> ServiceEntityMappings:
+    def fulfillment_messages(
+        self,
+        response_group: IntentResponseGroup=IntentResponseGroup.RICH
+    ) -> List[IntentResponse]:
         """
-        A Prediction subclass must know the Entity Mappings of its Prediction
-        Service. :meth:`parameters` will use such mappings to convert parameters
-        in `parameters_dict` to their generic `Sys.*` type.
-        """
+        Return a list of fulfillment messages that are suitable for the given
+        Response Group. The following scenarios may happen:
 
-    def parameters(self, schema: Dict[str, IntentParameterMetadata]) -> Dict[str, Any]:
-        """
-        Cast parameters in `Prediction.parameters_dict` according to the given
-        schema. This is necessary, because parameter types are not known at
-        prediction time, and therefore they need to be determined by the
-        corresponding :class:`Intent` class.
-        """
-        result = {}
-        for param_name, param_value in self.parameters_dict.items():
-            if param_name not in schema:
-                raise ValueError(f"Found parameter {param_name} in Service Prediction, but Intent class does not define it.")
-            param_metadata = schema[param_name]
-            mapping = self.entity_mappings[param_metadata.entity_cls]
-            try:
-                if param_metadata.is_list:
-                    if not isinstance(param_value, list):
-                        raise ValueError(f"Parameter {param_name} is defined as List, but returned value is not of 'list' type: {param_value}")
-                    result[param_name] = [mapping.from_service(x) for x in param_value]
-                else:
-                    result[param_name] = mapping.from_service(param_value)
-            except Exception as exc:
-                raise RuntimeError(f"Failed to match parameter '{param_name}' with value '{param_value}' against schema {schema}. See source exception above for details.") from exc
+        * :class:`language.IntentResponseGroup.DEFAULT` is requested -> Message
+          in the `DEFAULT` group will be returned
+        * :class:`language.IntentResponseGroup.RICH` is requested
 
-        return result
+            * `RICH` messages are defined -> `RICH` messages are returned
+            * No `RICH` message is defined -> `DEFAULT` messages are returned
+
+        If present, messages in the "rich" group will be returned:
+
+        >>> prediction.fulfillment_messages()
+        [TextIntentResponse(choices=['I like travelling too! How can I help?']),
+         QuickRepliesIntentResponse(replies=['Recommend a hotel', 'Send holiday photo', 'Where the station?'])]
+         
+        Alternatively, I can ask for plain-text default messages:
+
+        >>> from intents.language import IntentResponseGroup
+        >>> prediction.fulfillment_messages(IntentResponseGroup.DEFAULT)
+        [TextIntentResponse(choices=['Nice, I can send you holiday pictures, or recommend an hotel'])]
+        """
+        if response_group == IntentResponseGroup.RICH and \
+           not self.fulfillment_message_dict.get(response_group):
+            response_group = IntentResponseGroup.DEFAULT
+
+        return self.fulfillment_message_dict.get(response_group, [])
+
+def deserialize_intent_parameters(
+    service_parameters: Dict[str, Any],
+    intent_cls: _IntentMetaclass,
+    mappings: ServiceEntityMappings
+) -> Dict[str, EntityMixin]:
+    """
+    Cast parameters in `Prediction.parameters_dict` according to the given
+    schema. Typically this happens when a Connector has to turn prediction
+    parameters into *Intents* entities.
+    """
+    result = {}
+    # TODO: Custom entities?
+    schema = intent_cls.parameter_schema
+    for param_name, param_value in service_parameters.items():
+        if param_name not in schema:
+            raise ValueError(f"Found parameter {param_name} in Service Prediction, but Intent class does not define it.")
+        param_metadata = schema[param_name]
+        mapping = mappings[param_metadata.entity_cls]
+        try:
+            if param_metadata.is_list:
+                if not isinstance(param_value, list):
+                    raise ValueError(f"Parameter {param_name} is defined as List, but returned value is not of 'list' type: {param_value}")
+                result[param_name] = [mapping.from_service(x) for x in param_value]
+            else:
+                result[param_name] = mapping.from_service(param_value)
+        except Exception as exc:
+            raise RuntimeError(f"Failed to match parameter '{param_name}' with value '{param_value}' against schema {schema}. See source exception above for details.") from exc
+
+    return result
 
 class Connector(ABC):
 
@@ -223,7 +250,7 @@ class Connector(ABC):
         """
 
     @abstractmethod
-    def predict(self, message: str, session: str=None, language: str=None) -> Intent:
+    def predict(self, message: str, session: str=None, language: str=None) -> Prediction:
         """
         Predict the given User message in the given session using the given
         language. When `session` or `language` are None, `predict` will use the
@@ -235,13 +262,14 @@ class Connector(ABC):
         >>> from intents.connectors import DialogflowEsConnector
         >>> from example_agent import ExampleAgent
         >>> df = DialogflowEsConnector('/path/to/service-account.json', ExampleAgent)
-        >>> df_result = df.predict("Hi, my name is Guido")
+        >>> prediction = df.predict("Hi, my name is Guido")
+        >>> prediction.intent
         user_name_give(user_name='Guido')
-        >>> df_result.user_name
+        >>> prediction.intent.user_name
         "Guido"
-        >>> df_result.fulfillment_text
+        >>> prediction.fulfillment_text
         "Hi Guido, I'm Bot"
-        >>> df_result.confidence
+        >>> prediction.confidence
         0.86
 
         :param message: The User message to predict
@@ -251,7 +279,7 @@ class Connector(ABC):
         """
 
     @abstractmethod
-    def trigger(self, intent: Intent, session: str=None, language: str=None) -> Intent:
+    def trigger(self, intent: Intent, session: str=None, language: str=None) -> Prediction:
         """
         Trigger the given Intent in the given session using the given language.
         When `session` or `language` are None, `predict` will use the default
@@ -260,11 +288,12 @@ class Connector(ABC):
         >>> from intents.connectors import DialogflowEsConnector
         >>> from example_agent import ExampleAgent, smalltalk
         >>> df = DialogflowEsConnector('/path/to/service-account.json', ExampleAgent)
-        >>> df_result = df.trigger(smalltalk.agent_name_give(agent_name='Alice'))
+        >>> prediction = df.trigger(smalltalk.agent_name_give(agent_name='Alice'))
+        >>> prediction.intent
         agent_name_give(agent_name='Alice')
-        >>> df_result.fulfillment_text
+        >>> prediction.fulfillment_text
         "Howdy Human, I'm Alice"
-        >>> df_result.confidence
+        >>> prediction.confidence
         1.0
 
         :param intent: The Intent instance to trigger

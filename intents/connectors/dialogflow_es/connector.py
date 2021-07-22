@@ -5,8 +5,8 @@ Here we implement :class:`DialogflowEsConnector`, an implementation of
 import os
 import logging
 import tempfile
-from dataclasses import dataclass
 from typing import Set, Union, Iterable
+from dataclasses import dataclass, field
 
 import google.auth.credentials
 from google.cloud.dialogflow_v2.types import TextInput, QueryInput, EventInput
@@ -17,7 +17,7 @@ from google.protobuf.json_format import MessageToDict
 
 from intents import Agent, Intent
 from intents.model.relations import related_intents
-from intents.service_connector import Connector, Prediction
+from intents.service_connector import Connector, Prediction, deserialize_intent_parameters
 from intents.connectors.dialogflow_es.auth import resolve_credentials
 from intents.connectors.dialogflow_es.util import dict_to_protobuf
 from intents.connectors.dialogflow_es import entities as df_entities
@@ -40,6 +40,10 @@ RICH_RESPONSE_PLATFORMS = ["telegram", "facebook", "slack", "line", "hangouts"]
 class DialogflowPrediction(Prediction):
     """
     This is an implementation of :class:`Prediction` that comes from Dialogflow.
+    It adds a `df_response` field, through which the full Dialogflow prediction
+    payload can be accessed. Note that this is a tool for debugging: relying on
+    Dialogflow data in your business logic is likely to make it harder to
+    connect your Agent to different platforms.
 
     `DialogflowPredictions` are produced internally by
     :class:`DialogflowEsConnector`, and automatically used to instantiate
@@ -47,9 +51,7 @@ class DialogflowPrediction(Prediction):
     :class:`DialogflowEsConnector.trigger`. Probably you won't need to manually
     operate with Predictions.
     """
-    df_response: DetectIntentResponse = None
-
-    entity_mappings = df_entities.MAPPINGS
+    df_response: DetectIntentResponse = field(default=False, repr=False)
 
 class DialogflowEsConnector(Connector):
     """
@@ -145,8 +147,7 @@ class DialogflowEsConnector(Connector):
         )
         df_response = df_result
 
-        prediction = _df_response_to_prediction(df_response)
-        return self._prediction_to_intent(prediction)
+        return self._df_response_to_prediction(df_response)
 
     def trigger(self, intent: Intent, session: str=None, language: str=None) -> Intent:
         if not session:
@@ -182,17 +183,33 @@ class DialogflowEsConnector(Connector):
         )
         df_response = result
 
-        prediction = _df_response_to_prediction(df_response)
-        return self._prediction_to_intent(prediction)
+        return self._df_response_to_prediction(df_response)
 
-    def _prediction_to_intent(self, prediction: Prediction) -> Intent:
+    def _df_response_to_prediction(self, df_response: DetectIntentResponse) -> DialogflowPrediction:
+        return DialogflowPrediction(
+            intent=self._df_response_to_intent(df_response),
+            confidence=df_response.query_result.intent_detection_confidence,
+            fulfillment_message_dict=intent_responses(df_response),
+            fulfillment_text=df_response.query_result.fulfillment_text,
+            df_response=df_response
+        )
+
+    def _df_response_to_intent(self, df_response: DetectIntentResponse) -> Intent:
         """
-        Turns a Prediction object into an Intent object
+        Convert a Dialogflow prediction response into an instance of :class:`Intent`.
         """
-        intent_class: Intent = self.agent_cls._intents_by_name.get(prediction.intent_name)
-        if not intent_class:
-            raise ValueError(f"Prediction returned intent '{prediction.intent_name}', but this was not found in Agent definition. Make sure to restore a latest Agent export from `services.dialogflow_es.export.export()`. If the problem persists, please file a bug on the Intents repository.")
-        return intent_class.from_prediction(prediction)
+        # TODO: response may be partial in case of slot-filling
+        # TODO: fill related intents
+        intent_name = df_response.query_result.intent.display_name
+        intent_cls: Intent = self.agent_cls._intents_by_name.get(intent_name)
+        if not intent_cls:
+            raise ValueError(f"Prediction returned intent '{intent_name}', " +
+                "but this was not found in Agent definition. Make sure to restore a latest " +
+                "Agent export from `services.dialogflow_es.export.export()`. If the problem " +
+                "persists, please file a bug on the Intents repository.")
+        df_parameters = MessageToDict(df_response._pb.query_result.parameters)
+        parameters_dict = deserialize_intent_parameters(df_parameters, intent_cls, self.entity_mappings)
+        return intent_cls(**parameters_dict)
 
     def _intent_needs_context(self, intent: Intent) -> bool:
         return intent in self._need_context_set
@@ -201,24 +218,6 @@ class DialogflowEsConnector(Connector):
     def _context_name(intent: Intent) -> str:
         return "c_" + intent.name.replace(".", "_") # TODO: refine
 
-#
-# Response to prediction
-#
-
-def _df_response_to_prediction(df_response: DetectIntentResponse) -> DialogflowPrediction:
-    return DialogflowPrediction(  # pylint: disable=abstract-class-instantiated
-        intent_name=df_response.query_result.intent.display_name,
-        parameters_dict=MessageToDict(
-            df_response._pb.query_result.parameters
-        ),  # TODO: check types
-        # TODO: model
-        contexts=[MessageToDict(c)
-                  for c in df_response._pb.query_result.output_contexts],
-        confidence=df_response.query_result.intent_detection_confidence,
-        fulfillment_messages=intent_responses(df_response),
-        fulfillment_text=df_response.query_result.fulfillment_text,
-        df_response=df_response
-    )
 
 def _build_need_context_set(agent_cls: type(Agent)) -> Set[Intent]:
     """

@@ -5,6 +5,7 @@ todo:
 - render contexts for follow()
 - build related intents in prediction
 - check cases for DF parameter value
++ custom entities parameter de-serialization
 """
 from dataclasses import dataclass
 
