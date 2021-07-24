@@ -13,11 +13,10 @@ Agent fundamentals: Smalltalk
    :members:
 
 
-Input/Output Contexts: Rickroll
+Intent Relations: Shop
 -------------------------------
 
-.. automodule:: example_agent.rickroll
-   :members:
+.. automodule:: example_agent.shop
 
 Custom Entities: Restaurant
 ---------------------------

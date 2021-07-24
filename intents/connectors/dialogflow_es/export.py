@@ -10,7 +10,7 @@ from uuid import uuid1
 from dataclasses import asdict
 from typing import List, Dict, Iterable
 
-from intents import language
+from intents import Intent, language
 from intents.model.intent import _IntentMetaclass
 from intents.model.entity import SystemEntityMixin, _EntityMetaclass
 from intents.model.relations import related_intents
@@ -111,13 +111,50 @@ def render_agent(connector: "intents.DialogflowEsConnector",  agent_name: str, l
 #
 
 def get_input_contexts(connector: "DialogflowEsConnector", intent_cls: _IntentMetaclass) -> List[str]:
-    return [connector._context_name(i) for i in related_intents(intent_cls).follow]
+    result = [connector._context_name(r.intent_cls) for r in related_intents(intent_cls).follow]
+    
+    # TODO: remove after deprecation
+    result.extend([c.name for c in intent_cls.input_contexts])
 
-def get_output_contexts(connector: "DialogflowEsConnector", intent_cls: _IntentMetaclass) -> List[df.AffectedContext]:
+    return result
+
+def get_output_contexts(
+    connector: "DialogflowEsConnector",
+    intent_cls: _IntentMetaclass,
+    visited: List[_IntentMetaclass]=None
+) -> List[df.AffectedContext]:
+    """
+    An Intent can output its own context (e.g. intent `OrderFish` can spawn
+    context `c_orderfish`). However, this should only happen if that context is
+    actually needed (i.e. if there are intents referencing it).
+
+    Also, this procedure is recursive: if intent `OrderFish` inherits from
+    intent `OrderItem`, and there are intents referencing `c_orderitem`, then
+    `OrderFish` should output `c_orderitem`
+    """
+    if not visited:
+        visited = []
+
+    if intent_cls is Intent:
+        return []
+
     result = []
     if connector._intent_needs_context(intent_cls):
         name = connector._context_name(intent_cls)
         result.append(df.AffectedContext(name, 5)) # TODO: allow custom lifespan
+
+    # TODO: remove after deprecation
+    if issubclass(intent_cls, Intent):
+        result.extend([
+            df.AffectedContext(c.name, c.lifespan) for c in intent_cls.output_contexts
+            if c.name not in [ec.name for ec in result]
+        ])
+
+    visited.append(intent_cls)
+    for super_cls in intent_cls.mro():
+        if super_cls not in visited and issubclass(super_cls, Intent):
+            result.extend(get_output_contexts(connector, super_cls, visited))
+
     return result
 
 def render_intent(connector: "DialogflowEsConnector", intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):

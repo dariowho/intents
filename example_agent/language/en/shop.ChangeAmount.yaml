@@ -1,0 +1,17 @@
+examples:
+  - I'd like to change the amount of that
+  - Actually, I'd rather have more
+  - Less than that actually
+  - Make it $amount{two}
+  - let's make it $amount{1} please
+
+slot_filling_prompts:
+  amount:
+    - How many would you like?
+    - Sure, so how many in total?
+
+responses:
+  default:
+    - text:
+      - Sure, $amount kippers for you
+      - Alright, I changed the amount to $amount

@@ -1,0 +1,18 @@
+examples:
+  - Anche qualcuno in più
+  - Forse anche qualcuno in meno
+  - Facciamo $amount{2}
+  - Vorrei cambiare la quantità
+  - È possibile cambiare la quantità
+  - Posso averne $amount{2}?
+  - Posso averne $amount{2} per favore?
+
+slot_filling_prompts:
+  amount:
+    - Certo, quanti ne vorrebbe?
+    - Mi dica pure quanti ne vuole
+
+responses:
+  default:
+    - text:
+      - Ok, $amount merluzzi per lei
