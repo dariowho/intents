@@ -5,8 +5,8 @@ Here we implement :class:`DialogflowEsConnector`, an implementation of
 import os
 import logging
 import tempfile
-from typing import Set, Union, Iterable
 from dataclasses import dataclass, field
+from typing import Set, Dict, Union, Iterable
 
 import google.auth.credentials
 from google.cloud.dialogflow_v2.types import TextInput, QueryInput, EventInput
@@ -16,6 +16,8 @@ from google.cloud.dialogflow_v2.types import DetectIntentResponse, RestoreAgentR
 from google.protobuf.json_format import MessageToDict
 
 from intents import Agent, Intent
+from intents.model.agent import _AgentMetaclass
+from intents.model.intent import _IntentMetaclass
 from intents.model.relations import related_intents
 from intents.service_connector import Connector, Prediction, deserialize_intent_parameters
 from intents.connectors.dialogflow_es.auth import resolve_credentials
@@ -23,6 +25,7 @@ from intents.connectors.dialogflow_es.util import dict_to_protobuf
 from intents.connectors.dialogflow_es import entities as df_entities
 from intents.connectors.dialogflow_es import export as df_export
 from intents.connectors.dialogflow_es.response_format import intent_responses
+from intents.connectors.dialogflow_es.prediction import DialogflowResponse
 from intents.connectors.commons import WebhookConfiguration
 
 logger = logging.getLogger(__name__)
@@ -87,6 +90,8 @@ class DialogflowEsConnector(Connector):
 
     _credentials: google.auth.credentials.Credentials
     _session_client: SessionsClient
+    _need_context_set: Set[type(Intent)]
+    _intents_by_context: Dict[str, type(Intent)]
 
     def __init__(
         self,
@@ -104,7 +109,8 @@ class DialogflowEsConnector(Connector):
         self._session_client = SessionsClient(credentials=self._credentials)
         self.rich_platforms = rich_platforms
         self.webhook_configuration = webhook_configuration
-        self._need_context_set: Set[type(Intent)] = _build_need_context_set(agent_cls)
+        self._need_context_set = _build_need_context_set(agent_cls)
+        self._intents_by_context = _build_intents_by_context(agent_cls)
 
     @property
     def gcp_project_id(self) -> str:
@@ -130,7 +136,6 @@ class DialogflowEsConnector(Connector):
             )
             agents_client.restore_agent(request=restore_request)
 
-
     def predict(self, message: str, session: str = None, language: str = None) -> Intent:
         if not session:
             session = self.default_session
@@ -145,7 +150,7 @@ class DialogflowEsConnector(Connector):
             session=session_path,
             query_input=query_input
         )
-        df_response = df_result
+        df_response = DialogflowResponse(df_result)
 
         return self._df_response_to_prediction(df_response)
 
@@ -177,47 +182,83 @@ class DialogflowEsConnector(Connector):
         query_input = QueryInput(event=event_input)
         session_path = self._session_client.session_path(
             self.gcp_project_id, session)
-        result = self._session_client.detect_intent(
+        df_result = self._session_client.detect_intent(
             session=session_path,
             query_input=query_input
         )
-        df_response = result
+        df_response = DialogflowResponse(df_result)
 
         return self._df_response_to_prediction(df_response)
 
-    def _df_response_to_prediction(self, df_response: DetectIntentResponse) -> DialogflowPrediction:
+    def _df_response_to_prediction(self, df_response: DialogflowResponse) -> DialogflowPrediction:
         return DialogflowPrediction(
             intent=self._df_response_to_intent(df_response),
-            confidence=df_response.query_result.intent_detection_confidence,
-            fulfillment_message_dict=intent_responses(df_response),
-            fulfillment_text=df_response.query_result.fulfillment_text,
+            confidence=df_response.protobuf_response.query_result.intent_detection_confidence,
+            fulfillment_message_dict=intent_responses(df_response.protobuf_response),
+            fulfillment_text=df_response.protobuf_response.query_result.fulfillment_text,
             df_response=df_response
         )
 
-    def _df_response_to_intent(self, df_response: DetectIntentResponse) -> Intent:
+    def _df_response_to_intent(
+        self,
+        df_response: DialogflowResponse,
+        build_related_cls: _IntentMetaclass=None,
+        visited_intents: Set[_IntentMetaclass]=None
+    ) -> Intent:
         """
-        Convert a Dialogflow prediction response into an instance of :class:`Intent`.
+        Convert a Dialogflow prediction response into an instance of
+        :class:`Intent`. If `build_related_cls` is passed, build the given
+        Intent instead (this is used for related intents); in this case contexts
+        and parameters will be checked for consistency.
+
+        :param df_response: A Dialogflow Response
+        :param build_related_cls: Force to build the related intent instead of
+        the predicted one
+        :param visited_intents: This is used internally to prevent recursion loops
         """
-        # TODO: response may be partial in case of slot-filling
-        # TODO: fill related intents
-        intent_name = df_response.query_result.intent.display_name
-        intent_cls: Intent = self.agent_cls._intents_by_name.get(intent_name)
-        if not intent_cls:
-            raise ValueError(f"Prediction returned intent '{intent_name}', " +
-                "but this was not found in Agent definition. Make sure to restore a latest " +
-                "Agent export from `services.dialogflow_es.export.export()`. If the problem " +
-                "persists, please file a bug on the Intents repository.")
-        df_parameters = MessageToDict(df_response._pb.query_result.parameters)
-        parameters_dict = deserialize_intent_parameters(df_parameters, intent_cls, self.entity_mappings)
-        return intent_cls(**parameters_dict)
+        if not visited_intents:
+            visited_intents = set()
+
+        contexts, context_parameters = df_response.contexts()
+        
+        # Slot filling in progress
+        if "__system_counters__" in contexts:
+            return None
+
+        if build_related_cls:
+            # TODO: adjust lifespan
+            intent_cls = build_related_cls
+            df_parameters = {
+                p_name: p.value for p_name, p in context_parameters.items() 
+                if p_name in intent_cls.parameter_schema
+            }
+        else:
+            intent_name = df_response.intent_name
+            intent_cls: Intent = self.agent_cls._intents_by_name.get(intent_name)
+            if not intent_cls:
+                raise ValueError(f"Prediction returned intent '{intent_name}', " +
+                    "but this was not found in Agent definition. Make sure to restore a latest " +
+                    "Agent export from `services.dialogflow_es.export.export()`. If the problem " +
+                    "persists, please file a bug on the Intents repository.")
+            df_parameters = df_response.intent_parameters
+
+        visited_intents.add(intent_cls)
+        parameter_dict = deserialize_intent_parameters(df_parameters, intent_cls, self.entity_mappings)
+        related_intents_dict = {}
+        for related in related_intents(intent_cls).follow:
+            if related.intent_cls in visited_intents:
+                raise ValueError(f"Loop detected: {related.intent_cls} was already visited. Make sure your Agent has no circular dependencied")
+            related_intent = self._df_response_to_intent(df_response, related.intent_cls, visited_intents)
+            related_intents_dict[related.field_name] = related_intent
+
+        return intent_cls(**parameter_dict, **related_intents_dict)
 
     def _intent_needs_context(self, intent: Intent) -> bool:
         return intent in self._need_context_set
 
     @staticmethod
-    def _context_name(intent: Intent) -> str:
-        return "c_" + intent.name.replace(".", "_") # TODO: refine
-
+    def _context_name(intent_cls: _IntentMetaclass) -> str:
+        return "c_" + intent_cls.name.replace(".", "_") # TODO: refine
 
 def _build_need_context_set(agent_cls: type(Agent)) -> Set[Intent]:
     """
@@ -229,6 +270,17 @@ def _build_need_context_set(agent_cls: type(Agent)) -> Set[Intent]:
     result = set()
     for intent in agent_cls.intents:
         related = related_intents(intent)
-        for parent_intent in related.follow:
-            result.add(parent_intent)
+        for parent in related.follow:
+            result.add(parent.intent_cls)
+    return result
+
+def _build_intents_by_context(agent_cls: _AgentMetaclass) -> Dict[str, _IntentMetaclass]:
+    result = {}
+    for intent_cls in agent_cls.intents:
+        context_name = DialogflowEsConnector._context_name(intent_cls)
+        if context_name in result:
+            raise ValueError(f"Intents '{intent_cls.name}' and '{result[context_name].name}' " +
+                "have ambiguous context name. This is a bug: please file an issue on the " +
+                "Intents repo. Quick fix: change the name of one of the two intents.")
+        result[context_name] = intent_cls
     return result

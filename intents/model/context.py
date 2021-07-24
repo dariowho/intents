@@ -2,7 +2,13 @@
 Contexts allow the Agent to interpret utterances differently depending on the
 conversation state. An example of their usage can be found in
 :mod:`example_agent.rickroll`.
+
+.. warning::
+
+    This module is **deprecated** and will be removed in 0.3. Upgrade your code to use 
+    :mod:`intents.model.relations` instead.
 """
+### Deprecated ###
 
 from intents import SessionEntity
 
@@ -33,3 +39,5 @@ class Context(SessionEntity, metaclass=_ContextMetaclass):
     @property
     def name(self):
         return self.__class__.name
+
+###############################

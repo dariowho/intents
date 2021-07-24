@@ -24,6 +24,12 @@ Entity
 .. automodule:: intents.model.entity
    :members:
 
+Intent Relations
+^^^^^^^^^^^^^^^^
+
+.. automodule:: intents.model.relations
+   :members:
+
 Context
 ^^^^^^^
 

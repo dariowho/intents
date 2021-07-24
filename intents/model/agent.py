@@ -179,6 +179,12 @@ class Agent(metaclass=_AgentMetaclass):
 
         language.intent_language_data(cls, intent_cls) # TODO: Agent languages only
 
+        if intent_cls.input_contexts or intent_cls.output_contexts:
+            logger.warning("Intent '%s' defines input/output contexts. The contexts API is " +
+                "deprecated and will be removed in version 0.3 of Intents. Consider upgrading " +
+                "your Intent classes to use relations instead (see the 'shop' module of Example" +
+                "Agent for more details).", intent_cls.name)
+
         for context_cls in intent_cls.input_contexts:
             cls._register_context(context_cls)
 
@@ -275,21 +281,6 @@ class Agent(metaclass=_AgentMetaclass):
         # context (not ok).
         existing_intent = cls._intents_by_event[event_cls.name]
         raise ValueError(f"Event '{event_cls.name}' is alreadt associated to Intent '{existing_intent}'. An Event can only be associated with 1 intent. (differenciation by input contexts is not supported yet)")
-
-    # def save_session(self):
-    #     """
-    #     Store the current session (most importantly, the list of active
-    #     contexts) to a persisted storage.
-    #     """
-    #     raise NotImplementedError("Context persistence is unsupported yet")
-
-    # def load_session(self):
-    #     """
-    #     Load session information (most importantly, the list of active contexts),
-    #     in a format that can be used by :meth:`Agent.predict` to restore the
-    #     state before prediction.
-    #     """
-    #     raise NotImplementedError("Context persistence is unsupported yet")
 
     def _pylint_hack(self):
         raise NotImplementedError()

@@ -118,6 +118,9 @@ class _IntentMetaclass(type):
 
         TODO: consider computing this in metaclass to cache value and check types
         """
+        if cls is Intent:
+            return {}
+
         if not is_dataclass_strict(cls):
             logger.warning(f"{cls} is not a dataclass. This may cause unexpected behavior: consider adding a @dataclass decorator to your Intent class.")
             cls = dataclass(cls)
