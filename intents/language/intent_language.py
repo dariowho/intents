@@ -383,6 +383,9 @@ def intent_language_data(
     intent_cls: "intents.model.intent._IntentMetaclass",
     language_code: LanguageCode=None
 ) -> Dict[LanguageCode, IntentLanguageData]:
+    if "__intent_language_data__" in intent_cls.__dict__:
+        return intent_cls.__intent_language_data__
+        
     try:
         language_folder = agent_language.agent_language_folder(agent_cls)
 
