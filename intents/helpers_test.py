@@ -1,7 +1,7 @@
 from enum import Enum
 from dataclasses import dataclass, asdict
 
-from intents.helpers import custom_asdict_factory, OmitNone
+from intents.helpers.data_classes import custom_asdict_factory, OmitNone
 
 def test_custom_asdict_enums_are_converted():
     class ToyEnum(Enum):

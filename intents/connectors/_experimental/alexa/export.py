@@ -21,7 +21,7 @@ from intents import Intent
 from intents.model.entity import Entity
 from intents.language import intent_language, intent_language_data, entity_language, entity_language_data, agent_supported_languages, LanguageCode
 from intents.connectors._experimental.alexa import agent_schemas as ask_schema
-from intents.helpers import custom_asdict_factory
+from intents.helpers.data_classes import custom_asdict_factory
 
 # TODO: model in framework
 DEFAULT_INTENTS = [

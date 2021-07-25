@@ -3,10 +3,10 @@ An official Python implementation exists, which is more comprehensive, as well a
 complex: https://github.com/alexa/alexa-apis-for-python/blob/master/ask-smapi-model/ask_smapi_model/v1/skill/interaction_model/language_model.py
 """
 from enum import Enum
-from typing import Dict, List, Union
+from typing import List, Union
 from dataclasses import dataclass, field
 
-from intents.helpers import OmitNone
+from intents.helpers.data_classes import OmitNone
 from intents.connectors._experimental.alexa.slot_types import SystemSlotTypes
 
 #

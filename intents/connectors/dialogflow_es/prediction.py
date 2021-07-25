@@ -53,7 +53,7 @@ class DialogflowResponse():
         for c in self.protobuf_response._pb.query_result.output_contexts:
             context_dict = MessageToDict(c)
             parameters: Dict[str, DfResponseContextParameter] = defaultdict(DfResponseContextParameter)
-            for p_name, p_value in context_dict["parameters"].items():
+            for p_name, p_value in context_dict.get("parameters", {}).items():
                 if p_name.endswith(".original"):
                     p_name = p_name[:-9]
                     parameters[p_name].original = p_value
