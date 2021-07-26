@@ -31,10 +31,21 @@ Documentation Content
    :maxdepth: 2
 
    quickstart
-   api
-   example_agent
-   development
    STATUS.md
+
+.. toctree::
+   :maxdepth: 2
+   :caption: API Reference
+
+   api/index
+   connectors/index
+   example_agent
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Developer Reference
+
+   development
 
 
 Disclaimer

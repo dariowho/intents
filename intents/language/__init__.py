@@ -1,9 +1,10 @@
 """
-Language resources are defined separately from intent classes. They are stored
-as plain YAML files in a `language/` folder, aside Agent Python modules; this is
-to be flexible in the relationship with designers and translators, as well as to
-allow some degree of automation when downloading cloud changes back to the local
-Agent definition (this feature is currently not implemented).
+Language resources are defined separately from :class:`Intent` and
+:class:`Entity` classes. They are stored as plain YAML files in a `language/`
+folder, aside Agent Python modules; this is to be flexible in the relationship
+with designers and translators, as well as to allow some degree of automation
+when downloading cloud changes back to the local Agent definition (this feature
+is currently not implemented).
 
 Your `language/` folder will contain one subfloder per language (i.e.
 `language/en/`, `language/it/`, ...); each of these will contain
@@ -15,7 +16,9 @@ Your `language/` folder will contain one subfloder per language (i.e.
 
 .. tip::
 
-    It may be useful to look at The Example Agent code and language resources (https://github.com/dariowho/intents/tree/master/example_agent/language) to get more insight on the format and naming conventions of language files.
+    It may be useful to look at The Example Agent code and language resources
+    (https://github.com/dariowho/intents/tree/master/example_agent/language)
+    to get more insight on the format and naming conventions of language files.
 """
 from intents.language.language_codes import LanguageCode, LANGUAGE_CODES
 from intents.language.agent_language import agent_language_folder, agent_supported_languages

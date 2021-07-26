@@ -49,7 +49,7 @@ class CallableDict(dict):
 def is_dataclass_strict(obj):
     """
     Like :func:`dataclasses.is_dataclass`, but return True only if the class
-    itself was decorated with `@dataclass` (i.e. inheriting from a parent
+    itself was decorated with `@dataclass` (that is, inheriting from a parent
     dataclass is not sufficient)
 
     .. code-block:: python

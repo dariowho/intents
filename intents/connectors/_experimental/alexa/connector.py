@@ -9,7 +9,7 @@ This is a connector that can export an :class:`Agent` to the **Alexa** format.
     * `predict` and `trigger` are not implemented (you don't call Alexa, Alexa calls you)
     * Entities :class:`Sys.Email` and :class:`Sys.Url` are not available in Alexa (regex entites aren't supported either, which makes it difficult to work around this one)
     * Responses are managed with fulfillment, which is not implemented
-    * Contexts are not considered
+    * Intent relations are not considered
 
 Official Request/Response schemas:
 https://github.com/alexa/alexa-apis-for-python/tree/master/ask-sdk-model/ask_sdk_model

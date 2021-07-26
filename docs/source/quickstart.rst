@@ -128,4 +128,4 @@ Now that you know the basics, you can either:
 
 * Explore the included :ref:`Example Agent`, that describes all the available
   features of the framework
-* Dive deep into the :ref:`API Reference` to learn the finest details.
+* Dive deep into the :ref:`Core API` to learn the finest details.

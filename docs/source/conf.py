@@ -18,14 +18,17 @@ import os
 import sys
 sys.path.insert(0, os.path.abspath('../../'))
 
+# pylint: disable=import-error,wrong-import-position
+import intents
+
 # -- Project information -----------------------------------------------------
 
-project = 'Intents ⛺'
+# The full version, including alpha/beta/rc tags
+release = intents.__version__
+
+project = f'Intents ⛺ {release}'
 copyright = '2021, Dario Chiappetta'
 author = 'Dario Chiappetta'
-
-# The full version, including alpha/beta/rc tags
-release = '0.2.dev1'
 
 
 # -- General configuration ---------------------------------------------------

@@ -1,6 +1,6 @@
 """
 Here we implement :class:`DialogflowEsConnector`, an implementation of
-:class:`Connector` that allows Agents to operate on Dialogflow.
+:class:`Connector` that allows Agents to operate on Dialogflow ES.
 """
 import os
 import logging
