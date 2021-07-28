@@ -1,7 +1,7 @@
 import logging
 import datetime
 
-from intents.model.entity import Sys
+from intents.model.entity import Sys, Entity
 from intents.service_connector import EntityMapping, StringEntityMapping, ServiceEntityMappings
 
 class PersonEntityMapping(EntityMapping):
@@ -89,6 +89,7 @@ class DateEntityMapping(EntityMapping):
 
 
 MAPPINGS = ServiceEntityMappings.from_list([
+    StringEntityMapping(Entity, None),
     # StringEntityMapping(Sys.Any, "sys.any"),
     DateEntityMapping(),
     TimeEntityMapping(),

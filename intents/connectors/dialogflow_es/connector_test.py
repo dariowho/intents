@@ -16,15 +16,15 @@ df_response_quick_replies_serialized = b'\n-1cedb9e6-f958-437f-9299-74f966fbec62
 df_response_quick_replies = DetectIntentResponse.deserialize(df_response_quick_replies_serialized)
 
 # CoffeeAgent "I'd like an espresso"
-df_response_espresso_serialized = b'\n-c39d5684-4409-49bc-9095-08f39a506f7d-046d94d0\x12\x89\x02\n\x14I\'d like an espresso"\x00(\x012\x0cAny response:\x10\n\x0e\n\x0cAny responseR\\\nXprojects/learning-dialogflow/agent/sessions/testing-session/contexts/c_testing_askcoffee\x10\x05Zf\nOprojects/learning-dialogflow/agent/intents/ea48d872-ed7b-11eb-a79e-17bc86f5a601\x12\x13testing.AskEspressoe\x00\x00\x80?z\x02en'
+df_response_espresso_serialized = b'\n-8939a534-88f9-4e49-8ad1-eaec18543743-c4f60134\x12\xc1\x03\n\x14I\'d like an espresso"\x13\n\x11\n\x05roast\x12\x08\x1a\x06medium(\x012\x0cAny response:\x10\n\x0e\n\x0cAny responseR\x7f\nPprojects/learning-dialogflow/agent/sessions/testing-session/contexts/c_askcoffee\x10\x05\x1a)\n\x11\n\x05roast\x12\x08\x1a\x06medium\n\x14\n\x0eroast.original\x12\x02\x1a\x00R\x87\x01\nXprojects/learning-dialogflow/agent/sessions/testing-session/contexts/c_testing_askcoffee\x10\x04\x1a)\n\x11\n\x05roast\x12\x08\x1a\x06medium\n\x14\n\x0eroast.original\x12\x02\x1a\x00Z^\nOprojects/learning-dialogflow/agent/intents/9d3fe183-efd1-11eb-a79e-17bc86f5a601\x12\x0bAskEspressoe\x00\x00\x80?z\x02en'
 df_response_espresso = DetectIntentResponse.deserialize(df_response_espresso_serialized)
 
 # CoffeeAgent "I'd like an espresso" > "With milk"
-df_response_espresso_milk_serialized = b'\n-317df591-6627-41fa-a8e1-880752978ee0-046d94d0\x12\xd6\x02\n\tWith milk"\x00(\x012\x0cAny response:\x10\n\x0e\n\x0cAny responseRZ\nVprojects/learning-dialogflow/agent/sessions/testing-session/contexts/c_testing_addmilk\x10\x05R\\\nXprojects/learning-dialogflow/agent/sessions/testing-session/contexts/c_testing_askcoffee\x10\x04Zb\nOprojects/learning-dialogflow/agent/intents/ea48d874-ed7b-11eb-a79e-17bc86f5a601\x12\x0ftesting.AddMilke\x00\x00\x80?z\x02en'
+df_response_espresso_milk_serialized = b'\n-2478f1c9-6549-4f7d-90c8-9fd493f66a42-c4f60134\x12\xf3\x03\n\tWith milk"\x00(\x012\x0cAny response:\x10\n\x0e\n\x0cAny responseRR\nNprojects/learning-dialogflow/agent/sessions/testing-session/contexts/c_addmilk\x10\x05R\x7f\nPprojects/learning-dialogflow/agent/sessions/testing-session/contexts/c_askcoffee\x10\x04\x1a)\n\x14\n\x0eroast.original\x12\x02\x1a\x00\n\x11\n\x05roast\x12\x08\x1a\x06mediumR\x87\x01\nXprojects/learning-dialogflow/agent/sessions/testing-session/contexts/c_testing_askcoffee\x10\x03\x1a)\n\x11\n\x05roast\x12\x08\x1a\x06medium\n\x14\n\x0eroast.original\x12\x02\x1a\x00ZZ\nOprojects/learning-dialogflow/agent/intents/9d3fe186-efd1-11eb-a79e-17bc86f5a601\x12\x07AddMilke\x00\x00\x80?z\x02en'
 df_response_espresso_milk = DetectIntentResponse.deserialize(df_response_espresso_milk_serialized)
 
 # CoffeeAgent "I'd like an espresso" > "With milk" > "And no foam"
-df_response_espresso_milk_nofoam_serialized = b'\n-29024669-1dc0-470f-aea1-1386752072cd-046d94d0\x12\xda\x02\n\x0bAnd no foam"\x00(\x012\x0cAny response:\x10\n\x0e\n\x0cAny responseRZ\nVprojects/learning-dialogflow/agent/sessions/testing-session/contexts/c_testing_addmilk\x10\x04R\\\nXprojects/learning-dialogflow/agent/sessions/testing-session/contexts/c_testing_askcoffee\x10\x03Zd\nOprojects/learning-dialogflow/agent/intents/ea48d878-ed7b-11eb-a79e-17bc86f5a601\x12\x11testing.AndNoFoame\x00\x00\x80?z\x02en'
+df_response_espresso_milk_nofoam_serialized = b'\n-05c5d723-2f30-4d65-a590-6429a445144b-c4f60134\x12\xf7\x03\n\x0bAnd no foam"\x00(\x012\x0cAny response:\x10\n\x0e\n\x0cAny responseR\x7f\nPprojects/learning-dialogflow/agent/sessions/testing-session/contexts/c_askcoffee\x10\x03\x1a)\n\x11\n\x05roast\x12\x08\x1a\x06medium\n\x14\n\x0eroast.original\x12\x02\x1a\x00R\x87\x01\nXprojects/learning-dialogflow/agent/sessions/testing-session/contexts/c_testing_askcoffee\x10\x02\x1a)\n\x14\n\x0eroast.original\x12\x02\x1a\x00\n\x11\n\x05roast\x12\x08\x1a\x06mediumRR\nNprojects/learning-dialogflow/agent/sessions/testing-session/contexts/c_addmilk\x10\x04Z\\\nOprojects/learning-dialogflow/agent/intents/9d3fe18a-efd1-11eb-a79e-17bc86f5a601\x12\tAndNoFoame\x00\x00\x80?z\x02en'
 df_response_espresso_milk_nofoam = DetectIntentResponse.deserialize(df_response_espresso_milk_nofoam_serialized)
 
 #
@@ -86,6 +86,7 @@ def test_predict_related_intents_follow(mock_df_client_class, *args):
     assert isinstance(intent, coffee_agent.AndNoFoam)
     assert isinstance(intent.parent_add_milk, coffee_agent.AddMilk)
     assert isinstance(intent.parent_add_milk.parent_ask_coffee, coffee_agent.AskCoffee) # TODO: or should be AskEspresso?
+    assert intent.parent_add_milk.parent_ask_coffee.roast == "medium"
 
 @patch("intents.connectors.dialogflow_es.connector.resolve_credentials")
 def test_intent_need_context(m_credentials):

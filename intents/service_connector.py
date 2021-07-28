@@ -23,7 +23,7 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, List
 from dataclasses import dataclass, field
 
-from intents import Intent, Agent
+from intents import Intent, Agent, Entity
 from intents.language import IntentResponse, IntentResponseGroup
 from intents.model.intent import IntentParameterMetadata, _IntentMetaclass
 from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
@@ -201,13 +201,16 @@ def deserialize_intent_parameters(
     parameters into *Intents* entities.
     """
     result = {}
-    # TODO: Custom entities?
     schema = intent_cls.parameter_schema
     for param_name, param_value in service_parameters.items():
         if param_name not in schema:
             raise ValueError(f"Found parameter {param_name} in Service Prediction, but Intent class does not define it.")
         param_metadata = schema[param_name]
-        mapping = mappings[param_metadata.entity_cls]
+        mapping_cls = param_metadata.entity_cls
+        if issubclass(mapping_cls, Entity):
+            # Custom Entity
+            mapping_cls = Entity
+        mapping = mappings[mapping_cls]
         try:
             if param_metadata.is_list:
                 if not isinstance(param_value, list):

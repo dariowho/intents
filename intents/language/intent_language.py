@@ -52,8 +52,8 @@ Let's look at the sections of this file.
 import os
 import re
 from enum import Enum
-from dataclasses import dataclass
 from typing import List, Dict, Union
+from dataclasses import dataclass, field
 
 import yaml
 
@@ -372,9 +372,9 @@ class IntentLanguageData:
     the slot by asking "What type of pizza?". `slot_filling_prompts` will map
     parameters to their prompts: `{"pizza_type": ["What type of pizza?"]}`
     """
-    example_utterances: List[ExampleUtterance]
-    slot_filling_prompts: Dict[str, List[str]]
-    responses: Dict[IntentResponseGroup, List[IntentResponse]]
+    example_utterances: List[ExampleUtterance] = field(default_factory=list)
+    slot_filling_prompts: Dict[str, List[str]] = field(default_factory=dict)
+    responses: Dict[IntentResponseGroup, List[IntentResponse]] = field(default_factory=list)
 
 #
 # Language Data Loader

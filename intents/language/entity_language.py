@@ -16,12 +16,11 @@ class EntityEntry:
 
 def entity_language_data(agent_cls: "agent._AgentMetaclass", entity_cls: _EntityMetaclass, language_code: LanguageCode=None) -> Dict[LanguageCode, List[EntityEntry]]:
     # Custom language data
-    if entity_cls.custom_language_data:
+    if entity_cls.__entity_language_data__:
         # TODO: check custom language data
         if language_code:
-            return {language_code: entity_cls.custom_language_data[language_code]}
-        else:
-            return entity_cls.custom_language_data
+            return {language_code: entity_cls.__entity_language_data__[language_code]}
+        return entity_cls.__entity_language_data__
     
     language_folder = agent_language_folder(agent_cls)
 

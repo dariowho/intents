@@ -23,7 +23,7 @@ from dataclasses import dataclass
 class _EntityMetaclass(type):
 
     name: str = None
-    custom_language_data: Dict["language.LanguageCode", List["language.EntityEntry"]] = None
+    __entity_language_data__: Dict["language.LanguageCode", List["language.EntityEntry"]] = None
 
     def __new__(cls, name, bases, dct):
         result_cls = super().__new__(cls, name, bases, dct)
@@ -80,10 +80,10 @@ class Entity(str, EntityMixin):
         from intents import Intent, Entity
 
         class PizzaType(Entity):
-            \"\"\"One of the pizza types that a Customer can order\"\"\" 
+            \"\"\"One of the pizza types that a Customer can order\"\"\"
 
         @dataclass
-        class customer_orders_pizza(Intent):
+        class CustomerOrdersPizza(Intent):
             \"\"\"A little docstring for my Intent\"\"\"
 
             pizza_type: PizzaType
