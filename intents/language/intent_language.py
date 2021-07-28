@@ -58,6 +58,8 @@ from typing import List, Dict, Union
 import yaml
 
 from intents.language import agent_language, LanguageCode
+# from intents.model.agent import _AgentMetaclass
+from intents.model.intent import _IntentMetaclass
 from intents.model.entity import _EntityMetaclass
 
 #
@@ -379,8 +381,8 @@ class IntentLanguageData:
 #
 
 def intent_language_data(
-    agent_cls: "intents.model.agent._AgentMetaclass",
-    intent_cls: "intents.model.intent._IntentMetaclass",
+    agent_cls: "_AgentMetaclass",
+    intent_cls: _IntentMetaclass,
     language_code: LanguageCode=None
 ) -> Dict[LanguageCode, IntentLanguageData]:
     if "__intent_language_data__" in intent_cls.__dict__:
@@ -435,14 +437,17 @@ def _build_responses(responses_data: dict):
         try:
             response_group = IntentResponseGroup(response_group)
         except ValueError as exc:
-            raise NotImplementedError(f"Unsupported Response Group '{response_group}' in 'responses'. Currently, only 'default' and 'rich' are supported") from exc
+            raise NotImplementedError(f"Unsupported Response Group '{response_group}' in " +
+                "'responses'. Currently, only 'default' and 'rich' are supported") from exc
 
         result[response_group] = []
         for r in responses:
             assert len(r) == 1
             for r_type, r_data in r.items():
                 if response_group == IntentResponseGroup.DEFAULT and r_type != 'text':
-                    raise ValueError(f"Message type {r_type} found in response group 'default'. Only 'text' type is allowed in 'default': please define the additional 'rich' response group to use rich responses.")
+                    raise ValueError(f"Message type {r_type} found in response group 'default'. " +
+                        "Only 'text' type is allowed in 'default': please define the additional " +
+                        "'rich' response group to use rich responses.")
 
                 if r_type == 'text':
                     result[response_group].append(TextIntentResponse.from_yaml(r_data))
@@ -455,6 +460,7 @@ def _build_responses(responses_data: dict):
                 elif r_type == 'custom':
                     result[response_group].append(CustomPayloadIntentResponse.from_yaml(r_data))
                 else:
-                    raise NotImplementedError(f"Unsupported response type '{r_type}'. Currently, only 'text' is supported")
+                    raise NotImplementedError(f"Unsupported response type '{r_type}'. Currently, " +
+                        "only 'text' is supported")
                 
     return result

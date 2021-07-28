@@ -93,6 +93,7 @@ class Agent(metaclass=_AgentMetaclass):
 
     intents: List[Intent] = None
     _intents_by_name: Dict[str, Intent] = None
+    _intents_by_norm_name: Dict[str, Intent] = None # my_module.HelloWorld -> mymodulehelloworld
     _intents_by_event: Dict[str, Intent] = None
     _entities_by_name: Dict[str, _EntityMetaclass] = None
     _contexts_by_name: Dict[str, _ContextMetaclass] = None
@@ -163,14 +164,17 @@ class Agent(metaclass=_AgentMetaclass):
             assert not cls._contexts_by_name and not cls._events_by_name
             cls.intents = []
             cls._intents_by_name = {}
+            cls._intents_by_norm_name = {}
             cls._intents_by_event = {}
             cls._entities_by_name = {}
             cls._contexts_by_name = {}
             cls._events_by_name = {}
             cls._parameters_by_name = {}
 
-        if cls._intents_by_name.get(intent_cls.name):
-            raise ValueError(f"Another intent exists with name {intent_cls.name}: {cls._intents_by_name[intent_cls.name]}")
+        norm_name = Agent._norm_name(intent_cls.name)
+        if cls._intents_by_norm_name.get(norm_name):
+            raise ValueError(f"Another intent exists with an equivalent name to {intent_cls.name}" +
+                f": {cls._intents_by_norm_name[norm_name]}")
 
         # TODO: check conflicting events
         # event_name = Agent._event_name(name)
@@ -200,6 +204,7 @@ class Agent(metaclass=_AgentMetaclass):
 
         cls.intents.append(intent_cls)
         cls._intents_by_name[intent_cls.name] = intent_cls
+        cls._intents_by_norm_name[norm_name] = intent_cls
         cls._intents_by_event[intent_cls.events[0].name] = intent_cls
 
     @classmethod
@@ -296,3 +301,7 @@ class Agent(metaclass=_AgentMetaclass):
         TODO: This is only used in Dialogflow -> Deprecate and move to DialogflowConnector
         """
         return "E_" + intent_name.upper().replace('.', '_')
+
+    @staticmethod
+    def _norm_name(intent_name: str) -> str:
+        return re.sub(r"[^a-z0-9]", "", intent_name.lower())

@@ -5,7 +5,7 @@ from google.cloud.dialogflow_v2.types import DetectIntentResponse
 from intents.connectors.dialogflow_es.connector import DialogflowEsConnector
 from intents import language
 from intents.service_connector import Prediction
-from intents.helpers import testing as coffee_agent
+from intents.helpers import coffee_agent
 from example_agent import ExampleAgent, travels
 
 # A full Dialogflow Response from ExampleAgent, with

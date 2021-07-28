@@ -47,6 +47,38 @@ def test_register_intent_invalid_language_data(mock_language):
         MyAgent._register_intent(smalltalk.hello)
 
 @patch('intents.language.intent_language_data')
+def test_register_intent_non_unique_name(mock_language):
+    @dataclass
+    class AnIntent(Intent):
+        pass
+
+    @dataclass
+    class an_intent(Intent):
+        pass
+
+    @dataclass
+    class Anintent(Intent):
+        pass
+
+    @dataclass
+    class AnIntentWithCustomName(Intent):
+        name = f"agent_test.An.Intent"
+
+    class MyAgent(Agent):
+        pass
+
+    MyAgent.register(AnIntent)
+
+    with pytest.raises(ValueError):
+        MyAgent.register(an_intent)
+
+    with pytest.raises(ValueError):
+        MyAgent.register(Anintent)
+
+    with pytest.raises(ValueError):
+        MyAgent.register(AnIntentWithCustomName)
+
+@patch('intents.language.intent_language_data')
 def test_register_intent_non_unique_parameter(mock_language):
     @dataclass
     class an_intent(Intent):
@@ -156,5 +188,3 @@ def test_register_module(mock_language):
             call(MyAgent, smalltalk.greet_friends),
             call(MyAgent, smalltalk.agent_welcomes_user),
         ])
-
-# test duplicate intent

@@ -32,29 +32,34 @@ def mock_language_data(intent_cls: type, utterance: str, response: str="Any resp
 @dataclass
 class AskCoffee(Intent):
     """I'd like a coffee"""
+    name = "testing.AskCoffee"
 AskCoffee.__intent_language_data__ = mock_language_data(AskCoffee, "I'd like a coffee")
 
 @dataclass
 class AskEspresso(AskCoffee):
     """I'd like an espresso."""
+    name = "testing.AskEspresso"
 AskEspresso.__intent_language_data__ = mock_language_data(AskEspresso, "I'd like an espresso")
     
 @dataclass
 class AddMilk(Intent):
     """With milk please"""    
-    parent_ask_coffee: AskCoffee = follow()  
+    parent_ask_coffee: AskCoffee = follow()
+    name = "testing.AddMilk"
 AddMilk.__intent_language_data__ = mock_language_data(AddMilk, "With milk please")
 
 @dataclass
 class AddSkimmedMilk(AddMilk):
     """With skimmed milk please"""    
-    parent_ask_coffee: AskCoffee = follow()  
+    parent_ask_coffee: AskCoffee = follow()
+    name = "testing.AddSkimmedMilk"
 AddSkimmedMilk.__intent_language_data__ = mock_language_data(AddMilk, "With skimmed milk please")
 
 @dataclass
 class AndNoFoam(Intent):
     """And no foam"""    
     parent_add_milk: AddMilk = follow()
+    name = "testing.AndNoFoam"
 AndNoFoam.__intent_language_data__ = mock_language_data(AddMilk, "And no foam")
 
 class CoffeeAgent(Agent):

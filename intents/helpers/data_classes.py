@@ -2,6 +2,7 @@
 This module defines general purpose helpers that are used throughout the project
 """
 from enum import Enum
+import dataclasses
 from dataclasses import field
 
 class CustomFields(Enum):
@@ -35,3 +36,24 @@ def custom_asdict_factory():
         return dict((k, convert_value(v)) for k, v in data if v != CustomFields.OMIT_NONE)
     
     return result_f
+
+def is_dataclass_strict(obj):
+    """
+    Like :func:`dataclasses.is_dataclass`, but return True only if the class
+    itself was decorated with `@dataclass` (that is, inheriting from a parent
+    dataclass is not sufficient)
+
+    .. code-block:: python
+
+        @dataclass
+        class a_class:
+            foo: str
+
+        class a_subclass(a_class):
+            bar: str
+
+        is_dataclass(a_subclass)           # True
+        is_dataclass_strict(a_subclass)    # False
+    """
+    cls = obj if isinstance(obj, type) else type(obj)
+    return dataclasses._FIELDS in cls.__dict__

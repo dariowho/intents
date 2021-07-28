@@ -14,11 +14,11 @@ import re
 import inspect
 import logging
 import dataclasses
-from dataclasses import dataclass, is_dataclass
+from dataclasses import dataclass
 from typing import List, Dict, Any, _GenericAlias
 
 from intents.model import context, event, entity
-from intents import language
+from intents.helpers.data_classes import is_dataclass_strict
 
 logger = logging.getLogger(__name__)
 
@@ -46,27 +46,6 @@ class CallableDict(dict):
         logger.warning("'Intent.parameter_schema()' is deprecated, and is now a property. Use 'Intent.parameter_schema` instead. Support will be removed in 0.3")
         return self
 
-def is_dataclass_strict(obj):
-    """
-    Like :func:`dataclasses.is_dataclass`, but return True only if the class
-    itself was decorated with `@dataclass` (that is, inheriting from a parent
-    dataclass is not sufficient)
-
-    .. code-block:: python
-
-        @dataclass
-        class a_class:
-            foo: str
-
-        class a_subclass(a_class):
-            bar: str
-
-        is_dataclass(a_subclass)           # True
-        is_dataclass_strict(a_subclass)    # False
-    """
-    cls = obj if isinstance(obj, type) else type(obj)
-    return dataclasses._FIELDS in cls.__dict__
-
 class _IntentMetaclass(type):
 
     name: str = None
@@ -89,10 +68,8 @@ class _IntentMetaclass(type):
 
         if "name" not in result_cls.__dict__:
             result_cls.name = _intent_name_from_class(result_cls)
-        else:
-            is_valid, reason = _is_valid_intent_name(result_cls.name)
-            if not is_valid:
-                raise ValueError(f"Invalid intent name '{result_cls.name}': {reason}")
+
+        check_intent_name(result_cls.name)
 
         if not result_cls.input_contexts:
             result_cls.input_contexts = []
@@ -182,13 +159,14 @@ class Intent(metaclass=_IntentMetaclass):
 
         from intents import Intent
 
-        class user_says_hello(Intent):
+        class UserSaysHello(Intent):
             \"\"\"A little docstring for my Intent\"\"\"
 
     *Intents* will then look for language resources in the folder where your
     Agent class is defined, and specifically in
-    `language/<LANGUAGE-CODE>/user_says_hello.yaml`. More details in
-    :mod:`intents.language`.
+    `language/<LANGUAGE-CODE>/smalltalk.user_says_hello.yaml`. Note that the
+    name of the module where the Intent is defined (`smalltalk.py`) is used as a
+    prefix. More details in :mod:`intents.language`.
 
     Intents can be more complex than this, for instance:
 
@@ -198,25 +176,23 @@ class Intent(metaclass=_IntentMetaclass):
         from intents import Intent, Sys
 
         @dataclass
-        class user_says_hello(Intent):
+        class UserSaysHello(Intent):
             \"\"\"A little docstring for my Intent\"\"\"
 
             user_name: Sys.Person
 
             name = "hello_custom_name"
-            input_contexts = [a_context]
-            input_contexts = [a_context(2), another_context(1)]
 
-    This Intent has a custom name (i.e. will appear as "hello_custom_name" when
-    exported to Dialogflow), will be predicted only when `a_context` is active,
-    and will spawn `a_context`, lasting 2 conversation turns, and
-    `another_context` lasting only 1 conversation turn.
+    This Intent has a custom name, so it will appear as "hello_custom_name" when
+    exported to Dialogflow, and its language file will just be
+    `hello_custom_name.yaml`, without module prefix.
 
     Most importantly, this intent has a `user_name` **parameter** of type
-    :class:`Sys.Person` (check out :class:`intents.model.entity.Sys` for available system
-    entities). With adequate examples in its language file, it will be able to
-    match utterances like "Hello, my name is John", tagging "John" as an Entity.
-    When a connector is instantiated, predictions will look like this:
+    :class:`Sys.Person` (check out :class:`intents.model.entity.Sys` for
+    available system entities). With adequate examples in its language file, it
+    will be able to match utterances like "Hello, my name is John", tagging
+    "John" as an Entity. When a connector is instantiated, predictions will look
+    like this:
 
     >>> predicted = connector.predict("My name is John")
     >>> predicted.intent
@@ -249,25 +225,46 @@ class Intent(metaclass=_IntentMetaclass):
     def parameter_schema(self) -> Dict[str, IntentParameterMetadata]:
         return self.__class__.parameter_schema
 
-def _is_valid_intent_name(candidate_name):
+def check_intent_name(candidate_name):
+    """
+    Raise `ValueError` if the given Intent name is not a valid name. Valid names
+
+    * Only contain letter, underscore (`_`) and period (`.`) characters
+    * Start with a letter
+    * Don't contain repeated underscores (e.g. `__`)
+    * Don't start wit `i_`. This is a reserved prefix for *Intents* system
+      intents
+    
+    Note that `Agent.register` will apply further checks to spot duplicate
+    intent names. Note that names are case insensitive, and shouldn't overlap
+    with parameter names. 
+    """
+    invalid_reason = None
+    
     if re.search(r'[^a-zA-Z_\.]', candidate_name):
-        return False, "must only contain letters, underscore or dot"
+        invalid_reason = "must only contain letters, underscore or period"
 
     if candidate_name.startswith('.') or candidate_name.startswith('_'):
-        return False, "must start with a letter"
+        invalid_reason = "must start with a letter"
 
     if "__" in candidate_name:
-        return False, "must not contain __"
+        invalid_reason = "must not contain __"
 
-    return True, None
+    if candidate_name.startswith("i_"):
+        invalid_reason = "the 'i_' prefix is reserved for system intents"
+
+    if invalid_reason:
+        raise ValueError(f"Invalid intent name '{candidate_name}': {invalid_reason}. " +
+            "If the issue is related to your class name or path you can either change names to " +
+            "be compliant, or use a custom name by setting 'Intent.name' manually. See the " +
+            "documentation at https://intents.readthedocs.io/ for more information on intent " +
+            "naming rules.")
 
 def _intent_name_from_class(intent_cls: _IntentMetaclass) -> str:
     full_name = f"{intent_cls.__module__}.{intent_cls.__name__}"
     if intent_cls.__module__.startswith("_"):
         full_name = intent_cls.__name__
-    if "__" in full_name:
-        logger.warning("Intent class '%s' contains repeated '_'. This is reserved: repeated underscores will be reduced to one, this may cause unexpected behavior.")
-    full_name = re.sub(r"_+", "_", full_name)
+    # full_name = re.sub(r"_+", "_", full_name)
     return ".".join(full_name.split(".")[-2:])
 
 def _system_event(intent_name: str) -> str:
