@@ -22,18 +22,18 @@ def test_register_intent_valid_language_data(mock_language):
     mock_language.LanguageCode = real_LanguageCode
 
     MyAgent = _get_toy_agent()
-    MyAgent._register_intent(smalltalk.hello)
+    MyAgent._register_intent(smalltalk.Hello)
 
-    assert MyAgent.intents == [smalltalk.hello]
-    assert MyAgent._intents_by_name == {'smalltalk.hello': smalltalk.hello}
-    assert MyAgent._intents_by_event == {'E_SMALLTALK_HELLO': smalltalk.hello}
+    assert MyAgent.intents == [smalltalk.Hello]
+    assert MyAgent._intents_by_name == {'smalltalk.Hello': smalltalk.Hello}
+    assert MyAgent._intents_by_event == {'E_SMALLTALK_HELLO': smalltalk.Hello}
 
     MyAgent = _get_toy_agent()
-    MyAgent.register(smalltalk.hello)
+    MyAgent.register(smalltalk.Hello)
 
-    assert MyAgent.intents == [smalltalk.hello]
-    assert MyAgent._intents_by_name == {'smalltalk.hello': smalltalk.hello}
-    assert MyAgent._intents_by_event == {'E_SMALLTALK_HELLO': smalltalk.hello}
+    assert MyAgent.intents == [smalltalk.Hello]
+    assert MyAgent._intents_by_name == {'smalltalk.Hello': smalltalk.Hello}
+    assert MyAgent._intents_by_event == {'E_SMALLTALK_HELLO': smalltalk.Hello}
 
 @patch('intents.language.intent_language_data')
 def test_register_intent_invalid_language_data(mock_language):
@@ -44,7 +44,7 @@ def test_register_intent_invalid_language_data(mock_language):
     MyAgent = _get_toy_agent()
     
     with pytest.raises(ValueError):
-        MyAgent._register_intent(smalltalk.hello)
+        MyAgent._register_intent(smalltalk.Hello)
 
 @patch('intents.language.intent_language_data')
 def test_register_intent_non_unique_name(mock_language):
@@ -181,10 +181,9 @@ def test_register_module(mock_language):
     with patch.object(MyAgent, '_register_intent') as mock_register_intent:
         MyAgent.register(smalltalk)
         mock_register_intent.asssert_has_calls([
-            call(MyAgent, smalltalk.hello),
-            call(MyAgent, smalltalk.user_name_give),
-            call(MyAgent, smalltalk.agent_name_give),
-            call(MyAgent, smalltalk.user_likes_music),
-            call(MyAgent, smalltalk.greet_friends),
-            call(MyAgent, smalltalk.agent_welcomes_user),
+            call(MyAgent, smalltalk.Hello),
+            call(MyAgent, smalltalk.UserNameGive),
+            call(MyAgent, smalltalk.AgentNameGive),
+            call(MyAgent, smalltalk.UserLikesMusic),
+            call(MyAgent, smalltalk.GreetFriends),
         ])

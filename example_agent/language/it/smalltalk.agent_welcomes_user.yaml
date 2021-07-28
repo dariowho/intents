@@ -1,5 +1,0 @@
-responses:
-  default:
-    - text:
-      - Ciao, benvenuto in questa chat!
-      - Ciao $user_name, benvenuto!

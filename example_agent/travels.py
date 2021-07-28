@@ -6,28 +6,28 @@ from dataclasses import dataclass
 from intents import Intent
 
 @dataclass
-class user_wants_travel(Intent):
+class UserWantsTravel(Intent):
     """
     | User: I want to travel
     | Agent: How can I help? + **-quick replies-**
     """
 
 @dataclass
-class user_ask_hotel_recommendation(Intent):
+class UserAskHotelRecommendation(Intent):
     """
     | User: Recommend me a hotel
     | Agent: **-hotel card-**
     """
 
 @dataclass
-class user_ask_holiday_picture(Intent):
+class UserAskHolidayPicture(Intent):
     """
     | User: Send me a holiday picture
     | Agent: **-picture-**
     """
 
 @dataclass
-class user_ask_train_station(Intent):
+class UserAskTrainStation(Intent):
     """
     | User: Where is the train station?
     | Agent: Address + **-custom payload (location)-**

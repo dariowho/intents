@@ -119,12 +119,12 @@ class Agent(metaclass=_AgentMetaclass):
                 pass
 
             @dataclass
-            class my_test_intent(Intent):
+            class MyTestIntent(Intent):
                 \"\"\"A little docstring for my Intent...\"\"\"
                 a_parameter: Sys.Date
                 another_parameter: Sys.Person
 
-            MyAgent.register(my_test_intent)
+            MyAgent.register(MyTestIntent)
 
         Alternatively, you can register a **whole module** containing Intents.
         This is how you register all the intents that are defined in the

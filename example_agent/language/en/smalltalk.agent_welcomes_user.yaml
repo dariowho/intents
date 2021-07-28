@@ -1,5 +1,0 @@
-responses:
-  default:
-    - text:
-      - Howdy Human, welcome to the chat!
-      - Hi $user_name, welcome!

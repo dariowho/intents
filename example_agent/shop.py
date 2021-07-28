@@ -4,8 +4,7 @@ conversation flows.
 
 .. note::
 
-    Intent relations are under definition. The only one available at the moment
-    is `follow`. Future releases will bring more, to make the framework more expressive.
+    Intent relations are under definition, they will be extended in next releases.
 
 Let's break down a complex interaction involving :mod:`shop` intents.
 

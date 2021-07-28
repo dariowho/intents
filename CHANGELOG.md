@@ -4,6 +4,7 @@ This release, like probably many others in 0.x (see [semantic versioning FAQ](ht
 
 * (#4) Add experimental Alexa connector
 * (#7) Add `follow` intent relation
+* (#7) Deprecate manual Contexts
 * (#7) Breaking change: predict() and trigger() now return Prediction objects
 * (#5) Change documentation to render pages separately
 * (#9) Change Intent and Agent model to enforce stricter naming rules

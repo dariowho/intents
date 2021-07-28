@@ -12,7 +12,7 @@ from example_agent import ExampleAgent, travels
 # - A text message in the DEFAULT platform
 # - A text message in the TELEGRAM platform
 # - A quick replies message in the TELEGRAM platform
-df_response_quick_replies_serialized = b'\n-1cedb9e6-f958-437f-9299-74f966fbec62-9779ea79\x12\xa4\x03\n\x10i want to travel"\x00(\x012QIf you like I can recommend you an hotel. Or I can send you some holiday pictures:U\nS\nQIf you like I can recommend you an hotel. Or I can send you some holiday pictures:.\n*\n(I also like travels, how can I help you?0\x03:;\x1a7\n\rQuick Replies\x12\x12Recommend an hotel\x12\x12Send holiday photo0\x03Zl\nOprojects/learning-dialogflow/agent/intents/e3a1e749-be67-11eb-8ad8-bbef97dc13e7\x12\x19travels.user_wants_travele\x00\x00\x80?z\x02en'
+df_response_quick_replies_serialized = b'\n-1cedb9e6-f958-437f-9299-74f966fbec62-9779ea79\x12\xa2\x03\n\x10i want to travel"\x00(\x012QIf you like I can recommend you an hotel. Or I can send you some holiday pictures:U\nS\nQIf you like I can recommend you an hotel. Or I can send you some holiday pictures:.\n*\n(I also like travels, how can I help you?0\x03:;\x1a7\n\rQuick Replies\x12\x12Recommend an hotel\x12\x12Send holiday photo0\x03Zj\nOprojects/learning-dialogflow/agent/intents/e3a1e749-be67-11eb-8ad8-bbef97dc13e7\x12\x17travels.UserWantsTravele\x00\x00\x80?z\x02en'
 df_response_quick_replies = DetectIntentResponse.deserialize(df_response_quick_replies_serialized)
 
 # CoffeeAgent "I'd like an espresso"
@@ -52,7 +52,7 @@ def test_predict(mock_df_client_class, *args):
 
     df = DialogflowEsConnector('/fake/path/to/credentials.json', ExampleAgent)
     predicted = df.predict("A fake sentence")
-    assert isinstance(predicted.intent, travels.user_wants_travel)
+    assert isinstance(predicted.intent, travels.UserWantsTravel)
     assert predicted.fulfillment_text == df_response_quick_replies.query_result.fulfillment_text
     assert predicted.fulfillment_message_dict == {
         language.IntentResponseGroup.DEFAULT: [

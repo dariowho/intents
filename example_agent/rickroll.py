@@ -1,6 +1,11 @@
 """
 This module demonstrates the use of Contexts, to condition Agent understanding
 on previous conversation history.
+
+.. warning::
+
+    Contexts are **deprecated** and will be removed in 0.3. Upgrade your code to use 
+    :mod:`intents.model.relations` instead.
 """
 from dataclasses import dataclass
 

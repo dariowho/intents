@@ -13,7 +13,7 @@ class PizzaType(Entity):
     """
 
 @dataclass
-class order_pizza(Intent):
+class OrderPizza(Intent):
     """
     User is ordering a pizza, like "I want two Margherita please"
     """

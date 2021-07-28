@@ -62,7 +62,7 @@ Context parameters can be accessed with another OOP fundamental concept:
     >>> prediction = connector.predict("I want a dark roast espresso")
     >>> prediction = connector.predict("With milk please")
     >>> prediction.intent.parent_ask_coffee.roast_level
-    RoastLevel("dark")
+    "dark"
 
 This relation is implemented by looking at the **lifespan** of intents.
 `AskCoffee` starts with a lifespan of 5 (at the moment this is constant and

@@ -129,7 +129,7 @@ class Sys:
         from intents import Intent, Sys
 
         @dataclass
-        class user_says_name(Intent):
+        class UserSaysName(Intent):
             \"\"\"A little docstring for my Intent\"\"\"
 
             user_name: Sys.Person

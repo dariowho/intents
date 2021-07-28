@@ -367,7 +367,7 @@ class IntentLanguageData:
     responses that include cards, images and quick replies.
 
     **Slot Filling Promps** are used to solve parameters that couldn't be tagged in
-    the original message. For instance a `order_pizza` intent may have a
+    the original message. For instance a `OrderPizza` intent may have a
     `pizza_type` parameter. When User asks "I'd like a pizza" we want to fill
     the slot by asking "What type of pizza?". `slot_filling_prompts` will map
     parameters to their prompts: `{"pizza_type": ["What type of pizza?"]}`

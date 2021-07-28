@@ -4,7 +4,7 @@ This is an example Agent that has a number of Intent categories. Each category
 particularly:
 
 * :mod:`smalltalk` shows the fundamentals of Intents and their Parameters
-* :mod:`rickroll` demonstrates how to use Context to restrict intent predictions
+* :mod:`shop` demonstrates how to use Intent Relations to control the conversation flow
 * :mod:`restaurant` shows how to define Custom Entities
 * :mod:`travels` demonstrates the use of rich responses, such as Images, Cards
   and Quick Replies

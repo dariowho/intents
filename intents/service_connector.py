@@ -267,7 +267,7 @@ class Connector(ABC):
         >>> df = DialogflowEsConnector('/path/to/service-account.json', ExampleAgent)
         >>> prediction = df.predict("Hi, my name is Guido")
         >>> prediction.intent
-        user_name_give(user_name='Guido')
+        UserNameGive(user_name='Guido')
         >>> prediction.intent.user_name
         "Guido"
         >>> prediction.fulfillment_text
@@ -291,9 +291,9 @@ class Connector(ABC):
         >>> from intents.connectors import DialogflowEsConnector
         >>> from example_agent import ExampleAgent, smalltalk
         >>> df = DialogflowEsConnector('/path/to/service-account.json', ExampleAgent)
-        >>> prediction = df.trigger(smalltalk.agent_name_give(agent_name='Alice'))
+        >>> prediction = df.trigger(smalltalk.AgentNameGive(agent_name='Alice'))
         >>> prediction.intent
-        agent_name_give(agent_name='Alice')
+        AgentNameGive(agent_name='Alice')
         >>> prediction.fulfillment_text
         "Howdy Human, I'm Alice"
         >>> prediction.confidence

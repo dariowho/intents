@@ -2,7 +2,7 @@
 
 [![Documentation Status](https://readthedocs.org/projects/intents/badge/?version=latest)](https://intents.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/dariowho/intents/branch/master/graph/badge.svg?token=XAVLW70J8S)](https://codecov.io/gh/dariowho/intents)
-[![HEAD version](https://img.shields.io/badge/head-v0.2.dev1-blue)](https://img.shields.io/badge/head-v0.2.dev1-blue)
+[![HEAD version](https://img.shields.io/badge/head-v0.2.dev1-blue.svg)](https://img.shields.io/badge/head-v0.2.dev1-blue.svg)
 [![PyPI version](https://badge.fury.io/py/intents.svg)](https://badge.fury.io/py/intents)
 
 **Intents** is an unofficial Python framework to define and operate Dialogflow Agents with a simple,
@@ -15,7 +15,10 @@ code-first approach. Its main benefits are:
 * **Human-friendly prediction client**. Much more straightforward than the official
   Python SDK
 
-A detailed view of the available features can be found in [STATUS.md](STATUS.md)
+A detailed view of the available features can be found in
+[STATUS.md](STATUS.md). Also, check out the
+[Projects](https://github.com/dariowho/intents/projects) page to keep track of
+recent developments.
 
 ## Install
 

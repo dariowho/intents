@@ -14,16 +14,51 @@ Install
 Define An Agent
 ---------------
 
-The idea is to create your own Agent Python package: it will be a requirement of
-your Fulfillment project, or part of it.
-
-For now, let's start from the :ref:`Example Agent` that is included in the
-library's repo (https://github.com/dariowho/intents/tree/master/example_agent). You can use
-it straight away, or explore it and adapt it at your taste.
+The idea is to create your own Python package that will contain the whole Agent.
+Let's create an intent in `my_agent/smalltalk.py`. 
 
 .. code-block:: python
 
-    from example_agent import ExampleAgent
+    from dataclasses import dataclass
+    from intents import Intent, Sys
+
+    @dataclass
+    class UserSaysName(Intent):
+        user_name: Sys.Person
+
+We'll define language resources separately in
+`my_agent/language/en/smalltalk.UserSaysName.yaml` (remember your `__init__.py`
+in each folder).
+
+.. code-block:: yaml
+
+    examples:
+      - My name is $user_name{Mary}
+      - Hi, I'm $user_name{Mario}
+
+    responses:
+      default:
+        - text:
+          - Hi $user_name, I'm Bot
+          - Nice to meet you $user_name!
+
+Finally, let's create an Agent in `my_agent/agent.py`, and register the
+`smalltalk` module we just defined.
+
+.. code-block:: python
+
+    from intents import Agent
+    from my_agent import smalltalk
+
+    class MyAgent(Agent):
+        """A little docstring for my Agent"""
+
+    MyAgent.register(smalltalk)
+
+
+:ref:`Example Agent` is a more complete example, and it's included in the
+library's repo (https://github.com/dariowho/intents/tree/master/example_agent).
+We will use that one in the rest of the tutorial.
 
 Setup a Dialogflow Agent
 ------------------------
@@ -71,12 +106,12 @@ We can use the same Connector as a **prediction client** for the agent you just 
 
 .. code-block:: python
 
-    result = dialogflow.predict("My name is Guido")
+    prediction = dialogflow.predict("My name is Guido")
 
-    result                  # user_name_give(user_name="Guido")
-    result.user_name        # "Guido"
-    result.fulfillment_text # "Hi Guido, I'm Bot"
-    result.confidence       # 0.84
+    prediction.intent              # UserNameGive(user_name="Guido")
+    prediction.intent.user_name    # "Guido"
+    prediction.fulfillment_text    # "Hi Guido, I'm Bot"
+    prediction.confidence          # 0.84
 
 Trigger Intents
 ---------------
@@ -88,10 +123,10 @@ agent:
 
     from example_agent import smalltalk
 
-    result = dialogflow.trigger(smalltalk.agent_name_give(agent_name='Ugo'))
+    prediction = dialogflow.trigger(smalltalk.AgentNameGive(agent_name='Ugo'))
 
-    result.fulfillment_text # "Howdy Human, I'm Ugo"
-    result.confidence       # 1.0
+    prediction.fulfillment_text # "Howdy Human, I'm Ugo"
+    prediction.confidence       # 1.0
 
 Sessions
 --------

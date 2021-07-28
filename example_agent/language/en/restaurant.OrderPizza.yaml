@@ -24,4 +24,4 @@ responses:
 #                           # -> PizzaType('margherita')
 
 
-# restaurant.order_pizza(card=PizzaCard(image_url='...'))
+# restaurant.OrderPizza(card=PizzaCard(image_url='...'))

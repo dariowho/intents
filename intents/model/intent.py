@@ -1,7 +1,7 @@
 """
 An **intent** is a categorical representation of the User intention in a single
 conversation turn. For instance, utterances like "I want a pizza", "I'd like to
-order a pizza" and such, could be mapped to a single `order_pizza` intent.
+order a pizza" and such, could be mapped to a single `OrderPizza` intent.
 
 Your agent will typically define a number of *intents*, representing all the
 types of messages the Agent can understand and answer to. This is done by
@@ -185,7 +185,9 @@ class Intent(metaclass=_IntentMetaclass):
 
     This Intent has a custom name, so it will appear as "hello_custom_name" when
     exported to Dialogflow, and its language file will just be
-    `hello_custom_name.yaml`, without module prefix.
+    `hello_custom_name.yaml`, without module prefix. See
+    :func:`check_intent_name` for more details on the rules that intent names
+    must follow.
 
     Most importantly, this intent has a `user_name` **parameter** of type
     :class:`Sys.Person` (check out :class:`intents.model.entity.Sys` for

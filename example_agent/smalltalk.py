@@ -8,7 +8,7 @@ from dataclasses import dataclass
 from intents import Intent, Event, Sys
 
 @dataclass
-class hello(Intent):
+class Hello(Intent):
     """
     | User: Hello
     | Agent: Greetings, Human :)
@@ -17,7 +17,7 @@ class hello(Intent):
     """
 
 @dataclass
-class user_name_give(Intent):
+class UserNameGive(Intent):
     """
     | User: My name is Guido
     | Agent: Hi Guido
@@ -28,7 +28,7 @@ class user_name_give(Intent):
     user_name: Sys.Person
 
 @dataclass
-class agent_name_give(Intent):
+class AgentNameGive(Intent):
     """
     | Agent: Howdy Human, my name is $agent_name
 
@@ -40,7 +40,7 @@ class agent_name_give(Intent):
     agent_name: Sys.Person
 
 @dataclass
-class user_likes_music(Intent):
+class UserLikesMusic(Intent):
     """
     | User: I like music
     | Agent: I love Rock 'n' Roll!
@@ -54,7 +54,7 @@ class user_likes_music(Intent):
     music_genre: Sys.MusicGenre = "Rock 'n' Roll"
 
 @dataclass
-class greet_friends(Intent):
+class GreetFriends(Intent):
     """
     | User: Say hi to my friends Al, John and Jack
     | Agent: Hello Al, John and Jack
@@ -69,14 +69,14 @@ class greet_friends(Intent):
     friend_names: List[Sys.Person]
 
 @dataclass
-class user_asks_day(Intent):
+class UserAsksDay(Intent):
     """
     | User: What day is it?
     | Agent: When?
     | User: today
     | Agent: That would be 2021-06-19
 
-    This is equivalent to :class:`greet_friends`; they are both intents with a
+    This is equivalent to :class:`GreetFriends`; they are both intents with a
     required parameter that is prompted to User when missing in the original
     utterance.
     
@@ -93,21 +93,3 @@ class user_asks_day(Intent):
     Sys.Date(2021, 6, 20)
     """
     date: Sys.Date
-
-class WelcomeEvent(Event):
-    """
-    This models an external event that is meant to be sent directly to the
-    Agent. It could be a frontend component signaling that the User has just
-    opened the chat.
-    """
-
-@dataclass
-class agent_welcomes_user(Intent):
-    """
-    This is an intent that is triggered by a custom event. It covers the (rare)
-    case in which an external component wants to trigger this Intent by sending
-    a `WELCOMEEVENT` Event trigger directly to Dialogflow.
-    """
-    events = [WelcomeEvent]
-
-    user_name: Sys.Person
