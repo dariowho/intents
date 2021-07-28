@@ -2,7 +2,7 @@
 
 [![Documentation Status](https://readthedocs.org/projects/intents/badge/?version=latest)](https://intents.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/dariowho/intents/branch/master/graph/badge.svg?token=XAVLW70J8S)](https://codecov.io/gh/dariowho/intents)
-[![HEAD version](https://img.shields.io/badge/head-v0.2.dev1-blue.svg)](https://img.shields.io/badge/head-v0.2.dev1-blue.svg)
+[![HEAD version](https://img.shields.io/badge/head-v0.2a1-blue.svg)](https://img.shields.io/badge/head-v0.2a1-blue.svg)
 [![PyPI version](https://badge.fury.io/py/intents.svg)](https://badge.fury.io/py/intents)
 
 **Intents** is an unofficial Python framework to define and operate Dialogflow Agents with a simple,
@@ -23,7 +23,7 @@ recent developments.
 ## Install
 
 ```sh
-pip install intents
+pip install intents==0.2a1
 ```
 
 ## Usage
