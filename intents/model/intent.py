@@ -28,13 +28,27 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class IntentParameterMetadata:
+    """
+    Model metadata of a single Intent parameter. `IntentParameterMetadata`
+    objects are built internally by :meth:`Intent.parameter_schema` based on the
+    Intent dataclass fields.
+
+    Args:
+        name: Parameter name
+        entity_cls: Parameter type
+        is_list: Parameter will match multiple values in the User utterance
+        required: If True, user will be prompted for parameter value when that
+            can't be tagged in his utterance
+        default: If set, this value will be used when parameter value can't be
+            tagged in the User's utterance
+    """
     name: str
     entity_cls: entity._EntityMetaclass
     is_list: bool
     required: bool
     default: Any
 
-class CallableDict(dict):
+class _CallableDict(dict):
     """
     This is a proxy to handle the deprecation of
     :meth:`Intent.parameter_schema`, which is now a property. Legacy code may
@@ -146,7 +160,7 @@ class _IntentMetaclass(type):
                 default=default
             )
 
-        return CallableDict(result)
+        return _CallableDict(result)
 
 class Intent(metaclass=_IntentMetaclass):
     """
@@ -227,7 +241,7 @@ class Intent(metaclass=_IntentMetaclass):
     def parameter_schema(self) -> Dict[str, IntentParameterMetadata]:
         return self.__class__.parameter_schema
 
-def check_intent_name(candidate_name):
+def check_intent_name(candidate_name: str):
     """
     Raise `ValueError` if the given Intent name is not a valid name. Valid names
 
@@ -239,7 +253,10 @@ def check_intent_name(candidate_name):
     
     Note that `Agent.register` will apply further checks to spot duplicate
     intent names. Note that names are case insensitive, and shouldn't overlap
-    with parameter names. 
+    with parameter names.
+
+    Args:
+        candidate_name: The Intent name to check
     """
     invalid_reason = None
     

@@ -23,7 +23,10 @@ class UserNameGive(Intent):
     | Agent: Hi Guido
 
     This demonstrates the use of a **system entity** that is recognized in the
-    User utterance. Check :mod:`restaurant` for custom entities.
+    User utterance. Check :mod:`example_agent.restaurant` for custom entities.
+
+    Args:
+        user_name: User said this is his name
     """
     user_name: Sys.Person
 
@@ -36,6 +39,9 @@ class AgentNameGive(Intent):
     predicting a response. The language file of the Intent will have no Example
     Utterances, meaning that the Intent can be **triggered**, but will never be
     predicted.
+
+    Args:
+        agent_name: Agent claims this is its name
     """
     agent_name: Sys.Person
 
@@ -50,6 +56,9 @@ class UserLikesMusic(Intent):
 
     This intent demonstrates the use of **default** parameter values: when User
     doesn't specify a genre, Agent will assume it's Rock 'n' Roll.
+
+    Args:
+        music_genre: User said he likes this genre, defaults to "Rock 'n' Roll"
     """
     music_genre: Sys.MusicGenre = "Rock 'n' Roll"
 
@@ -65,6 +74,9 @@ class GreetFriends(Intent):
     Also, friend_names is a **required** parameter. When User doesn't specify
     names, we want to ask her to do so in a slot filling manner. This is done by
     defining `slot_filling_prompts` in the Intent language file.
+
+    Args:
+        friend_names: A list of friends to greet
     """
     friend_names: List[Sys.Person]
 
@@ -89,7 +101,11 @@ class UserAsksDay(Intent):
     (:class:`Sys.Date` inherits from :class:`datetime.date`):
 
     >>> predicted = connector.predict("What day will be tomorrow?")
-    >>> predicted.date
+    >>> predicted.intent.date
     Sys.Date(2021, 6, 20)
+
+    Args:
+        date: The date User wants to check
+    
     """
     date: Sys.Date

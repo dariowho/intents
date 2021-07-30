@@ -79,35 +79,79 @@ It's worth noting that the *follow* relation is **inherited** by subclasses:
 """
 from enum import Enum
 from typing import List
+import dataclasses
 from dataclasses import dataclass, field
 
 from intents import Intent
 from intents.model.intent import _IntentMetaclass
 
 class RelationType(Enum):
+    """
+    Currently, the only available type is `RelationType.FOLLOW`. If you want to
+    define a *follow* relation, use :func:`follow`.
+    """
     FOLLOW = "follow"
 
-@dataclass
-class IntentRelationMetadata:
-    relation: str
-    field_type: str = 'intent_relation'
+def follow() -> dataclasses.Field:
+    """
+    This can be used as a value for an Intent Relation field, e.g.
 
-def follow():
+    .. code-block:: python
+        
+        @dataclass
+        class AddMilk(Intent):
+            \"\"\"With milk please\"\"\"
+            parent_ask_coffee: AskCoffee = follow()
+
+    Internally, this is equivalent to calling :func:`dataclasses.field` with a
+    custom set of metadata.
+
+    .. warning::
+
+        The returned field currently sets `default=None` as a workaround to some
+        known limitations of dataclasses with inheritance. This behavior may be
+        adjusted again before 1.0
+    """
     # TODO: solve inheritance after default fields and remove default
     return field(default=None, metadata={"relation_type": RelationType.FOLLOW})
-    # return field(default=None, metadata=asdict(IntentRelationMetadata('follow')))
 
 @dataclass
 class RelatedIntent:
+    """
+    Represent one of the Intents that are related to the Relation subject. Along
+    with the related intent's class, this structure also stores its name as a
+    parameter and the relation type.
+
+    This structure is produced by :func:`related_intents`.
+
+    Args:
+        field_name: Name of the field in the Relation subject
+        relation_type: One of the supported Relation types
+        intent_cls: Class of the intent that is related to the subject
+    """
     field_name: str
     relation_type: RelationType
     intent_cls: _IntentMetaclass
 
 @dataclass
 class RelatedIntents:
+    """
+    A map of an Intent's relations, as it is produced by
+    :func:`related_intents`.
+
+    Args:
+        follow: A list of intents that are followed by the Relation subject
+    """
     follow: List[RelatedIntent] = field(default_factory=list)
 
 def related_intents(intent: Intent) -> RelatedIntents:
+    """
+    Produce a map of all the intents that are related to the given relation
+    subject.
+
+    Args:
+        intent: The relation subject
+    """
     result = RelatedIntents()
     for cls_field in intent.__dataclass_fields__.values():
         relation_type: RelationType = cls_field.metadata.get("relation_type")

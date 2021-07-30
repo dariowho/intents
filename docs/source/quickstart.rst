@@ -24,6 +24,7 @@ Let's create an intent in `my_agent/smalltalk.py`.
 
     @dataclass
     class UserSaysName(Intent):
+        """My name is Mary"""
         user_name: Sys.Person
 
 We'll define language resources separately in
@@ -51,14 +52,13 @@ Finally, let's create an Agent in `my_agent/agent.py`, and register the
     from my_agent import smalltalk
 
     class MyAgent(Agent):
-        """A little docstring for my Agent"""
+        """A toy Agent that still has a docstring"""
 
     MyAgent.register(smalltalk)
 
-
-:ref:`Example Agent` is a more complete example, and it's included in the
-library's repo (https://github.com/dariowho/intents/tree/master/example_agent).
-We will use that one in the rest of the tutorial.
+We have just defined a conversational Agent with one Intent. :ref:`Example
+Agent` is a more complete example, and it's included in the library's repo
+(https://github.com/dariowho/intents/tree/master/example_agent).
 
 Setup a Dialogflow Agent
 ------------------------
@@ -77,14 +77,13 @@ https://cloud.google.com/dialogflow/es/docs/quick/setup.
 Connect to Dialogflow
 ---------------------
 
-Agents alone aren't tied to a particular prediction service (ideally, we can use
-the same Agent on different services). To use Dialogflow we need a specific
+Agents alone are abstract. To use them with Dialogflow we need a specific
 **connector**:
 
 .. code-block:: python
     
     from intents.connectors import DialogflowEsConnector
-    dialogflow = DialogflowEsConnector('/path/to/your/service_account.json', ExampleAgent)
+    dialogflow = DialogflowEsConnector('/path/to/your/service_account.json', MyAgent)
 
 Upload to Cloud Agent
 ---------------------
@@ -96,7 +95,7 @@ Let's **upload** our example agent into our Dialogflow project:
     dialogflow.upload()
 
 This translates your Python Agent definition in Dialogflow ES format, and uploads
-it into its cloud projects: you will find it in your Dialogflow console at
+it into its cloud project: you will find it in your Dialogflow console at
 https://dialogflow.cloud.google.com
 
 Make predictions
@@ -113,20 +112,7 @@ We can use the same Connector as a **prediction client** for the agent you just 
     prediction.fulfillment_text    # "Hi Guido, I'm Bot"
     prediction.confidence          # 0.84
 
-Trigger Intents
----------------
-
-Intent objects can be **instantiated**, and used to trigger intents on the Cloud
-agent:
-
-.. code-block:: python
-
-    from example_agent import smalltalk
-
-    prediction = dialogflow.trigger(smalltalk.AgentNameGive(agent_name='Ugo'))
-
-    prediction.fulfillment_text # "Howdy Human, I'm Ugo"
-    prediction.confidence       # 1.0
+Intents can also be triggered programmatically with :meth:`~intents.service_connector.Connector.trigger`.
 
 Sessions
 --------

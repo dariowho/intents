@@ -57,9 +57,11 @@ from dataclasses import dataclass, field
 
 import yaml
 
+# pylint: disable=unused-import
+import intents # Needed to generate docs
 from intents.language import agent_language, LanguageCode
 # from intents.model.agent import _AgentMetaclass
-from intents.model.intent import _IntentMetaclass
+from intents.model.intent import Intent, _IntentMetaclass
 from intents.model.entity import _EntityMetaclass
 
 #
@@ -97,11 +99,11 @@ class ExampleUtterance(str):
     """
     
     # TODO: check for escape characters - intent is possibly intent_cls
-    def __init__(self, example: str, intent: "intents.Intent"):
+    def __init__(self, example: str, intent: Intent):
         self._intent = intent
         self.chunks() # Will check parameters
     
-    def __new__(cls, example: str, intent: "intents.Intent"):
+    def __new__(cls, example: str, intent: Intent):
         return super().__new__(cls, example)
 
     def chunks(self):
@@ -172,6 +174,9 @@ class IntentResponse:
         YAML file. Typically, IntentResponse is a dataclass and `data` is a dict
         of fields; however specific subclasses may override with custom
         parameters.
+
+        Args:
+            data: A response object, as it is read from the YAML file
         """
         return cls(**data)
 
@@ -199,6 +204,10 @@ class TextIntentResponse(IntentResponse):
             - text:
               - This is a response
               - This is an alternative response
+
+    Args:
+        choices: A list of equivalent responses. One will be chosen at random at
+            prediction time
     """
 
     choices: List[str]
@@ -232,6 +241,9 @@ class QuickRepliesIntentResponse(IntentResponse):
           - quick_replies:
             - Order Pizza
             - Order Beer
+
+    Args:
+        replies: A list of possible User replies to the current intent 
     """
 
     replies: List[str]
@@ -270,6 +282,10 @@ class ImageIntentResponse(IntentResponse):
           - image:
               url: https://example.com/image.png
               title: An example image
+    
+    Args:
+        url: A publicly accessible image URL
+        title: A title for the image
     """
     url: str
     title: str = None
@@ -299,6 +315,12 @@ class CardIntentResponse(IntentResponse):
               subtitle: An optional subtitle
               image: https://example.com/image.jpeg
               link: https://example.com/
+
+    Args:
+        title: The card title
+        subtitle: A short subtitle
+        image: URL of an image to be used as cover
+        link: A link to follow if User taps the card
     """
     title: str
     subtitle: str = None
@@ -312,6 +334,10 @@ class CustomPayloadIntentResponse(IntentResponse):
     Dialogflow in every response group, including "Default". Currently they can
     only be defined in the YAML as free form payloads; support for marshalling
     or generation from code is expected in future developments.
+
+    Args:
+        name: A name that identifies the payload type
+        payload: Any JSON-serializable object
     """
 
     name: str
@@ -371,6 +397,14 @@ class IntentLanguageData:
     `pizza_type` parameter. When User asks "I'd like a pizza" we want to fill
     the slot by asking "What type of pizza?". `slot_filling_prompts` will map
     parameters to their prompts: `{"pizza_type": ["What type of pizza?"]}`
+
+    Args:
+        example_utterance: A list of User utterances that should be associated
+            with the intent
+        slot_filling_prompts: A map of prompts to use when required parameters
+            are missing
+        responses: The Responses that Agent will send to User when the intent is
+            predicted 
     """
     example_utterances: List[ExampleUtterance] = field(default_factory=list)
     slot_filling_prompts: Dict[str, List[str]] = field(default_factory=dict)
@@ -381,10 +415,19 @@ class IntentLanguageData:
 #
 
 def intent_language_data(
-    agent_cls: "_AgentMetaclass",
+    agent_cls: "intents.model.agent._AgentMetaclass",
     intent_cls: _IntentMetaclass,
     language_code: LanguageCode=None
 ) -> Dict[LanguageCode, IntentLanguageData]:
+    """
+    Return Language Data for the given Intent.
+
+    Args:
+        agent_cls: The Agent class that registered the Intent
+        intent_cls: The Intent to load language data for
+        language_code: A specific language code to load. If not present, all
+            available languages will be returned
+    """
     if "__intent_language_data__" in intent_cls.__dict__:
         return intent_cls.__intent_language_data__
         

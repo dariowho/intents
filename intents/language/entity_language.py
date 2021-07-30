@@ -1,20 +1,65 @@
+"""
+Each of your Entity classes is supposed to define language data in a
+`language/<LANGUAGE-CODE>/ENTITY_MyEntityClass.yaml` YAML file.
+
+An Entity language file simply contains a list of entries and their synonyms.
+For instance, this is the content of `example_agent/language/en/ENTITY_PizzaType.yaml`:
+
+.. code-block:: yaml
+
+    entries:
+      Margherita:
+        - normal
+        - standard
+      Diavola:
+        - spicy
+        - pepperoni
+      Capricciosa:
+        - with olives and artichokes
+
+Check out :mod:`example_agent.restaurant` for a hands-on example with custom entities.
+"""
 import os
 from typing import List, Dict
 from dataclasses import dataclass
 
 import yaml
 
+# pylint: disable=unused-import
+import intents # (needed for building docs)
 from intents.model.entity import _EntityMetaclass
 from intents.language.language_codes import LanguageCode
 from intents.language.agent_language import agent_language_folder
 
 @dataclass
 class EntityEntry:
-
+    """
+    Model Language entry for a Custom Entity. `EntityEntry` objects are produced
+    by :func:`entity_language_data` as a result of parsing YAML language
+    resources.
+    
+    Args:
+        value: The canonical value of the entry (e.g. "Diavola")
+        synonyms: A set of synonyms that refer to the same entry (e.g. "spicy",
+            "pepperoni", ...)
+    """
     value: str
     synonyms: List[str]
 
-def entity_language_data(agent_cls: "agent._AgentMetaclass", entity_cls: _EntityMetaclass, language_code: LanguageCode=None) -> Dict[LanguageCode, List[EntityEntry]]:
+def entity_language_data(
+    agent_cls: "intents.model.agent._AgentMetaclass",
+    entity_cls: _EntityMetaclass,
+    language_code: LanguageCode=None
+) -> Dict[LanguageCode, List[EntityEntry]]:
+    """
+    Return language data for a given Entity.
+
+    Args:
+        agent_cls: The Agent class that registered the Entity
+        entity_cls: The Entity class to load language resources for
+        language_code: A specific Language to load. If not present, all
+            available languages will be returned
+    """
     # Custom language data
     if entity_cls.__entity_language_data__:
         # TODO: check custom language data

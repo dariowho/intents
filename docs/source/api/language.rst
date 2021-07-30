@@ -1,5 +1,5 @@
-Language
-========
+Language Data
+=============
 
 .. automodule:: intents.language
    :members:

@@ -90,8 +90,11 @@ class EntityMapping(ABC):
         >>> date_mapping.to_service(Sys.Date(2021, 7, 11))
         "2021-07-11"
 
-        :param entity: the System Entity to serialize
-        :return: the serialized Entity that can be sent to Service (e.g. in a trigger request)
+        Args:
+            entity: The System Entity to serialize
+
+        Returns:
+            The serialized Entity that can be sent to Service (e.g. in a trigger request)
         """
 
 class StringEntityMapping(EntityMapping):
@@ -151,6 +154,14 @@ class Prediction:
     One of the core uses of Service Connectors is to predict user utterances, or
     programmatically trigger intents. This class models the result of such
     predictions and triggers
+
+    Args:
+        intent: An instance of the predicted Intent
+        confidence: A confidence value on the service prediction
+        fulfillment_message_dict: A map of Intent Responses, as they were
+            returned by the Service. Consider using
+            :meth:`Prediction.fulfillment_messages` for convenience
+        fulfillment_text: A plain-text version of the response
     """
     intent: Intent
     confidence: float
@@ -183,6 +194,10 @@ class Prediction:
         >>> from intents.language import IntentResponseGroup
         >>> prediction.fulfillment_messages(IntentResponseGroup.DEFAULT)
         [TextIntentResponse(choices=['Nice, I can send you holiday pictures, or recommend an hotel'])]
+        
+        Args:
+
+            response_group: The Response Group to fetch responses for
         """
         if response_group == IntentResponseGroup.RICH and \
            not self.fulfillment_message_dict.get(response_group):
@@ -196,9 +211,15 @@ def deserialize_intent_parameters(
     mappings: ServiceEntityMappings
 ) -> Dict[str, EntityMixin]:
     """
-    Cast parameters in `Prediction.parameters_dict` according to the given
+    Cast parameters from Service format to Intents format according to the given
     schema. Typically this happens when a Connector has to turn prediction
     parameters into *Intents* entities.
+
+    Args:
+
+        service_parameters: The parameters dict, as it is returned by a Prediction Service
+        intent_cls: The Intent parameters will be matched against
+        mappings: The Service Entity Mappings, to deserialize parameter values
     """
     result = {}
     schema = intent_cls.parameter_schema
@@ -259,8 +280,8 @@ class Connector(ABC):
         language. When `session` or `language` are None, `predict` will use the
         default values that are specified in :meth:`__init__`.
 
-        *predict* will return an instance of `Intent`, representing the intent
-        as it was predicted by the service.
+        *predict* will return an instance of :class:`Prediction`, representing
+        the service response.
 
         >>> from intents.connectors import DialogflowEsConnector
         >>> from example_agent import ExampleAgent
@@ -275,10 +296,10 @@ class Connector(ABC):
         >>> prediction.confidence
         0.86
 
-        :param message: The User message to predict
-        :param session: Any string identifying a conversation
-        :param language: A ISO 639-1 language code (e.g. "en")
-        :return: An instance of the predicted Intent class
+        Args:
+            message: The User message to predict
+            session: Any string identifying a conversation
+            language: A ISO 639-1 language code (e.g. "en")
         """
 
     @abstractmethod
@@ -299,10 +320,10 @@ class Connector(ABC):
         >>> prediction.confidence
         1.0
 
-        :param intent: The Intent instance to trigger
-        :param session: Any string identifying a conversation
-        :param language: A ISO 639-1 language code (e.g. "en")
-        :return: An instance of the triggered Intent class
+        Args:
+            intent: The Intent instance to trigger
+            session: Any string identifying a conversation
+            language: A ISO 639-1 language code (e.g. "en")
         """
 
     @abstractmethod

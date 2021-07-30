@@ -102,8 +102,16 @@ class Entity(str, EntityMixin):
         """
         This class is used to set user-controlled Entity parameters.
 
-        **NOTE**: usage of Meta is experimental, it may be removed in upcoming
-        releases. 
+        .. warning::
+
+            The use of Meta is strictly bound to Dialogflow; support
+            may be dropped in the next releases of Intents
+
+        Args:
+            regex_entity: Whether to treat entity values as regular expressions
+            automated_expansion: Service will try to match synonyms even if they
+                are not explicitly declared
+            fuzzy_matching: Service will ignore word order in matching
         """
         regex_entity: bool = False
         automated_expansion: bool = False
@@ -134,6 +142,16 @@ class Sys:
 
             user_name: Sys.Person
 
+    System entities inherit from Python base types, so
+
+    .. code-block:: python
+
+        >>> isinstance(Sys.Integer(42), int)
+        True
+        >>> from datetime import date
+        >>> isinstance(Sys.Date.from_py_date(date(2021, 7, 30)), date)
+        True
+
     **NOTE**: This class can be expanded to contain more sophisticated entities,
     such as time intervals, amounts with measurement units and such. These may
     not be natively supported on every prediction service: some attention is
@@ -158,6 +176,9 @@ class Sys:
             """
             Clone the given :class:`datetime.date` object into a `Sys.Date`
             object. This is mostly for internal use.
+
+            Args:
+                py_date: A Python date object
             """
             return Sys.Date(py_date.year, py_date.month, py_date.day)
 
@@ -171,6 +192,9 @@ class Sys:
             """
             Clone the given :class:`datetime.time` object into a `Sys.Time`
             object. This is mostly for internal use.
+
+            Args:
+                py_time: A Python time object
             """
             return Sys.Time(py_time.hour, py_time.minute, py_time.second, tzinfo=py_time.tzinfo)
 

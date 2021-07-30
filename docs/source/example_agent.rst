@@ -11,6 +11,7 @@ Agent fundamentals: Smalltalk
 
 .. automodule:: example_agent.smalltalk
    :members:
+   :member-order: bysource
 
 
 Intent Relations: Shop
@@ -23,10 +24,12 @@ Custom Entities: Restaurant
 
 .. automodule:: example_agent.restaurant
    :members:
+   :member-order: bysource
 
 Rich Responses: Travels
 ---------------------------
 
 .. automodule:: example_agent.travels
    :members:
+   :member-order: bysource
    

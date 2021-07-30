@@ -83,11 +83,23 @@ class CartApi:
     some sort.
     """
     def add(self, item: str, amount: int):
-        """Add an item to cart"""
+        """
+        Add an item to cart
+        
+        Args:
+            item: Name of the item to add
+            amount: Amount to add
+        """
         print(f"If I was real, I'd add {amount} {item} to cart")
 
     def update(self, item: str, amount: int):
-        """Update an item in cart"""
+        """
+        Update an item in cart
+        
+        Args:
+            item: Name of the item to update
+            amount: New amount to set
+        """
         print(f"If I was real, I'd update the amount of {item} to {amount}")
 
 #
@@ -99,6 +111,9 @@ class OrderFish(Intent):
     """
     | U: I'd like to buy a fish please
     | A: What sort of fish would you like?
+
+    Args:
+        amount: The amount of fish to buy
     """
     amount: Sys.Integer = 1
 
@@ -107,6 +122,9 @@ class OrderKipper(OrderFish):
     """
     | U: I'd like to buy a kipper
     | A: Alright, adding 1 kipper to cart
+
+    Args:
+        amount: The amount of kipper to buy
     """
 
     def fulfill(self):
@@ -123,6 +141,10 @@ class OrderFishAnswerKipper(OrderKipper):
     | ("...what sort of fish would you like?")
     | U: kipper
     | A: Kipper, good choice
+
+    Args:
+        amount: The amount of kipper to buy
+        parent_order_fish: The OrderFish intent from context
     """
     parent_order_fish: OrderFish = follow()
 
@@ -132,6 +154,12 @@ class ChangeAmount(Intent):
     | ("...adding one kipper to cart")
     | U: actually, make it 2
     | A: Sure, 2 kippers for you
+
+    Args:
+        amount: The new amount of kipper. Note that this overwrites all the
+            other values for parameter "amount" in context, even if they come from
+            other intents
+        parent_order_kipper: The OrderKipper intent from context
     """
     amount: Sys.Integer
 
