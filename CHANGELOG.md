@@ -1,6 +1,6 @@
 # v0.2.0
 
-This release, like probably many others in 0.x (see [semantic versioning FAQ](https://semver.org/#doesnt-this-discourage-rapid-development-and-fast-iteration)), contains breaking changes. They are reported below.
+This release contains breaking changes (see [semantic versioning FAQ](https://semver.org/#doesnt-this-discourage-rapid-development-and-fast-iteration)), they are reported below.
 
 * (#4) Add experimental Alexa connector
 * (#7) Add `follow` intent relation

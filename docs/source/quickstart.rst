@@ -9,7 +9,7 @@ Install
 
 .. code-block:: sh
 
-    pip install intents==0.2a1
+    pip install intents
 
 Define An Agent
 ---------------

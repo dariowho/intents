@@ -153,7 +153,10 @@ class Prediction:
     """
     One of the core uses of Service Connectors is to predict user utterances, or
     programmatically trigger intents. This class models the result of such
-    predictions and triggers
+    predictions and triggers.
+
+    You will typically obtain `Prediction` objects from :class:`Connector`
+    methods :meth:`~Connector.predict` and :meth:`~Connector.trigger`.
 
     Args:
         intent: An instance of the predicted Intent
@@ -245,19 +248,19 @@ def deserialize_intent_parameters(
     return result
 
 class Connector(ABC):
+    """
+    Connect the given Agent to a Prediction Service.
+
+    :param agent_cls: The Agent to connect
+    :param default_session: A default session ID (conversation channel) for predictions
+    :param default_language: A default language for predictions
+    """
 
     agent_cls: type(Agent)
     default_session: str
     default_language: str
 
     def __init__(self, agent_cls: type(Agent), default_session: str=None, default_language: str="en"):
-        """
-        Connect the given Agent to a Prediction Service.
-
-        :param agent_cls: The Agent to connect
-        :param default_session: A default session ID (conversation channel) for predictions
-        :param default_language: A default language for predictions
-        """
         if not default_session:
             default_session = f"py-{str(uuid1())}"
         

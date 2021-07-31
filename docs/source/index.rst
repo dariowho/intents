@@ -1,15 +1,19 @@
 Intents ⛺
 ==========
-**Intents** is an unofficial Python library to define and operate Dialogflow Agents with a simple,
-code-first approach.
+
+**Intents** is a Python framework to define and operate Conversational
+Agents with a simple, code-first approach. `Dialogflow ES <https://dialogflow.cloud.google.com/>`_ is the primary
+supported NLU service.
 
 Why *Intents*
 =============
 
 Define Agents as Python classes
 -------------------------------
-Dialogflow UI is great, but we are coders. With *Intents* your Agent lives **within your software** project:
-autocomplete, type hints and static code checks are back!
+Dialogflow UI is great, but we are coders. With *Intents* your Agent is defined
+**within your software** project, with native Python structures. Autocomplete and
+static code checks are back, to make your Agents more flexible, scalable and
+maintainable.
 
 Versioning and Continuous Integration
 -------------------------------------
@@ -17,12 +21,11 @@ With *Intents* you can **generate an Agent from code**, your developers
 can work in branches, the right Agent can be generated and restored
 programmatically in CI pipelines.
 
-A Human-friendly prediction client
-----------------------------------
-The official Dialogflow Python client is not the most enjoyable piece of
-sowftware you will experience as a developer. It gives you full control over the
-Agent, but if you are simply interested in making
-predictions and triggers, why not **keep it simple**?
+Human-friendly Connectors
+-------------------------
+Agent definitions are service-agnostic. While built-in support for **Dialogflow ES**
+is provided, you are free to develop connectors for any other platform. And
+since your intents are classes, predictions will just be their instances. 
 
 Documentation Content
 =====================

@@ -42,26 +42,34 @@ RICH_RESPONSE_PLATFORMS = ["telegram", "facebook", "slack", "line", "hangouts"]
 @dataclass
 class DialogflowPrediction(Prediction):
     """
-    This is an implementation of :class:`Prediction` that comes from Dialogflow.
-    It adds a `df_response` field, through which the full Dialogflow prediction
-    payload can be accessed. Note that this is a tool for debugging: relying on
-    Dialogflow data in your business logic is likely to make it harder to
-    connect your Agent to different platforms.
+    This is an implementation of :class:`~intents.service_connector.Prediction`
+    that comes from Dialogflow. It adds a `df_response` field, through which the
+    full Dialogflow prediction payload can be accessed. Note that this is a tool
+    for debugging: relying on Dialogflow data in your business logic is likely
+    to make it harder to connect your Agent to different platforms.
 
     `DialogflowPredictions` are produced internally by
-    :class:`DialogflowEsConnector`, and automatically used to instantiate
-    Intents in :class:`DialogflowEsConnector.predict` and
-    :class:`DialogflowEsConnector.trigger`. Probably you won't need to manually
-    operate with Predictions.
+    :class:`DialogflowEsConnector`, and are returned by its :meth:`~DialogflowEsConnector.predict` and
+    :meth:`~DialogflowEsConnector.trigger` methods.
+
+    Args:
+        intent: An instance of the predicted Intent
+        confidence: Dialogflow's confidence on its prediction
+        fulfillment_message_dict: A map of Intent Responses, as they were
+            returned by the Service. Consider using
+            :meth:`Prediction.fulfillment_messages` for convenience
+        fulfillment_text: A plain-text version of the response
+        df_response: Raw Dialogflow response data. It is advisable not to rely
+            on this is production, if you want to keep cross-service compatibility
     """
     df_response: DetectIntentResponse = field(default=False, repr=False)
 
 class DialogflowEsConnector(Connector):
     """
-    This is an implementation of :class:`Connector` that enables Agents to
-    work as Dialogflow projects.
+    This is an implementation of :class:`~intents.service_connector.Connector`
+    that enables Agents to work as Dialogflow projects.
 
-    An Agent can be connected to Dialogflow by providing its :class:`Agent`
+    An Agent can be connected to Dialogflow by providing its :class:`~intents.model.agent.Agent`
     class and service account credentials for the the Google Cloud project
     that hosts the Dialogflow ES agent:
 
@@ -136,7 +144,7 @@ class DialogflowEsConnector(Connector):
             )
             agents_client.restore_agent(request=restore_request)
 
-    def predict(self, message: str, session: str = None, language: str = None) -> Intent:
+    def predict(self, message: str, session: str = None, language: str = None) -> DialogflowPrediction:
         if not session:
             session = self.default_session
         if not language:
@@ -154,7 +162,7 @@ class DialogflowEsConnector(Connector):
 
         return self._df_response_to_prediction(df_response)
 
-    def trigger(self, intent: Intent, session: str=None, language: str=None) -> Intent:
+    def trigger(self, intent: Intent, session: str=None, language: str=None) -> DialogflowPrediction:
         if not session:
             session = self.default_session
         if not language:
