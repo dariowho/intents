@@ -1,3 +1,12 @@
+# v0.3.0 (in development)
+
+* (#17) Add dataclass model for Dialogflow Responses and Webhook requests
+* (#17) Breaking changes (internal):
+    * `connectors.dialogflow_es.response_format` renamed to `prediction_format`
+    * `DialogflowIntentResponse` classes moved from `prediction_format` to
+      `prediction` 
+    * Replaced protobuf parameters with dataclass equivalents
+
 # v0.2.0
 
 This release contains breaking changes (see [semantic versioning FAQ](https://semver.org/#doesnt-this-discourage-rapid-development-and-fast-iteration)), they are reported below.

@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "intents"
-version = "0.2.0"
+version = "0.3.dev1"
 description = "Define and operate Dialogflow Agents with a simple, code-first, approach"
 authors = ["Dario <dario.chi@inventati.org>"]
 license = "Apache-2.0"
@@ -12,6 +12,7 @@ documentation = "https://intents.readthedocs.io/"
 python = "^3.8"
 pyyaml = "^5.4.1"
 google-cloud-dialogflow = "^2.0.0"
+dacite = "^1.6.0"
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.6.0"

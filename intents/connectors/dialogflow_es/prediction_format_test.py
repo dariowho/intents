@@ -2,10 +2,13 @@ from google.cloud.dialogflow_v2.types import DetectIntentResponse
 from google.cloud.dialogflow_v2 import types as df_types
 
 from intents.language import IntentResponseGroup, TextIntentResponse, QuickRepliesIntentResponse, CardIntentResponse
-from intents.connectors.dialogflow_es.response_format import DialogflowTextResponse, \
+from intents.connectors.dialogflow_es.prediction import DialogflowTextResponse, \
     DialogflowQuickRepliesResponse, \
     DialogflowCardResponse, \
-    intent_responses
+    DetectIntentBody, \
+    intent_responses, \
+    build_response_message
+from intents.connectors.dialogflow_es import prediction_format as df
 
 
 # {'text': {'text': ['How about Hotel Belvedere, in Como?']}}
@@ -54,22 +57,30 @@ df_response_quick_replies_serialized = b'\n-1cedb9e6-f958-437f-9299-74f966fbec62
 df_response_quick_replies = DetectIntentResponse.deserialize(df_response_quick_replies_serialized)
 
 def test_text_intent_response():
-    result = DialogflowTextResponse.from_df_message(text_message.text)
+    message = df.from_protobuf(df.QueryResultMessage, text_message)
+    result = DialogflowTextResponse.from_df_message(message)
     assert result == text_message_expected
+    assert result == build_response_message(message)
 
-    result = DialogflowTextResponse.from_df_message(text_message_rich.text)
+    message = df.from_protobuf(df.QueryResultMessage, text_message_rich)
+    result = DialogflowTextResponse.from_df_message(message)
     assert result == text_message_rich_expected
+    assert result == build_response_message(message)
 
 def test_quick_replies_response():
-    result = DialogflowQuickRepliesResponse.from_df_message(quick_replies_message.quick_replies)
+    message = df.from_protobuf(df.QueryResultMessage, quick_replies_message)
+    result = DialogflowQuickRepliesResponse.from_df_message(message)
     assert result == quick_replies_expected
+    assert result == build_response_message(message)
 
 def test_card_response():
-    result = DialogflowCardResponse.from_df_message(card_message.card)
+    message = df.from_protobuf(df.QueryResultMessage, card_message)
+    result = DialogflowCardResponse.from_df_message(message)
     assert result == card_message_expected
+    assert result == build_response_message(message)
 
 def test_intent_responses():
-    result = intent_responses(df_response_quick_replies)
+    result = intent_responses(DetectIntentBody(df_response_quick_replies))
     expected = {
         IntentResponseGroup.DEFAULT: [
             TextIntentResponse(choices=["If you like I can recommend you an hotel. Or I can send you some holiday pictures"])

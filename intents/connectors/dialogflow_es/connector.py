@@ -12,8 +12,7 @@ import google.auth.credentials
 from google.cloud.dialogflow_v2.types import TextInput, QueryInput, EventInput
 from google.cloud.dialogflow_v2.services.sessions import SessionsClient
 from google.cloud.dialogflow_v2.services.agents import AgentsClient
-from google.cloud.dialogflow_v2.types import DetectIntentResponse, RestoreAgentRequest
-from google.protobuf.json_format import MessageToDict
+from google.cloud.dialogflow_v2 import types as pb
 
 from intents import Agent, Intent
 from intents.model.agent import _AgentMetaclass
@@ -24,8 +23,7 @@ from intents.connectors.dialogflow_es.auth import resolve_credentials
 from intents.connectors.dialogflow_es.util import dict_to_protobuf
 from intents.connectors.dialogflow_es import entities as df_entities
 from intents.connectors.dialogflow_es import export as df_export
-from intents.connectors.dialogflow_es.response_format import intent_responses
-from intents.connectors.dialogflow_es.prediction import DialogflowResponse
+from intents.connectors.dialogflow_es.prediction import PredictionBody, DetectIntentBody, intent_responses
 from intents.connectors.commons import WebhookConfiguration
 
 logger = logging.getLogger(__name__)
@@ -62,7 +60,7 @@ class DialogflowPrediction(Prediction):
         df_response: Raw Dialogflow response data. It is advisable not to rely
             on this is production, if you want to keep cross-service compatibility
     """
-    df_response: DetectIntentResponse = field(default=False, repr=False)
+    df_response: DetectIntentBody = field(default=False, repr=False)
 
 class DialogflowEsConnector(Connector):
     """
@@ -138,7 +136,7 @@ class DialogflowEsConnector(Connector):
             self.export(export_path)
             with open(export_path, 'rb') as f:
                 agent_content = f.read()
-            restore_request = RestoreAgentRequest(
+            restore_request = pb.RestoreAgentRequest(
                 parent=f"projects/{self.gcp_project_id}",
                 agent_content=agent_content
             )
@@ -158,9 +156,9 @@ class DialogflowEsConnector(Connector):
             session=session_path,
             query_input=query_input
         )
-        df_response = DialogflowResponse(df_result)
+        df_response = DetectIntentBody(df_result)
 
-        return self._df_response_to_prediction(df_response)
+        return self._df_body_to_prediction(df_response)
 
     def trigger(self, intent: Intent, session: str=None, language: str=None) -> DialogflowPrediction:
         if not session:
@@ -194,22 +192,22 @@ class DialogflowEsConnector(Connector):
             session=session_path,
             query_input=query_input
         )
-        df_response = DialogflowResponse(df_result)
+        df_response = DetectIntentBody(df_result)
 
-        return self._df_response_to_prediction(df_response)
+        return self._df_body_to_prediction(df_response)
 
-    def _df_response_to_prediction(self, df_response: DialogflowResponse) -> DialogflowPrediction:
+    def _df_body_to_prediction(self, df_body: DetectIntentBody) -> DialogflowPrediction:
         return DialogflowPrediction(
-            intent=self._df_response_to_intent(df_response),
-            confidence=df_response.protobuf_response.query_result.intent_detection_confidence,
-            fulfillment_message_dict=intent_responses(df_response.protobuf_response),
-            fulfillment_text=df_response.protobuf_response.query_result.fulfillment_text,
-            df_response=df_response
+            intent=self._df_body_to_intent(df_body),
+            confidence=df_body.queryResult.intentDetectionConfidence,
+            fulfillment_message_dict=intent_responses(df_body),
+            fulfillment_text=df_body.queryResult.fulfillmentText,
+            df_response=df_body.detect_intent
         )
 
-    def _df_response_to_intent(
+    def _df_body_to_intent(
         self,
-        df_response: DialogflowResponse,
+        df_body: PredictionBody,
         build_related_cls: _IntentMetaclass=None,
         visited_intents: Set[_IntentMetaclass]=None
     ) -> Intent:
@@ -219,7 +217,7 @@ class DialogflowEsConnector(Connector):
         Intent instead (this is used for related intents); in this case contexts
         and parameters will be checked for consistency.
 
-        :param df_response: A Dialogflow Response
+        :param df_body: A Dialogflow Response
         :param build_related_cls: Force to build the related intent instead of
         the predicted one
         :param visited_intents: This is used internally to prevent recursion loops
@@ -227,9 +225,11 @@ class DialogflowEsConnector(Connector):
         if not visited_intents:
             visited_intents = set()
 
-        contexts, context_parameters = df_response.contexts()
+        contexts, context_parameters = df_body.contexts()
         
         # Slot filling in progress
+        # TODO: use queryResult.allRequiredParamsPresent instead
+        # TODO: also check queryResult.cancelsSlotFilling
         if "__system_counters__" in contexts:
             return None
 
@@ -241,14 +241,14 @@ class DialogflowEsConnector(Connector):
                 if p_name in intent_cls.parameter_schema
             }
         else:
-            intent_name = df_response.intent_name
+            intent_name = df_body.intent_name
             intent_cls: Intent = self.agent_cls._intents_by_name.get(intent_name)
             if not intent_cls:
                 raise ValueError(f"Prediction returned intent '{intent_name}', " +
                     "but this was not found in Agent definition. Make sure to restore a latest " +
                     "Agent export from `services.dialogflow_es.export.export()`. If the problem " +
                     "persists, please file a bug on the Intents repository.")
-            df_parameters = df_response.intent_parameters
+            df_parameters = df_body.intent_parameters
 
         visited_intents.add(intent_cls)
         parameter_dict = deserialize_intent_parameters(df_parameters, intent_cls, self.entity_mappings)
@@ -256,7 +256,7 @@ class DialogflowEsConnector(Connector):
         for related in related_intents(intent_cls).follow:
             if related.intent_cls in visited_intents:
                 raise ValueError(f"Loop detected: {related.intent_cls} was already visited. Make sure your Agent has no circular dependencied")
-            related_intent = self._df_response_to_intent(df_response, related.intent_cls, visited_intents)
+            related_intent = self._df_body_to_intent(df_body, related.intent_cls, visited_intents)
             related_intents_dict[related.field_name] = related_intent
 
         return intent_cls(**parameter_dict, **related_intents_dict)
