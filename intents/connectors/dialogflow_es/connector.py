@@ -255,7 +255,7 @@ class DialogflowEsConnector(Connector):
         related_intents_dict = {}
         for related in related_intents(intent_cls).follow:
             if related.intent_cls in visited_intents:
-                raise ValueError(f"Loop detected: {related.intent_cls} was already visited. Make sure your Agent has no circular dependencied")
+                raise ValueError(f"Loop detected: {related.intent_cls} was already visited. Make sure your Agent has no circular dependencies")
             related_intent = self._df_body_to_intent(df_body, related.intent_cls, visited_intents)
             related_intents_dict[related.field_name] = related_intent
 

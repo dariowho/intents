@@ -1,0 +1,1 @@
+from intents.connectors._experimental.snips.connector import SnipsConnector

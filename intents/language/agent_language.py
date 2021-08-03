@@ -23,6 +23,9 @@ def agent_language_folder(agent_cls: "agent._AgentMetaclass") -> str:
     return language_folder
 
 def agent_supported_languages(agent_cls: "agent._AgentMetaclass") -> List[LanguageCode]:
+    if agent_cls.languages:
+        return agent_cls.languages
+        
     result = []
     
     language_folder = agent_language_folder(agent_cls)

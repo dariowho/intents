@@ -13,6 +13,10 @@ python = "^3.8"
 pyyaml = "^5.4.1"
 google-cloud-dialogflow = "^2.0.0"
 dacite = "^1.6.0"
+snips-nlu = {version = "^0.20.2", optional = true, extras = ["snips"]}
+
+[tool.poetry.extras]
+snips = ["snips-nlu"]
 
 [tool.poetry.dev-dependencies]
 pylint = "^2.6.0"

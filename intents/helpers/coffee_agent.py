@@ -22,15 +22,17 @@ from intents.language.entity_language import EntityEntry
 def mock_language_data(
     intent_cls: type,
     utterances: Union[str, List[str]],
-    response: str="Any response"
+    responses: Union[str, List[str]]="Any response"
 ):
     if isinstance(utterances, str):
         utterances = [utterances]
+    if isinstance(responses, str):
+        responses = [responses]
     return {
         LanguageCode.ENGLISH: IntentLanguageData(
             example_utterances=[ExampleUtterance(u, intent_cls) for u in utterances],
             responses={
-                IntentResponseGroup.DEFAULT: [TextIntentResponse(choices=response)]
+                IntentResponseGroup.DEFAULT: [TextIntentResponse(choices=responses)]
             }
         )
     }
@@ -49,13 +51,21 @@ class AskCoffee(Intent):
     """I'd like a coffee"""
     name = "AskCoffee"
     roast: CoffeeRoast = "medium"
-AskCoffee.__intent_language_data__ = mock_language_data(AskCoffee, ["I'd like a coffee", "I'd like a $roast{medium} roast coffee"])
+AskCoffee.__intent_language_data__ = mock_language_data(
+    AskCoffee,
+    ["I'd like a coffee", "I'd like a $roast{medium} roast coffee"],
+    ["$roast roast coffee, good choice!", "Alright, $roast roasted coffee for you"]
+)
 
 @dataclass
 class AskEspresso(AskCoffee):
     """I'd like an espresso."""
     name = "AskEspresso"
-AskEspresso.__intent_language_data__ = mock_language_data(AskEspresso, ["I'd like an espresso", "I'd like a $roast{medium} roast espresso"])
+AskEspresso.__intent_language_data__ = mock_language_data(
+    AskEspresso,
+    ["I'd like an espresso", "I'd like a $roast{medium} roast espresso"],
+    ["$roast roast espresso, good choice!", "Alright, $roast roasted espresso for you"]
+)
     
 @dataclass
 class AddMilk(Intent):

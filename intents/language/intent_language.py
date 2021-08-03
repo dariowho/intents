@@ -51,6 +51,7 @@ Let's look at the sections of this file.
 
 import os
 import re
+import random
 from enum import Enum
 from typing import List, Dict, Union
 from dataclasses import dataclass, field
@@ -180,6 +181,41 @@ class IntentResponse:
         """
         return cls(**data)
 
+    def render(self, intent: Intent):
+        """
+        Render the Response object by replacing parameter references with values from the give :class:`Intent`
+        instance. This is done on every member of the Response class.
+
+        As `IntentResponse` objects are frozen, `self` won't change. Instead a **new object** will be returned,
+        with rendered members.
+
+        .. warning::
+
+            This function currently doesn't handle escaping.
+
+        .. code-block:: python
+
+                >>> intent = OrderCoffee(roast="dark")   # This typically comes from a Prediction
+                >>> response = TextIntentResponse(choices=["I like $roast roasted coffee as well", "$roast roast, good choice!"]
+                >>> response.render(intent)
+                TextIntentResponse(choices=["I like dark roasted coffee as well", "dark roast, good choice!"])
+
+        Args:
+            intent: The Intent instance that will be used to read parameter values
+        """
+        # TODO: handle list/dict values differently
+        parameter_dict = {k: intent.__dict__[k] for k in intent.parameter_schema}
+        result_args = {}
+        for field_name in self.__dataclass_fields__:
+            if isinstance(field_name, (str, list)):
+                result_args[field_name] = _render_response(
+                    self.__dict__[field_name],
+                    parameter_dict
+                )
+            else:
+                result_args[field_name] = self.__dict__[field_name]
+        return self.__class__(**result_args)
+
 @dataclass(frozen=True)
 class TextIntentResponse(IntentResponse):
     """
@@ -219,6 +255,19 @@ class TextIntentResponse(IntentResponse):
 
         assert isinstance(data, list)
         return cls(data)
+
+    def choose(self):
+        """
+        Pick one of the available choices. It is recommended to :meth:`~IntentResponse.render` the response first.
+
+        .. code-block:: python
+
+            >>> intent = OrderCoffee(roast="dark")   # This typically comes from a Prediction
+            >>> response = TextIntentResponse(choices=["I like $roast roasted coffee as well", "$roast roast, good choice!"]
+            >>> response.render(intent).choose()
+            "dark roast, good choice!"
+        """
+        return random.choice(self.choices)
 
 @dataclass(frozen=True)
 class QuickRepliesIntentResponse(IntentResponse):
@@ -374,6 +423,28 @@ class CustomPayloadIntentResponse(IntentResponse):
 
         return CustomPayloadIntentResponse(payload_name, payload_content)
 
+
+def _render_response(data: Union[str, list], parameter_dict: Dict[str, str]):
+    """
+    Render some response data by replacing parameter references with the one contained in `parameter_dict`. This
+    function is called by :meth:`IntentResponse.render` on each of the Response members.
+    """
+    if isinstance(data, str):
+        result = data
+        for k, v in parameter_dict.items():
+            result = result.replace(f"${k}", str(v))  # TODO: handle escaping
+        return result
+
+    if isinstance(data, list):
+        return [_render_response(x, parameter_dict) for x in data]
+
+    raise NotImplementedError(f"Unsupported IntentResponse member type: `{type(data)}`. "
+                              "Please open an issue at the Intents repository")
+
+#
+# Language Data Loader
+#
+
 @dataclass
 class IntentLanguageData:
     """
@@ -404,15 +475,11 @@ class IntentLanguageData:
         slot_filling_prompts: A map of prompts to use when required parameters
             are missing
         responses: The Responses that Agent will send to User when the intent is
-            predicted 
+            predicted
     """
     example_utterances: List[ExampleUtterance] = field(default_factory=list)
     slot_filling_prompts: Dict[str, List[str]] = field(default_factory=dict)
     responses: Dict[IntentResponseGroup, List[IntentResponse]] = field(default_factory=list)
-
-#
-# Language Data Loader
-#
 
 def intent_language_data(
     agent_cls: "intents.model.agent._AgentMetaclass",
