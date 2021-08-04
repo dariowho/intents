@@ -1,8 +1,9 @@
 import logging
-import datetime
 from enum import Enum
+
 from intents import Sys, Entity
-from intents.service_connector import EntityMapping, StringEntityMapping, ServiceEntityMappings
+from intents.resources.builtin_entities import color
+from intents.service_connector import StringEntityMapping, PatchedEntityMapping, ServiceEntityMappings
 
 logger = logging.getLogger(__name__)
 
@@ -13,6 +14,7 @@ class BuiltinEntityTypes(Enum):
 ENTITY_MAPPINGS = ServiceEntityMappings.from_list([
     StringEntityMapping(Entity, None),
     # StringEntityMapping(Sys.Person, SystemSlotTypes.Person.value),
+    PatchedEntityMapping(Sys.Color, color.I_IntentsColor),
     # StringEntityMapping(Sys.Color, SystemSlotTypes.Color.value),
     # DateMapping(),
     # DummyMapping(Sys.Email), # TODO: implement

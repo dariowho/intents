@@ -1,5 +1,13 @@
+from dataclasses import dataclass
+
 import pytest
+
+from intents import Intent, Sys
 from intents.language.intent_language import TextIntentResponse, QuickRepliesIntentResponse, ImageIntentResponse, CardIntentResponse, CustomPayloadIntentResponse
+
+@dataclass
+class FakeIntent(Intent):
+    foo: Sys.Person
 
 def test_text_intent_response_string():
     text_response_instance = TextIntentResponse(["ciao"])
@@ -13,11 +21,55 @@ def test_text_intent_response_list():
     assert text_response_instance == text_response_from_yaml
     assert text_response_from_yaml.choices == ["pippo", "franco"]
 
+def test_text_intent_response_equals():
+    response_1 = TextIntentResponse(["pippo", "franco"])
+    response_2 = TextIntentResponse(["pippo", "franco"])
+    response_3 = TextIntentResponse(["franco", "pippo"])
+    response_4 = TextIntentResponse(["something", "else"])
+    assert response_1 == response_2
+    assert response_1 != response_3
+    assert response_1 != response_4
+    # can't do this with mutable lists
+    # assert response_1 in {response_2, response_3, response_4}
+    # assert response_1 not in {response_3, response_4}
+
+def test_text_intent_response_random():
+    text_response_instance = TextIntentResponse(["pippo", "franco"])
+    assert text_response_instance.random() in ["pippo", "franco"]
+
+def test_text_response_render():
+    text_response_instance = TextIntentResponse([
+        "$foo is when you look at me",
+        "I like it when it's $foo",
+        "Why does it $foo when I $foobar?",
+        "Why does it $foobar when I $foo?",
+        "Is it \"$foo\" if it hurts?"
+        "$foo"
+    ])
+
+    fake_intent = FakeIntent(foo="Trotskyism")
+
+    expected = TextIntentResponse([
+        "Trotskyism is when you look at me",
+        "I like it when it's Trotskyism",
+        "Why does it Trotskyism when I $foobar?",
+        "Why does it $foobar when I Trotskyism?",
+        "Is it \"Trotskyism\" if it hurts?"
+        "Trotskyism"
+    ])
+
+    assert text_response_instance.render(fake_intent) == expected
+
 def test_quick_replies_response_string():
     quick_replies_instance = QuickRepliesIntentResponse(["ciao"])
     quick_replies_from_yaml = QuickRepliesIntentResponse.from_yaml("ciao")
     assert quick_replies_instance == quick_replies_from_yaml
     assert quick_replies_from_yaml.replies == ["ciao"]
+
+def test_quick_replies_render():
+    quick_replies_response_instance = QuickRepliesIntentResponse(["$foo", "pippo", "franco $foo"])
+    fake_intent = FakeIntent(foo="bar")
+    expected = QuickRepliesIntentResponse(["bar", "pippo", "franco bar"])
 
 def test_quick_replies_response_list():
     quick_replies_response_instance = QuickRepliesIntentResponse(["pippo", "franco"])

@@ -1,5 +1,7 @@
 # v0.3.0 (in development)
 
+* (#19) Add basic SnipsNLU Connector
+* (#19) Add builtin entities module and `service_connector.PatchEntityMapping`
 * (#17) Add dataclass model for Dialogflow Responses and Webhook requests
 * (#17) Breaking changes (internal):
     * `connectors.dialogflow_es.response_format` renamed to `prediction_format`

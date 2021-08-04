@@ -97,9 +97,10 @@ class EntityMapping(ABC):
             The serialized Entity that can be sent to Service (e.g. in a trigger request)
         """
 
+@dataclass(frozen=True)
 class StringEntityMapping(EntityMapping):
     """
-    This is a basic :class:`EntityMapping` that reads values as they are sent
+    This is a convenience :class:`EntityMapping` that reads values as they are sent
     by the prediction service (e.g. `"3"` -> `Sys.Integer("3")`), and serializes
     by simple string conversion (e.g. `Sys.Integer(3)` -> "3").
 
@@ -107,17 +108,46 @@ class StringEntityMapping(EntityMapping):
     instance:
 
     >>> StringEntityMapping(Sys.Integer, "sys.number-integer")
+
+    Args:
+        entity_cls: One of the `Sys.*` entity classes
+        service_name: Name of the corresponding entity within the Prediction
+            Service
     """
 
     entity_cls: _EntityMetaclass = None
     service_name: str = None
 
-    def __init__(self, entity_cls: _EntityMetaclass, service_name: str):
-        """
-        :param service_name: name of the Entity in the Prediction Service
-        """
-        self.entity_cls = entity_cls
-        self.service_name = service_name
+    def from_service(self, service_data: Any) -> SystemEntityMixin:
+        return self.entity_cls(service_data)
+
+    def to_service(self, entity: SystemEntityMixin) -> Any:
+        return str(entity)
+
+@dataclass(frozen=True)
+class PatchedEntityMapping(EntityMapping):
+    """
+    Different Prediction Services support different entities. For instance,
+    :class:`Sys.Color` is native in Dialogflow, but is not supported in Snips.
+    In some cases, we can patch missing system entities with custom ones; for
+    instance, :class:`Sys.Color` can be patched with
+    :class:`intents.resources.builtin_entities.color.I_IntentsColor`.
+    `PatchedEntityMapping` can be use to define mappings for system entities
+    that are patched with custom ones.
+
+    Connectors that use patched entities must define logic to handle
+    `PatchedEntityMapping` in their export procedures.
+
+    By default, `builtin_entity.name` is used as Service entity name, and values
+    are (de)serialized as simple strings. If a Connector have different
+    required, it should define a custom subclass of `PatchedEntityMapping`.
+    """
+    entity_cls: _EntityMetaclass = None
+    builtin_entity: Entity = None
+
+    @property
+    def service_name(self):
+        return self.builtin_entity.name
 
     def from_service(self, service_data: Any) -> SystemEntityMixin:
         return self.entity_cls(service_data)
@@ -231,7 +261,7 @@ def deserialize_intent_parameters(
             raise ValueError(f"Found parameter {param_name} in Service Prediction, but Intent class does not define it.")
         param_metadata = schema[param_name]
         mapping_cls = param_metadata.entity_cls
-        if issubclass(mapping_cls, Entity):
+        if issubclass(mapping_cls, Entity) and mapping_cls not in mappings:
             # Custom Entity
             mapping_cls = Entity
         mapping = mappings[mapping_cls]

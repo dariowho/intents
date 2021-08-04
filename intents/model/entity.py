@@ -20,6 +20,8 @@ import datetime
 from typing import Any, List, Dict
 from dataclasses import dataclass
 
+from intents.model import names
+
 class _EntityMetaclass(type):
 
     name: str = None
@@ -29,13 +31,17 @@ class _EntityMetaclass(type):
         result_cls = super().__new__(cls, name, bases, dct)
 
         # Do not process Intent base class
-        if name in ['Entity', 'EntityMixin', 'SystemEntityMixin']:
+        if name in ['Entity', 'EntityMixin', 'SystemEntityMixin', 'BuiltinEntity']:
             # TODO: check if user isn't defining "class Entity(intents.Entity)" for
             # some reason
             return result_cls
 
         if not result_cls.name:
             result_cls.name = result_cls.__name__
+
+        # TODO: fix and re-enable
+        # is_system = hasattr(result_cls, "__intents_internal__")
+        # names.check_name(result_cls.name, is_system)
 
         return result_cls
 

@@ -16,3 +16,4 @@ service; once your Agent is defined you can use one of the built-in
     relations
     entity
     language
+    names

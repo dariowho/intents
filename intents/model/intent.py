@@ -9,15 +9,13 @@ defining :class:`Intent` sub-classes and their language resources (see
 :mod:`intents.language`), and registering them to an :class:`intents.Agent`
 class with :meth:`intents.Agent.register`.
 """
-
-import re
 import inspect
 import logging
 import dataclasses
 from dataclasses import dataclass
 from typing import List, Dict, Any, _GenericAlias
 
-from intents.model import context, event, entity
+from intents.model import context, event, entity, names
 from intents.helpers.data_classes import is_dataclass_strict
 
 logger = logging.getLogger(__name__)
@@ -83,7 +81,7 @@ class _IntentMetaclass(type):
         if "name" not in result_cls.__dict__:
             result_cls.name = _intent_name_from_class(result_cls)
 
-        check_intent_name(result_cls.name)
+        names.check_name(result_cls.name)
 
         if not result_cls.input_contexts:
             result_cls.input_contexts = []
@@ -200,7 +198,7 @@ class Intent(metaclass=_IntentMetaclass):
     This Intent has a custom name, so it will appear as "hello_custom_name" when
     exported to Dialogflow, and its language file will just be
     `hello_custom_name.yaml`, without module prefix. See
-    :func:`check_intent_name` for more details on the rules that intent names
+    :func:`~intents.model.names.check_name` for more details on the rules that intent names
     must follow.
 
     Most importantly, this intent has a `user_name` **parameter** of type
@@ -240,44 +238,6 @@ class Intent(metaclass=_IntentMetaclass):
     @property
     def parameter_schema(self) -> Dict[str, IntentParameterMetadata]:
         return self.__class__.parameter_schema
-
-def check_intent_name(candidate_name: str):
-    """
-    Raise `ValueError` if the given Intent name is not a valid name. Valid names
-
-    * Only contain letter, underscore (`_`) and period (`.`) characters
-    * Start with a letter
-    * Don't contain repeated underscores (e.g. `__`)
-    * Don't start wit `i_`. This is a reserved prefix for *Intents* system
-      intents
-    
-    Note that `Agent.register` will apply further checks to spot duplicate
-    intent names. Note that names are case insensitive, and shouldn't overlap
-    with parameter names.
-
-    Args:
-        candidate_name: The Intent name to check
-    """
-    invalid_reason = None
-    
-    if re.search(r'[^a-zA-Z_\.]', candidate_name):
-        invalid_reason = "must only contain letters, underscore or period"
-
-    if candidate_name.startswith('.') or candidate_name.startswith('_'):
-        invalid_reason = "must start with a letter"
-
-    if "__" in candidate_name:
-        invalid_reason = "must not contain __"
-
-    if candidate_name.startswith("i_"):
-        invalid_reason = "the 'i_' prefix is reserved for system intents"
-
-    if invalid_reason:
-        raise ValueError(f"Invalid intent name '{candidate_name}': {invalid_reason}. " +
-            "If the issue is related to your class name or path you can either change names to " +
-            "be compliant, or use a custom name by setting 'Intent.name' manually. See the " +
-            "documentation at https://intents.readthedocs.io/ for more information on intent " +
-            "naming rules.")
 
 def _intent_name_from_class(intent_cls: _IntentMetaclass) -> str:
     full_name = f"{intent_cls.__module__}.{intent_cls.__name__}"

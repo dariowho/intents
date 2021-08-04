@@ -120,8 +120,11 @@ class ExampleUtterance(str):
             TextUtteranceChunk(text="!")
         ]
 
-        TODO: handle escaping
+        .. warning::
+
+            This method doesn't handle escaping yet.
         """
+        # TODO: handle escaping
         parameter_schema = self._intent.parameter_schema
         result = []
         last_end = 0
@@ -206,7 +209,13 @@ class IntentResponse:
         # TODO: handle list/dict values differently
         parameter_dict = {k: intent.__dict__[k] for k in intent.parameter_schema}
         result_args = {}
-        for field_name in self.__dataclass_fields__:
+        try:
+            dataclass_fields = getattr(self, "__dataclass_fields__")
+        except AttributeError as exc:
+            raise ValueError(f"Response '{self}' doesn't seem to be a dataclass. If this is a "
+                             "custom IntentResponse class, make sure to add a @dataclass decorator; "
+                             "otherwise, please file an issue on the Intents repository.") from exc
+        for field_name in dataclass_fields:
             if isinstance(field_name, (str, list)):
                 result_args[field_name] = _render_response(
                     self.__dict__[field_name],
@@ -215,6 +224,24 @@ class IntentResponse:
             else:
                 result_args[field_name] = self.__dict__[field_name]
         return self.__class__(**result_args)
+
+def _render_response(data: Union[str, list], parameter_dict: Dict[str, str]):
+    """
+    Render some response data by replacing parameter references with the one contained in `parameter_dict`. This
+    function is called by :meth:`IntentResponse.render` on each of the Response members.
+    """
+    if isinstance(data, str):
+        result = data
+        for k, v in parameter_dict.items():
+            # result = result.replace(f"${k}", str(v))  # TODO: handle escaping
+            result = re.sub(r"(?:(?<=[^\w])|^)\$%s(?:(?=[^\w])|$)" % k, str(v), result)
+        return result
+
+    if isinstance(data, list):
+        return [_render_response(x, parameter_dict) for x in data]
+
+    raise NotImplementedError(f"Unsupported IntentResponse member type: `{type(data)}`. "
+                              "Please open an issue at the Intents repository")
 
 @dataclass(frozen=True)
 class TextIntentResponse(IntentResponse):
@@ -256,7 +283,7 @@ class TextIntentResponse(IntentResponse):
         assert isinstance(data, list)
         return cls(data)
 
-    def choose(self):
+    def random(self):
         """
         Pick one of the available choices. It is recommended to :meth:`~IntentResponse.render` the response first.
 
@@ -264,7 +291,7 @@ class TextIntentResponse(IntentResponse):
 
             >>> intent = OrderCoffee(roast="dark")   # This typically comes from a Prediction
             >>> response = TextIntentResponse(choices=["I like $roast roasted coffee as well", "$roast roast, good choice!"]
-            >>> response.render(intent).choose()
+            >>> response.render(intent).random()
             "dark roast, good choice!"
         """
         return random.choice(self.choices)
@@ -298,6 +325,7 @@ class QuickRepliesIntentResponse(IntentResponse):
     replies: List[str]
 
     def __post_init__(self):
+        # TODO: find policy for rendered replies
         for rep in self.replies:
             if len(rep) > 20:
                 raise ValueError(f"Quick Replies must be shorter than 20 chars. Quick reply '{rep}' is {len(rep)} chars long.")
@@ -422,24 +450,6 @@ class CustomPayloadIntentResponse(IntentResponse):
             raise ValueError(f"Custom payloads are expected to be dictionaries. {payload_name} has value: {payload_content}")
 
         return CustomPayloadIntentResponse(payload_name, payload_content)
-
-
-def _render_response(data: Union[str, list], parameter_dict: Dict[str, str]):
-    """
-    Render some response data by replacing parameter references with the one contained in `parameter_dict`. This
-    function is called by :meth:`IntentResponse.render` on each of the Response members.
-    """
-    if isinstance(data, str):
-        result = data
-        for k, v in parameter_dict.items():
-            result = result.replace(f"${k}", str(v))  # TODO: handle escaping
-        return result
-
-    if isinstance(data, list):
-        return [_render_response(x, parameter_dict) for x in data]
-
-    raise NotImplementedError(f"Unsupported IntentResponse member type: `{type(data)}`. "
-                              "Please open an issue at the Intents repository")
 
 #
 # Language Data Loader

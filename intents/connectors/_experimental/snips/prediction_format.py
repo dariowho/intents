@@ -27,4 +27,5 @@ class ParseResult:
     slots: List[ParseResultSlot]
 
 def from_dict(parse_result: dict):
+    # TODO: handle fallback (intentName=None)
     return dacite.from_dict(ParseResult, parse_result)

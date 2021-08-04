@@ -5,22 +5,7 @@ from dataclasses import dataclass, field
 import pytest
 
 from intents import Intent, Sys, Entity, follow
-from intents.model.intent import IntentParameterMetadata, check_intent_name
-
-def test_check_intent_name():
-    check_intent_name("valid_intent_name")
-    check_intent_name("AlsoValidName")
-    check_intent_name("valid.NameAsWell")
-    with pytest.raises(ValueError):
-        check_intent_name("Invalid Name")
-    with pytest.raises(ValueError):
-        check_intent_name("invalid $name")
-    with pytest.raises(ValueError):
-        check_intent_name("invalid__Name")
-    with pytest.raises(ValueError):
-        check_intent_name("_InvalidName")
-    with pytest.raises(ValueError):
-        check_intent_name("i_InvalidName")
+from intents.model.intent import IntentParameterMetadata
 
 def test_param_schema_no_params():
 

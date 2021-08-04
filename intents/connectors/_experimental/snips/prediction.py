@@ -25,7 +25,7 @@ def _render_responses(intent: Intent, language_data: IntentLanguageData):
     result_messages: Dict[IntentResponseGroup, IntentResponse] = {}
     for group, response_list in language_data.responses.items():
         result_messages[group] = [r.render(intent) for r in response_list]
-    rendered_plaintext = [r.choose() for r in result_messages.get(IntentResponseGroup.DEFAULT, [])]
+    rendered_plaintext = [r.random() for r in result_messages.get(IntentResponseGroup.DEFAULT, [])]
     result_plaintext = " ".join(rendered_plaintext)
     return result_messages, result_plaintext
 

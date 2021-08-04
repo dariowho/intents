@@ -20,8 +20,8 @@ For instance, this is the content of `example_agent/language/en/ENTITY_PizzaType
 Check out :mod:`example_agent.restaurant` for a hands-on example with custom entities.
 """
 import os
-from typing import List, Dict
 from dataclasses import dataclass
+from typing import List, Dict, Union
 
 import yaml
 
@@ -45,6 +45,26 @@ class EntityEntry:
     """
     value: str
     synonyms: List[str]
+
+def make_language_data(entries: List[Union[str, List[str]]]) -> List[EntityEntry]:
+    """
+    Synthesize entity language data for an Entity from a list of entries. Each
+    entry can just be a string, or a list where the first element is the value,
+    and the remaining ones are synonyms.
+
+    This function is mostly for internal use: it is recommended that you store
+    language data in YAML files instead.
+
+    Args:
+        entries: A list of entity entries to build language data
+    """
+    result = []
+    for e in entries:
+        assert e
+        if isinstance(e, str):
+            e = [e]
+        result.append(EntityEntry(value=e[0], synonyms=e[1:]))
+    return result
 
 def entity_language_data(
     agent_cls: "intents.model.agent._AgentMetaclass",
