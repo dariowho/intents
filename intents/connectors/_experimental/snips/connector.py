@@ -1,3 +1,25 @@
+"""
+Snips NLU is an open source Python/Rust library for Natural Language Understanding.
+It provides intent classification and entity (slot) tagging, and it runs **locally**
+as a standard Python library.
+
+:class:`SnipsConnector` is a Connector that doesn't require any other service
+(nor remote or local) to run. It makes predictions internally, by calling the
+underlying `snips-nlu` library functions.
+
+To use :class:`SnipsConnector` it is necessary to install its optional
+dependency group:
+
+.. code-block:: sh
+
+    pip install intents[snips]
+
+More details about Snips can be found at
+
+* https://github.com/snipsco/snips-nlu
+* https://snips-nlu.readthedocs.io/
+"""
+
 import os
 import json
 import shutil
@@ -16,6 +38,28 @@ from intents.connectors._experimental.snips import entities, prediction_format
 logger = logging.getLogger(__name__)
 
 class SnipsConnector(Connector):
+    """
+    This is a Connector that runs entirely locally, without needing any resident
+    service to operate. Predictions are made by calling the `snips-nlu` Python
+    API.
+    
+    .. warning::
+
+        `SnipsConnector` is **experimental**: expect running into relevant rough
+        edges when using it. Its main limitations include:
+
+        * Intent relations are not implemented
+        * Prompts for required parameters are not implemented: an exception will be thrown if all the required parameters are not present 
+        * :class:`Sys.Email`, :class:`Sys.PhoneNumber` and :class:`Url` entities are patched with empty placeholders
+        * :class:`Sys.Date` is only available in English
+
+    Args:
+        agent_cls: The Agent class to train the system
+        default_session: A default session identifier. Will be generated
+            randomly if None
+        default_language: Default language for predictions. English will be used
+            if None.
+    """
 
     entity_mappings: ServiceEntityMappings = entities.ENTITY_MAPPINGS
 
@@ -45,6 +89,9 @@ class SnipsConnector(Connector):
 
         The export will generate one JSON file per language, they can be loaded
         into Snips as a JSON Dataset.
+
+        Args:
+            destination: A folder that will contain exported JSON files
         """
         from intents.connectors._experimental.snips import export
 

@@ -16,12 +16,12 @@ colors: 🟢 complete, 🟡 partial, 🔴 missing, ⚪ not planned
 | Example Utterances with Entities | 🟢            | 🟢     | 🟢     |
 | Parameters with System Entities  | 🟢            | 🟢     | 🟡     |
 | Parameters with Custom Entities  | 🟢            | 🟢     | 🟢     |
-| List Parameters                  | 🟢            | 🟢     | 🔴     |
+| List Parameters                  | 🟢            | 🟢     | 🟢     |
 | Required Parameters with prompts | 🟢            | 🔴     | 🔴     |
 | Default Text Responses           | 🟢            | 🔴     | 🟢     |
 | Platform Text/Rich Responses     | 🟢            | 🔴     | 🟢     |
 | Custom Payload Responses         | 🟢            | 🔴     | 🟢     |
-| Agent Webhook Settings           | 🟢            | 🔴     | 🔴     |
+| Agent Webhook Settings           | 🟢            | 🔴     | ⚪     |
 | Multi-Language Agents            | 🟢            | 🟢     | 🟢     |
 | "Follow" Intent Relation         | 🟢            | 🔴     | 🔴     |
 
@@ -34,8 +34,8 @@ Extended System Entities and such) are not supported.
 |----------------------------------------|---------------|-------|-------|
 | Export Agent to ZIP                    | 🟢            | 🟢    | 🟢    |
 | Upload Agent to existing Cloud project | 🟢            | 🔴    | 🟢*   |
-| Sync Language changes from Cloud       | 🔴            | 🔴    | 🔴    |
-| Upload agent to a new Cloud project    | 🔴            | 🔴    | 🔴    |
+| Sync Language changes from Cloud       | 🔴            | 🔴    | ⚪    |
+| Upload agent to a new Cloud project    | 🔴            | 🔴    | ⚪    |
 
 (*) Snips runs locally; `SnipsConnector.upload()` trains the local model
 

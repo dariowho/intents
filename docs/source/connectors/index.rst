@@ -9,3 +9,4 @@ Connectors
     service_connector
     dialogflow_es
     alexa
+    snips

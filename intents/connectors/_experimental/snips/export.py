@@ -27,10 +27,22 @@ def render(connector: SnipsConnector) -> Dict[LanguageCode, dict]:
 
 def render_dataset(connector: SnipsConnector, lang: LanguageCode) -> af.Dataset:
     return af.Dataset(
-        intents={i.name: render_intent(connector, i, lang) for i in connector.agent_cls.intents},
+        intents=render_all_intents(connector, lang),
         entities=render_all_entities(connector, lang),
         language=lang.value
     )
+
+def render_all_intents(connector: SnipsConnector, lang: LanguageCode):
+    """
+    Intents without example utterances will break Snips training. Here we filter
+    them out.
+    """
+    result = {}
+    for intent in connector.agent_cls.intents:
+        rendered = render_intent(connector, intent, lang)
+        if rendered:
+            result[intent.name] = rendered
+    return result
 
 def render_intent(
     connector: SnipsConnector,
@@ -39,12 +51,13 @@ def render_intent(
 ) -> af.DatasetIntent:
     language_data = intent_language.intent_language_data(connector.agent_cls, intent_cls, lang)
     language_data = language_data[lang]
+
+    if not language_data.example_utterances:
+        return None
+
+    # Note that List parameters don't have any special tag. See snips.prediction
+    # for details on list parameters
     utterances = []
-    for param_metadata in intent_cls.parameter_schema.values():
-        if param_metadata.is_list:
-            raise NotImplementedError(f"Parameter '{param_metadata.name}' in Intent '{intent_cls}' "
-                                      "is defined as List, but Snips NLU doesn't support list "
-                                      "parameters.")
     for utterance in language_data.example_utterances:
         utterance_data = []
         for chunk in utterance.chunks():
