@@ -2,12 +2,15 @@
 
 * (#19) Add basic SnipsNLU Connector
 * (#19) Add builtin entities module and `service_connector.PatchEntityMapping`
+    * Add `Color`, `Language`, `MusicGenre` and `FirstName` builtin entities
+* (#19) Add `EntityMapping.supported_languages` property
 * (#17) Add dataclass model for Dialogflow Responses and Webhook requests
 * (#17) Breaking changes (internal):
     * `connectors.dialogflow_es.response_format` renamed to `prediction_format`
     * `DialogflowIntentResponse` classes moved from `prediction_format` to
       `prediction` 
     * Replaced protobuf parameters with dataclass equivalents
+* (#19) Fix name constraints not enforced on Entities
 
 # v0.2.0
 

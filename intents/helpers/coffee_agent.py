@@ -22,14 +22,15 @@ from intents.language.entity_language import EntityEntry
 def mock_language_data(
     intent_cls: type,
     utterances: Union[str, List[str]],
-    responses: Union[str, List[str]]="Any response"
+    responses: Union[str, List[str]]="Any response",
+    language: LanguageCode = LanguageCode.ENGLISH
 ):
     if isinstance(utterances, str):
         utterances = [utterances]
     if isinstance(responses, str):
         responses = [responses]
     return {
-        LanguageCode.ENGLISH: IntentLanguageData(
+        language: IntentLanguageData(
             example_utterances=[ExampleUtterance(u, intent_cls) for u in utterances],
             responses={
                 IntentResponseGroup.DEFAULT: [TextIntentResponse(choices=responses)]

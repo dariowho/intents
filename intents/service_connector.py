@@ -26,9 +26,13 @@ from dataclasses import dataclass, field
 from intents import Intent, Agent, Entity
 from intents.language import IntentResponse, IntentResponseGroup
 from intents.model.intent import IntentParameterMetadata, _IntentMetaclass
+from intents.language import IntentResponse, IntentResponseGroup, LanguageCode
+from intents.model.intent import _IntentMetaclass
 from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
 
-class EntityMapping(ABC):
+# TODO: turn it to an abstract class, when pylint will support dataclass
+# implementation of abstract properties
+class EntityMapping():
     """
     An Entity Mapping is a (de-)serializer for predicted Entities.
 
@@ -45,7 +49,6 @@ class EntityMapping(ABC):
     """
 
     @property
-    @abstractmethod
     def entity_cls(self) -> _EntityMetaclass:
         """
         This is the internal entity type that is being mapped.
@@ -54,9 +57,9 @@ class EntityMapping(ABC):
         >>> mapping.entity_cls
         Sys.Integer
         """
+        raise NotImplementedError()
 
     @property
-    @abstractmethod
     def service_name(self) -> str:
         """
         This is the name of the Entity in the Prediction Service domain.
@@ -65,6 +68,21 @@ class EntityMapping(ABC):
         >>> mapping.service_name
         'sys.number-integer'
         """
+        raise NotImplementedError()
+
+    @property
+    def supported_languages(self) -> List[LanguageCode]:
+        """
+        It may happen that a Prediction Service only supports an Entity for a
+        limited set of languages. For instance, Snips NLU only supports its
+        `snips/date` entity in English.
+
+        This property is set to `None` when the mapping is valid for all the
+        service-supported language. If support is restricted to a subset of
+        them, it will contain the list of language codes. Export and prediction
+        procedures must handle accordingly.
+        """
+        return None
 
     @abstractmethod
     def from_service(self, service_data: Any) -> SystemEntityMixin:
@@ -163,14 +181,66 @@ class ServiceEntityMappings(dict):
     are added:
 
     * Instantiate from a list of mappings with :meth:`from_list`
-    * Consistency check: a mapping list must cover all the entities defined in
-      the framework (TODO)
-    * Shortcut to define StringEntityMappings like `(Sys.Integer,
-      'sys.number-integer')` (TODO)
+    * Flexible lookup with :meth:`ServiceEntityMapping.lookup`
     """
+
+    def lookup(self, entity_cls: _EntityMetaclass) -> EntityMapping:
+        """
+        Return the mapping in the dictionary that is associated with the given
+        `entity_cls`. In addition to a simple `mappings[entity_cls]`, this
+        method also implements a fallback for Custom Entities. That is, when a
+        Custom Entity is not in the mapping dict (typically they are not),
+        retrieve the mapping for :class:`Entity` instead.
+
+        Args:
+            entity_cls: The Entity class to lookup
+        Returns:
+            The mapping that refers to the given Entity class
+        Raises:
+            KeyError: If no mapping exists that can be used for `entity_cls`
+        """
+        # `Entity` objects are custom entities
+        if issubclass(entity_cls, Entity) and entity_cls not in self:
+            entity_cls = Entity
+        if entity_cls not in self:
+            mapped_entities = [m.entity_cls for m in self]
+            raise KeyError(f"Failed to lookup entity {entity_cls} in mappings. Mapped entities: {mapped_entities}")
+        return self[entity_cls]
+
+    def is_mapped(self, entity_cls: _EntityMetaclass, lang: LanguageCode) -> bool:
+        """
+        Return `False` if no mapping is defined for the given entity. Also
+        return `False` if a mapping exists, but the mapping defines
+        :attr:`~EntityMapping.supported_languages` and the given language is not
+        in the list.
+
+        Args:
+            entity_cls: The Entity class to lookup
+            lang: The language that should be supported by the mapping
+        """
+        try:
+            mapping = self.lookup(entity_cls)
+        except KeyError:
+            return False
+
+        if not mapping.supported_languages:
+            return True
+
+        return lang in mapping.supported_languages
 
     @classmethod
     def from_list(cls, mapping_list: List[EntityMapping]) -> "ServiceEntityMappings":
+        """
+        Convenience method for building a mapping from a list, instead of
+        specifying the whole dict. See Dialogflow's
+        :mod:`~intents.connectors.dialogflow_es.entities` module for an example.
+
+        Args:
+            mapping_list: The mappings that will be used to build the
+                `ServiceEntityMapping` dict
+        Returns:
+            A `ServiceEntityMapping` with the given mappings
+        """
         result = cls()
         for mapping in mapping_list:
             if mapping in result:
@@ -249,10 +319,12 @@ def deserialize_intent_parameters(
     parameters into *Intents* entities.
 
     Args:
-
         service_parameters: The parameters dict, as it is returned by a Prediction Service
         intent_cls: The Intent parameters will be matched against
         mappings: The Service Entity Mappings, to deserialize parameter values
+    Return:
+        A dictionary like `service_parameters`, but all the values are converted
+        to native Intents Entity objects.
     """
     result = {}
     schema = intent_cls.parameter_schema
@@ -260,11 +332,8 @@ def deserialize_intent_parameters(
         if param_name not in schema:
             raise ValueError(f"Found parameter {param_name} in Service Prediction, but Intent class does not define it.")
         param_metadata = schema[param_name]
-        mapping_cls = param_metadata.entity_cls
-        if issubclass(mapping_cls, Entity) and mapping_cls not in mappings:
-            # Custom Entity
-            mapping_cls = Entity
-        mapping = mappings[mapping_cls]
+        entity_cls = param_metadata.entity_cls
+        mapping = mappings.lookup(entity_cls)
         try:
             if param_metadata.is_list:
                 if not isinstance(param_value, list):

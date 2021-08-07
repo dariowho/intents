@@ -17,7 +17,7 @@ def intent_from_parse_result(connector: SnipsConnector, parse_result: f.ParseRes
         raise ValueError(f"Snips returned intent with name '{intent_cls}', but this was not found in the Agent "
                          f"definition. Make sure that the model is updated by running SnipsConnector.fit() again,"
                          f"and if the problem persists please open an issue on the Intents repository.")
-    snips_parameters = {slot.slotName: slot.value["value"] for slot in parse_result.slots}
+    snips_parameters = {slot.slotName: slot.value for slot in parse_result.slots}
     parameter_dict = deserialize_intent_parameters(snips_parameters, intent_cls, connector.entity_mappings)
     return intent_cls(**parameter_dict)
 

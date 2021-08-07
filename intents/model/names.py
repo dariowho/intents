@@ -4,7 +4,7 @@ and implements those constraints.
 """
 import re
 
-def check_name(candidate_name: str, is_system=False):
+def check_name(candidate_name: str, is_system: bool=False):
     """
     Raise `ValueError` if the given Intent or Entity name is not a valid name.
     Valid names
@@ -21,7 +21,7 @@ def check_name(candidate_name: str, is_system=False):
 
     Args:
         candidate_name: The Intent or Entity name to check
-        is_system: When True, allow reserved names (those starting with "i_")
+        is_system: When True, allow reserved names (those starting with `i_`)
     """
     invalid_reason = None
     
@@ -34,12 +34,12 @@ def check_name(candidate_name: str, is_system=False):
     if "__" in candidate_name:
         invalid_reason = "must not contain __"
 
-    if candidate_name.lower().startswith("i_"):
+    if candidate_name.lower().startswith("i_") and not is_system:
         invalid_reason = "the 'i_' prefix is reserved for system intents and entities"
 
     if invalid_reason:
-        raise ValueError(f"Invalid name '{candidate_name}': {invalid_reason}. " +
-            "If the issue is related to your class name or path you can either change names to " +
-            "be compliant, or use a custom name by setting 'Intent.name' manually. See the " +
-            "documentation at https://intents.readthedocs.io/ for more information on intent " +
+        raise ValueError(f"Invalid name '{candidate_name}': {invalid_reason}. "
+            "If the issue is related to your class name or path you can either change names to "
+            "be compliant, or use a custom name by setting 'Intent.name' manually. See the "
+            "documentation at https://intents.readthedocs.io/ for more information on intent "
             "naming rules.")

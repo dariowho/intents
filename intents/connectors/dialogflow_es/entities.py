@@ -63,7 +63,7 @@ class DateEntityMapping(EntityMapping):
 
     Both :class:`datetime.date` and :class:`str` can be serialized to be used as
     parameter values. As :class:`Sys.Date` inherits from :class:`datetime.date`,
-    these are all valid usages:
+    these are all **valid** usages:
 
     >>> connector.trigger(birthday_intent(date=Sys.Date(2021, 07, 21)))
     >>> connector.trigger(birthday_intent(date=datetime.date(2021, 07, 21)))
@@ -71,7 +71,7 @@ class DateEntityMapping(EntityMapping):
 
     Note that strings will be sent to Dialogflow without checks: be sure to use
     valid date references. Also, note that Dialogflow won't resolve relative
-    date references in triggers. The following code will result in an error:
+    date references in triggers. The following code will result in an **error**:
 
     >>> connector.trigger(birthday_intent(date="tomorrow"))
     RuntimeError: ...

@@ -51,7 +51,8 @@ class _CallableDict(dict):
     This is a proxy to handle the deprecation of
     :meth:`Intent.parameter_schema`, which is now a property. Legacy code may
     still call it as a method (e.g. `hello_intent.parameter_schema()`), hence we
-    need to support `__call__`, warning User to update his code (e.g. `hello_intent.parameter_schema`) 
+    need to support `__call__`, warning User to update his code (e.g.
+    `hello_intent.parameter_schema`)
     """
 
     def __call__(self):
@@ -105,7 +106,7 @@ class _IntentMetaclass(type):
         Return a dict representing the Intent parameter definition. A key is a
         parameter name, a value is a :class:`IntentParameterMetadata` object.
 
-        TODO: consider computing this in metaclass to cache value and check types
+        TODO: This property doesn't show up in documentation
         """
         if cls is Intent:
             return {}

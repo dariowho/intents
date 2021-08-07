@@ -6,9 +6,10 @@ import tempfile
 
 import snips_nlu
 
-from intents import LanguageCode
+from intents import Entity, LanguageCode
 from intents.model.agent import _AgentMetaclass
 from intents.model.entity import _EntityMetaclass
+from intents.language import agent_supported_languages
 from intents.service_connector import Connector, ServiceEntityMappings
 from intents.connectors._experimental.snips import entities, prediction_format
 
@@ -26,7 +27,9 @@ class SnipsConnector(Connector):
         default_language: str=None
     ):
         super().__init__(agent_cls, default_session, default_language)
-        self.nlu_engine = snips_nlu.SnipsNLUEngine()
+        self.nlu_engines = {
+            lang: snips_nlu.SnipsNLUEngine() for lang in agent_supported_languages(agent_cls)
+        }
 
     def export(self, destination: str):
         """
@@ -58,20 +61,25 @@ class SnipsConnector(Connector):
 
     def upload(self):
         from intents.connectors._experimental.snips import export
-        rendered = export.render(self)
-        self.nlu_engine.fit(rendered[LanguageCode.ENGLISH])
+        for lang, rendered in export.render(self).items():
+            self.nlu_engines[lang].fit(rendered)
 
     def fulfill(self):
         raise NotImplementedError()
 
-    def predict(self, message: str, lang: LanguageCode=LanguageCode.ENGLISH):
+    def predict(self, message: str, lang: LanguageCode=None):
+        if not lang:
+            lang = self.default_language
         from intents.connectors._experimental.snips import prediction
-        parse_result_dict = self.nlu_engine.parse(message)
+        parse_result_dict = self.nlu_engines[lang].parse(message)
         parse_result = prediction_format.from_dict(parse_result_dict)
         return prediction.prediction_from_parse_result(self, parse_result, lang)
 
     def trigger(self):
         raise NotImplementedError()
 
-    def _entity_service_name(self, entity_cls: _EntityMetaclass):
-        return self.entity_mappings[entity_cls.name].service_name
+    def _entity_service_name(self, entity_cls: _EntityMetaclass) -> str:
+        mapping = self.entity_mappings.lookup(entity_cls)
+        if mapping.entity_cls is Entity:
+            return entity_cls.name
+        return mapping.service_name

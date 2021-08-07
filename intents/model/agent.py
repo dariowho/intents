@@ -10,7 +10,7 @@ import re
 import logging
 import inspect
 from types import ModuleType
-from typing import List, Dict, Union
+from typing import List, Dict, Union, Set
 from dataclasses import dataclass
 
 from intents.model.intent import Intent, _IntentMetaclass, IntentParameterMetadata
@@ -99,6 +99,7 @@ class Agent(metaclass=_AgentMetaclass):
     _contexts_by_name: Dict[str, _ContextMetaclass] = None
     _events_by_name: Dict[str, _EventMetaclass] = None
     _parameters_by_name: Dict[str, RegisteredParameter] = None
+    _referenced_sys_entities: Set[SystemEntityMixin] = None # All
 
     @classmethod
     def register(cls, resource: Union[_IntentMetaclass, ModuleType]):
@@ -170,6 +171,7 @@ class Agent(metaclass=_AgentMetaclass):
             cls._contexts_by_name = {}
             cls._events_by_name = {}
             cls._parameters_by_name = {}
+            cls._referenced_sys_entities = set()
 
         norm_name = Agent._norm_name(intent_cls.name)
         if cls._intents_by_norm_name.get(norm_name):
@@ -184,9 +186,9 @@ class Agent(metaclass=_AgentMetaclass):
         language.intent_language_data(cls, intent_cls) # TODO: Agent languages only
 
         if intent_cls.input_contexts or intent_cls.output_contexts:
-            logger.warning("Intent '%s' defines input/output contexts. The contexts API is " +
-                "deprecated and will be removed in version 0.3 of Intents. Consider upgrading " +
-                "your Intent classes to use relations instead (see the 'shop' module of Example" +
+            logger.warning("Intent '%s' defines input/output contexts. The contexts API is "
+                "deprecated and will be removed in version 0.3 of Intents. Consider upgrading "
+                "your Intent classes to use relations instead (see the 'shop' module of Example"
                 "Agent for more details).", intent_cls.name)
 
         for context_cls in intent_cls.input_contexts:
@@ -235,6 +237,7 @@ class Agent(metaclass=_AgentMetaclass):
             raise ValueError(f"Invalid type '{entity_cls}' for parameter '{parameter_name}' in Intent '{intent_name}': must be an Entity. Try system entities such as 'intents.Sys.Integer', or define your own custom entity.")
 
         if issubclass(entity_cls, SystemEntityMixin):
+            cls._referenced_sys_entities.add(entity_cls)
             return
 
         existing_cls = cls._entities_by_name.get(entity_cls.name)

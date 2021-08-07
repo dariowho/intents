@@ -506,7 +506,11 @@ def intent_language_data(
             available languages will be returned
     """
     if "__intent_language_data__" in intent_cls.__dict__:
-        return intent_cls.__intent_language_data__
+        result = intent_cls.__intent_language_data__
+        if language_code and language_code not in result:
+            raise KeyError(f"Intent '{intent_cls}' in Agent '{agent_cls}' doesn't seem to define "
+                           f"language data for language '{language_code}")
+        return result
         
     try:
         language_folder = agent_language.agent_language_folder(agent_cls)

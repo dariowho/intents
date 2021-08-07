@@ -39,9 +39,8 @@ class _EntityMetaclass(type):
         if not result_cls.name:
             result_cls.name = result_cls.__name__
 
-        # TODO: fix and re-enable
-        # is_system = hasattr(result_cls, "__intents_internal__")
-        # names.check_name(result_cls.name, is_system)
+        is_system = hasattr(result_cls, "__intents_internal__")
+        names.check_name(result_cls.name, is_system)
 
         return result_cls
 
