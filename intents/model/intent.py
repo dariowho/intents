@@ -15,7 +15,7 @@ import dataclasses
 from dataclasses import dataclass
 from typing import List, Dict, Any, _GenericAlias
 
-from intents.model import context, event, entity, names
+from intents.model import entity, names
 from intents.helpers.data_classes import is_dataclass_strict
 
 logger = logging.getLogger(__name__)
@@ -46,25 +46,9 @@ class IntentParameterMetadata:
     required: bool
     default: Any
 
-class _CallableDict(dict):
-    """
-    This is a proxy to handle the deprecation of
-    :meth:`Intent.parameter_schema`, which is now a property. Legacy code may
-    still call it as a method (e.g. `hello_intent.parameter_schema()`), hence we
-    need to support `__call__`, warning User to update his code (e.g.
-    `hello_intent.parameter_schema`)
-    """
-
-    def __call__(self):
-        logger.warning("'Intent.parameter_schema()' is deprecated, and is now a property. Use 'Intent.parameter_schema` instead. Support will be removed in 0.3")
-        return self
-
 class _IntentMetaclass(type):
 
     name: str = None
-    input_contexts: List[context._ContextMetaclass] = None
-    output_contexts: List[context.Context] = None
-    events: List[event.Event] = None # TODO: at some point this may contain strings
 
     def __new__(cls, name, bases, dct):
         result_cls = super().__new__(cls, name, bases, dct)
@@ -84,19 +68,9 @@ class _IntentMetaclass(type):
 
         names.check_name(result_cls.name)
 
-        if not result_cls.input_contexts:
-            result_cls.input_contexts = []
-        if not result_cls.output_contexts:
-            result_cls.output_contexts = []
-
         # TODO: check that custom parameters don't overlap Intent fields
         # TODO: check language data
         # language.intent_language_data(cls, result) # Checks that language data is existing and consistent
-
-        events = [_system_event(result_cls.name)]
-        for event_cls in result_cls.__dict__.get('events', []):
-            events.append(event_cls)
-        result_cls.events = events
 
         return result_cls
 
@@ -159,7 +133,7 @@ class _IntentMetaclass(type):
                 default=default
             )
 
-        return _CallableDict(result)
+        return result
 
 class Intent(metaclass=_IntentMetaclass):
     """
@@ -232,9 +206,6 @@ class Intent(metaclass=_IntentMetaclass):
     # TODO: check parameter names: no underscore, no reserved names, max length
 
     name: str = None
-    input_contexts: List[context._ContextMetaclass] = None
-    output_contexts: List[context.Context] = None
-    events: List[event.Event] = None # TODO: at some point this may contain strings
 
     @property
     def parameter_schema(self) -> Dict[str, IntentParameterMetadata]:
@@ -246,14 +217,3 @@ def _intent_name_from_class(intent_cls: _IntentMetaclass) -> str:
         full_name = intent_cls.__name__
     # full_name = re.sub(r"_+", "_", full_name)
     return ".".join(full_name.split(".")[-2:])
-
-def _system_event(intent_name: str) -> str:
-    """
-    Generate the default event name that we associate with every intent.
-
-    >>> _event_name('test.intent_name')
-    'E_TEST_INTENT_NAME'
-    """
-    # TODO: This is only used in Dialogflow -> Deprecate and move to DialogflowConnector
-    event_name = "E_" + intent_name.upper().replace('.', '_')
-    return event.SystemEvent(event_name)

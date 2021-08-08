@@ -113,9 +113,6 @@ def render_agent(connector: "intents.DialogflowEsConnector",  agent_name: str, l
 def get_input_contexts(connector: "DialogflowEsConnector", intent_cls: _IntentMetaclass) -> List[str]:
     result = [connector._context_name(r.intent_cls) for r in related_intents(intent_cls).follow]
     
-    # TODO: remove after deprecation
-    result.extend([c.name for c in intent_cls.input_contexts])
-
     return result
 
 def get_output_contexts(
@@ -143,13 +140,6 @@ def get_output_contexts(
         name = connector._context_name(intent_cls)
         result.append(df.AffectedContext(name, 5)) # TODO: allow custom lifespan
 
-    # TODO: remove after deprecation
-    if issubclass(intent_cls, Intent):
-        result.extend([
-            df.AffectedContext(c.name, c.lifespan) for c in intent_cls.output_contexts
-            if c.name not in [ec.name for ec in result]
-        ])
-
     visited.append(intent_cls)
     for super_cls in intent_cls.mro():
         if super_cls not in visited and issubclass(super_cls, Intent):
@@ -160,7 +150,6 @@ def get_output_contexts(
 def render_intent(connector: "DialogflowEsConnector", intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
     response = df.Response(
         affectedContexts=get_output_contexts(connector, intent_cls),
-        # affectedContexts=[df.AffectedContext(c.name, c.lifespan) for c in intent_cls.output_contexts],
         parameters=render_parameters(intent_cls, language_data),
         messages=render_responses(intent_cls, language_data, connector.rich_platforms),
     )
@@ -169,13 +158,12 @@ def render_intent(connector: "DialogflowEsConnector", intent_cls: _IntentMetacla
         id=str(uuid1()),
         name=intent_cls.name,
         contexts=get_input_contexts(connector, intent_cls),
-        # contexts=[c.name for c in intent_cls.input_contexts],
         responses=[response],
 
         # TODO: re-enable
         # webhookUsed=intent_cls.metadata.intent_webhook_enabled,
         # webhookForSlotFilling=intent_cls.metadata.slot_filling_webhook_enabled,
-        events=[df.Event(e.name) for e in intent_cls.events]
+        events=[df.Event(connector._event_name(intent_cls))]
     )
 
 def render_parameters(intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):

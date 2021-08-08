@@ -26,14 +26,12 @@ def test_register_intent_valid_language_data(mock_language):
 
     assert MyAgent.intents == [smalltalk.Hello]
     assert MyAgent._intents_by_name == {'smalltalk.Hello': smalltalk.Hello}
-    assert MyAgent._intents_by_event == {'E_SMALLTALK_HELLO': smalltalk.Hello}
 
     MyAgent = _get_toy_agent()
     MyAgent.register(smalltalk.Hello)
 
     assert MyAgent.intents == [smalltalk.Hello]
     assert MyAgent._intents_by_name == {'smalltalk.Hello': smalltalk.Hello}
-    assert MyAgent._intents_by_event == {'E_SMALLTALK_HELLO': smalltalk.Hello}
 
 @patch('intents.language.intent_language_data')
 def test_register_intent_invalid_language_data(mock_language):
@@ -142,7 +140,6 @@ def test_register_intent_registers_entities(mock_language):
 
     assert MyAgent.intents == [MyIntent]
     assert MyAgent._intents_by_name == {'my_intent': MyIntent}
-    assert MyAgent._intents_by_event == {'E_MY_INTENT': MyIntent}
     assert MyAgent._entities_by_name == {'MyEntity': MyEntity}
 
     @dataclass
@@ -155,7 +152,6 @@ def test_register_intent_registers_entities(mock_language):
     MyAgent._register_intent(MyOtherIntent)
     assert MyAgent.intents == [MyIntent, MyOtherIntent]
     assert MyAgent._intents_by_name == {'my_intent': MyIntent, 'my_other_intent': MyOtherIntent}
-    assert MyAgent._intents_by_event == {'E_MY_INTENT': MyIntent, 'E_MY_OTHER_INTENT': MyOtherIntent}
     assert MyAgent._entities_by_name == {'MyEntity': MyEntity} # MyEntity is not registered twice
     
     def _make_duplicate_entity():

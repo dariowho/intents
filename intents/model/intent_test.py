@@ -65,19 +65,6 @@ def test_param_scheme_invalid_list_default():
 
         intent_with_invalid_list_default.parameter_schema
 
-def test_deprecated_parameter_schema():
-
-    @dataclass
-    class intent_with_params(Intent):
-        """Intent with parameters"""
-        required_param: Sys.Person
-        required_list_param: List[Sys.Person]
-        optional_param: Sys.Person = "John"
-        optional_list_param: List[Sys.Person] = field(default_factory=lambda: ["Al", "John"])
-
-    # pylint: disable=no-value-for-parameter
-    assert intent_with_params.parameter_schema == intent_with_params.parameter_schema()
-
 def test_parameter_schema_class_property():
     @dataclass
     class intent_with_params(Intent):

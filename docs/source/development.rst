@@ -50,8 +50,11 @@ Poetry is not available in *Read the Docs* build environment, a **requirements**
 file must be provided. The build script is configured to read `readthedocs.txt`
 for this purpose.
 
-When adding a new requirement, remember to run `poetry run pip freeze > readthedocs.txt` to 
-make sure docs are built correctly.  
+When adding a new requirement, remember to update `readthedocs.txt`:
+
+.. code-block:: sh
+
+    poetry export -E snips --dev -f requirements.txt --output readthedocs.txt
 
 Test
 ----

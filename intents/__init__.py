@@ -14,8 +14,6 @@ class SessionEntity:
 
 from intents.model.intent import Intent
 from intents.model.entity import Entity, Sys
-from intents.model.context import Context
-from intents.model.event import Event
 from intents.model.agent import Agent
 from intents.model.relations import follow
 

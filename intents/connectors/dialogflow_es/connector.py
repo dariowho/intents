@@ -167,7 +167,7 @@ class DialogflowEsConnector(Connector):
             language = self.default_language
 
         intent_name = intent.name
-        event_name = Agent._event_name(intent_name)
+        event_name = self._event_name(intent.__class__)
         event_parameters = {}
         for param_name, param_metadata in intent.parameter_schema.items():
             param_mapping = df_entities.MAPPINGS[param_metadata.entity_cls]
@@ -267,6 +267,16 @@ class DialogflowEsConnector(Connector):
     @staticmethod
     def _context_name(intent_cls: _IntentMetaclass) -> str:
         return "c_" + intent_cls.name.replace(".", "_") # TODO: refine
+
+    @staticmethod
+    def _event_name(intent_cls: _IntentMetaclass) -> str:
+        """
+        Generate the default event name that we associate with every intent.
+
+        >>> df._event_name('test.intent_name')
+        'E_TEST_INTENT_NAME'
+        """
+        return "E_" + intent_cls.name.upper().replace('.', '_')
 
 def _build_need_context_set(agent_cls: type(Agent)) -> Set[Intent]:
     """

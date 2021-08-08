@@ -15,8 +15,6 @@ from dataclasses import dataclass
 
 from intents.model.intent import Intent, _IntentMetaclass, IntentParameterMetadata
 from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
-from intents.model.context import Context, _ContextMetaclass
-from intents.model.event import _EventMetaclass
 from intents import language
 
 logger = logging.getLogger(__name__)
@@ -94,10 +92,7 @@ class Agent(metaclass=_AgentMetaclass):
     intents: List[Intent] = None
     _intents_by_name: Dict[str, Intent] = None
     _intents_by_norm_name: Dict[str, Intent] = None # my_module.HelloWorld -> mymodulehelloworld
-    _intents_by_event: Dict[str, Intent] = None
     _entities_by_name: Dict[str, _EntityMetaclass] = None
-    _contexts_by_name: Dict[str, _ContextMetaclass] = None
-    _events_by_name: Dict[str, _EventMetaclass] = None
     _parameters_by_name: Dict[str, RegisteredParameter] = None
     _referenced_sys_entities: Set[SystemEntityMixin] = None # All
 
@@ -141,7 +136,7 @@ class Agent(metaclass=_AgentMetaclass):
             MyAgent.register(smalltalk)
 
         Note that together with each Intent, the Agent will register all of its
-        linked resources, such as Entities, Events and Contexts.
+        linked properties and resources, such as parameters and Entities.
 
         :param resource: The resource to register (an Intent, or a module
                          containing Intents)
@@ -160,16 +155,12 @@ class Agent(metaclass=_AgentMetaclass):
         Register a single intent in the Agent class and check that language data is
         present for all supported languages (examples and responses).
         """
-        if not cls.intents or not cls._intents_by_name and not cls._intents_by_event:
-            assert not cls.intents and not cls._intents_by_name and not cls._intents_by_event
-            assert not cls._contexts_by_name and not cls._events_by_name
+        if not cls.intents or not cls._intents_by_name:
+            assert not cls.intents and not cls._intents_by_name
             cls.intents = []
             cls._intents_by_name = {}
             cls._intents_by_norm_name = {}
-            cls._intents_by_event = {}
             cls._entities_by_name = {}
-            cls._contexts_by_name = {}
-            cls._events_by_name = {}
             cls._parameters_by_name = {}
             cls._referenced_sys_entities = set()
 
@@ -178,27 +169,7 @@ class Agent(metaclass=_AgentMetaclass):
             raise ValueError(f"Another intent exists with an equivalent name to {intent_cls.name}" +
                 f": {cls._intents_by_norm_name[norm_name]}")
 
-        # TODO: check conflicting events
-        # event_name = Agent._event_name(name)
-        # if conflicting_intent := cls._intents_by_event.get(event_name):
-        #     raise ValueError(f"Intent name {name} is ambiguous and clashes with {conflicting_intent} ('{conflicting_intent.metadata.name}')")
-
         language.intent_language_data(cls, intent_cls) # TODO: Agent languages only
-
-        if intent_cls.input_contexts or intent_cls.output_contexts:
-            logger.warning("Intent '%s' defines input/output contexts. The contexts API is "
-                "deprecated and will be removed in version 0.3 of Intents. Consider upgrading "
-                "your Intent classes to use relations instead (see the 'shop' module of Example"
-                "Agent for more details).", intent_cls.name)
-
-        for context_cls in intent_cls.input_contexts:
-            cls._register_context(context_cls)
-
-        for context in intent_cls.output_contexts:
-            cls._register_context(context)
-
-        for event_cls in intent_cls.events:
-            cls._register_event(event_cls, intent_cls)
 
         for param_name, param_metadata in intent_cls.parameter_schema.items():
             cls._register_parameter(param_metadata, intent_cls)
@@ -207,7 +178,6 @@ class Agent(metaclass=_AgentMetaclass):
         cls.intents.append(intent_cls)
         cls._intents_by_name[intent_cls.name] = intent_cls
         cls._intents_by_norm_name[norm_name] = intent_cls
-        cls._intents_by_event[intent_cls.events[0].name] = intent_cls
 
     @classmethod
     def _register_parameter(cls, param_meta: IntentParameterMetadata, intent_cls: type(Intent)):
@@ -251,59 +221,8 @@ class Agent(metaclass=_AgentMetaclass):
             entity_cls_path = f"{entity_cls.__module__}.{entity_cls.__qualname__}"
             raise ValueError(f"Two different Entity classes exist with the same name: '{existing_cls_path}' and '{entity_cls_path}'")
 
-    @classmethod
-    def _register_context(cls, context_obj_or_cls: Union[_ContextMetaclass, Context]):
-        if isinstance(context_obj_or_cls, Context):
-            context_cls = context_obj_or_cls.__class__
-        elif inspect.isclass(context_obj_or_cls) and issubclass(context_obj_or_cls, Context):
-            context_cls = context_obj_or_cls
-        else:
-            raise ValueError(f"Context {context_obj_or_cls} is not a Context instance or subclass")
-
-        existing_cls = cls._contexts_by_name.get(context_cls.name)
-        if not existing_cls:
-            cls._contexts_by_name[context_cls.name] = context_cls
-            return
-
-        if id(context_cls) != id(existing_cls):
-            existing_cls_path = f"{existing_cls.__module__}.{existing_cls.__qualname__}"
-            context_cls_path = f"{context_cls.__module__}.{context_cls.__qualname__}"
-            raise ValueError(f"Two different Context classes exist with the same name: '{existing_cls_path}' and '{context_cls_path}'")
-
-    @classmethod
-    def _register_event(cls, event_cls: _EventMetaclass, intent_cls: _IntentMetaclass):
-        existing_cls = cls._events_by_name.get(event_cls.name)
-
-        if not existing_cls:
-            cls._events_by_name[event_cls.name] = event_cls
-            cls._intents_by_event[event_cls.name] = intent_cls
-            return
-
-        if id(existing_cls) != id(event_cls):
-            existing_cls_path = f"{existing_cls.__module__}.{existing_cls.__qualname__}"
-            event_cls_path = f"{event_cls.__module__}.{event_cls.__qualname__}"
-            raise ValueError(f"Two different Event classes exist with the same name: '{existing_cls_path}' and '{event_cls_path}'")
-
-        # TODO: model different intents with same event and different input
-        # context (ok) vs. different intents with same event and same input
-        # context (not ok).
-        existing_intent = cls._intents_by_event[event_cls.name]
-        raise ValueError(f"Event '{event_cls.name}' is alreadt associated to Intent '{existing_intent}'. An Event can only be associated with 1 intent. (differenciation by input contexts is not supported yet)")
-
     def _pylint_hack(self):
         raise NotImplementedError()
-
-    @staticmethod
-    def _event_name(intent_name: str) -> str:
-        """
-        Generate the default event name that we associate with every intent.
-
-        >>> _event_name('test.intent_name')
-        'E_TEST_INTENT_NAME'
-
-        TODO: This is only used in Dialogflow -> Deprecate and move to DialogflowConnector
-        """
-        return "E_" + intent_name.upper().replace('.', '_')
 
     @staticmethod
     def _norm_name(intent_name: str) -> str:

@@ -7,7 +7,7 @@ Features:
 - [OK] system entity slots
 - [OK] custom entity slots
 - [  ] plain text responses
-- [  ] input/output contexts
+- [  ] intent relations
 - [OK] multi language
 
 Note that there are some relevant TODOs in this module (e.g. intent names may be

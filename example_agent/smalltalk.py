@@ -1,11 +1,11 @@
 """
-These intents demonstrate the fundamentals of a Conversation: Intents,
-Entities and Events.
+These intents demonstrate the fundamentals of a Conversation: Intents and
+Entities.
 """
 from typing import List
 from dataclasses import dataclass
 
-from intents import Intent, Event, Sys
+from intents import Intent, Sys
 
 @dataclass
 class Hello(Intent):
