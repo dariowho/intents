@@ -3,7 +3,7 @@ from dataclasses import dataclass
 import pytest
 
 from intents import Intent, Sys
-from intents.language.intent_language import TextIntentResponse, QuickRepliesIntentResponse, ImageIntentResponse, CardIntentResponse, CustomPayloadIntentResponse
+from intents.language.intent_language import IntentResponseDict, IntentResponseGroup, TextIntentResponse, QuickRepliesIntentResponse, ImageIntentResponse, CardIntentResponse, CustomPayloadIntentResponse
 
 @dataclass
 class FakeIntent(Intent):
@@ -126,3 +126,14 @@ def test_custom_payload_multiple_keys():
             "any_name": {"foo": "bar"},
             "another_name": {"not": "allowed"}
         })
+
+def test_intent_response_dict_for_group():
+    mock_default_messages = ["MOCK DEFAULT 1", "MOCK DEFAULT 2"]
+    mock_rich_messages = ["MOCK RICH 1", "MOCK RICH 2"]
+    d = IntentResponseDict({
+        IntentResponseGroup.DEFAULT: mock_default_messages,
+        IntentResponseGroup.RICH: mock_rich_messages
+    })
+    assert d.for_group() == mock_rich_messages
+    assert d.for_group(IntentResponseGroup.DEFAULT) == mock_default_messages
+    assert d.for_group(IntentResponseGroup.RICH) == mock_rich_messages

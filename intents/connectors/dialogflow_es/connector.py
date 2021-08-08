@@ -52,9 +52,8 @@ class DialogflowPrediction(Prediction):
     Args:
         intent: An instance of the predicted Intent
         confidence: Dialogflow's confidence on its prediction
-        fulfillment_message_dict: A map of Intent Responses, as they were
-            returned by the Service. Consider using
-            :meth:`Prediction.fulfillment_messages` for convenience
+        fulfillment_messages: A map of Intent Responses, as they were
+            returned by the Service
         fulfillment_text: A plain-text version of the response
         df_response: Raw Dialogflow response data. It is advisable not to rely
             on this is production, if you want to keep cross-service compatibility
@@ -199,7 +198,7 @@ class DialogflowEsConnector(Connector):
         return DialogflowPrediction(
             intent=self._df_body_to_intent(df_body),
             confidence=df_body.queryResult.intentDetectionConfidence,
-            fulfillment_message_dict=intent_responses(df_body),
+            fulfillment_messages=intent_responses(df_body),
             fulfillment_text=df_body.queryResult.fulfillmentText,
             df_response=df_body.detect_intent
         )

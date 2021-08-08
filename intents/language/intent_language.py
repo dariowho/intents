@@ -52,6 +52,8 @@ Let's look at the sections of this file.
 import os
 import re
 import random
+import logging
+import warnings
 from enum import Enum
 from typing import List, Dict, Union
 from dataclasses import dataclass, field
@@ -63,6 +65,8 @@ import intents # Needed to generate docs
 from intents.model.intent import Intent, IntentType
 from intents.model.entity import EntityType
 from intents.language import agent_language, LanguageCode
+
+logger = logging.getLogger(__name__)
 
 #
 # Example Utterances
@@ -449,6 +453,71 @@ class CustomPayloadIntentResponse(IntentResponse):
             raise ValueError(f"Custom payloads are expected to be dictionaries. {payload_name} has value: {payload_content}")
 
         return CustomPayloadIntentResponse(payload_name, payload_content)
+
+class IntentResponseDict(dict):
+    """
+    This is dict of Intent responses, divided by group
+    (`Dict[IntentResponseGroup, List[IntentResponse]]`):
+
+    .. code-block:: python
+
+        IntentResponseDict({
+            IntentResponseGroup.DEFAULT: [
+                TextIntentResponse(choices=["An anternative", "Another alternative])
+            ],
+            IntentResponseGroup.RICH: [
+                TextIntentResponse(choices=["Text response for Rich group"]),
+                QuickRepliesIntentResponse(replies=["A reply", "Another reply"])
+            ]
+        })
+
+    In addition to a standard dict, a :meth:`~IntentResponseDict.for_group`
+    convenience method is provided, to select the most suitable messages for a
+    given group.
+    """
+
+    def __call__(self, response_group: IntentResponseGroup=IntentResponseGroup.RICH):
+        warnings.warn("prediction.fulfillment_messages(group) is deprecated, and will be "
+                      "removed in 0.4. Please update your code to use "
+                      "prediction.fulfillment_messages.for_group() instead", DeprecationWarning)
+        return self.for_group(response_group)
+
+    def for_group(
+        self,
+        response_group: IntentResponseGroup=IntentResponseGroup.RICH
+    ) -> List[IntentResponse]:
+        """
+        Return a list of fulfillment messages that are suitable for the given
+        Response Group. The following scenarios may happen:
+
+        * :class:`language.IntentResponseGroup.DEFAULT` is requested -> Message
+          in the `DEFAULT` group will be returned
+        * :class:`language.IntentResponseGroup.RICH` is requested
+
+            * `RICH` messages are defined -> `RICH` messages are returned
+            * No `RICH` message is defined -> `DEFAULT` messages are returned
+
+        If present, messages in the "rich" group will be returned:
+
+        >>> prediction.fulfillment_messages()
+        [TextIntentResponse(choices=['I like travelling too! How can I help?']),
+         QuickRepliesIntentResponse(replies=['Recommend a hotel', 'Send holiday photo', 'Where the station?'])]
+         
+        Alternatively, I can ask for plain-text default messages:
+
+        >>> from intents.language import IntentResponseGroup
+        >>> prediction.fulfillment_messages(IntentResponseGroup.DEFAULT)
+        [TextIntentResponse(choices=['Nice, I can send you holiday pictures, or recommend an hotel'])]
+        
+        Args:
+
+            response_group: The Response Group to fetch responses for
+        """
+        if response_group == IntentResponseGroup.RICH and \
+           not self.get(response_group):
+            response_group = IntentResponseGroup.DEFAULT
+
+        return self.get(response_group, [])
 
 #
 # Language Data Loader

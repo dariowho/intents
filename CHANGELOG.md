@@ -7,6 +7,9 @@
 * (#19) Change ServiceConnector to accept `LanguageCode` values as language
   codes, in addition to ISO strings
 * (#17) Add dataclass model for Dialogflow Responses and Webhook requests
+* (#17) Change (with deprecation) `Prediction.fulfillment_messages()` to be a
+  property of type `IntentResponseDict`. Remove
+  `Prediction.fulfillment_response_dict` (with deprecation)
 * (#17) Breaking changes (internal):
     * `connectors.dialogflow_es.response_format` renamed to `prediction_format`
     * `DialogflowIntentResponse` classes moved from `prediction_format` to

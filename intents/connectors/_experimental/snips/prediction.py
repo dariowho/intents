@@ -1,12 +1,12 @@
 import logging
 from dataclasses import dataclass
-from typing import Dict, List, Any
+from typing import Dict, List, Any, Tuple
 from collections import defaultdict
 
 from intents import Intent, LanguageCode
 from intents.types import IntentType, AgentType
 from intents.service_connector import deserialize_intent_parameters, Prediction, ServiceEntityMappings
-from intents.language import intent_language, IntentLanguageData, IntentResponse, IntentResponseGroup
+from intents.language import intent_language, IntentLanguageData, IntentResponse, IntentResponseGroup, IntentResponseDict
 from intents.connectors._experimental.snips import prediction_format as f
 
 logger = logging.getLogger(__name__)
@@ -53,7 +53,7 @@ class SnipsPredictionComponent:
         return SnipsPrediction(
             intent=intent,
             confidence=parse_result.intent.probability,
-            fulfillment_message_dict=fulfillment_messages,
+            fulfillment_messages=fulfillment_messages,
             fulfillment_text=fulfillment_text,
             parse_result=parse_result
         )
@@ -74,7 +74,7 @@ class SnipsPredictionComponent:
         return SnipsPrediction(
             intent=intent,
             confidence=1.0,
-            fulfillment_message_dict=fulfillment_messages,
+            fulfillment_messages=fulfillment_messages,
             fulfillment_text=fulfillment_text,
             parse_result=None
         )
@@ -115,8 +115,8 @@ def _slot_list_to_param_dict(
             result[slot_name] = slot_values[0]
     return result
 
-def _render_responses(intent: Intent, language_data: IntentLanguageData):
-    result_messages: Dict[IntentResponseGroup, IntentResponse] = {}
+def _render_responses(intent: Intent, language_data: IntentLanguageData) -> Tuple[IntentResponseDict, str]:
+    result_messages: IntentResponseDict = IntentResponseDict()
     for group, response_list in language_data.responses.items():
         result_messages[group] = [r.render(intent) for r in response_list]
     rendered_plaintext = [r.random() for r in result_messages.get(IntentResponseGroup.DEFAULT, [])]

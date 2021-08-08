@@ -23,9 +23,15 @@ def test_prediction_from_parse_renders_language():
     })
     result = prediction_component.prediction_from_parse_result(parse_result, LanguageCode.ENGLISH)
     assert result.fulfillment_text in ["dark roast espresso, good choice!", "Alright, dark roasted espresso for you"]
-    messages = result.fulfillment_messages(IntentResponseGroup.DEFAULT)
+    
+    messages = result.fulfillment_messages.for_group(IntentResponseGroup.DEFAULT)
     assert messages
     assert messages[0].choices == ["dark roast espresso, good choice!", "Alright, dark roasted espresso for you"]
+    
+    with pytest.warns(DeprecationWarning):
+        messages = result.fulfillment_messages(IntentResponseGroup.DEFAULT)
+        assert messages
+        assert messages[0].choices == ["dark roast espresso, good choice!", "Alright, dark roasted espresso for you"]
 
 def test_intent_from_parse__default_parameter():
     parse_result = {

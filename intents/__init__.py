@@ -16,5 +16,6 @@ from intents.model.intent import Intent
 from intents.model.entity import Entity, Sys
 from intents.model.agent import Agent
 from intents.model.relations import follow
+from intents.model.fulfillment import FulfillmentRequest, FulfillmentResponse
 
 from intents.language import LanguageCode

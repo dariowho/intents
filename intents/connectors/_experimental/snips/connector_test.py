@@ -2,6 +2,8 @@ import os
 import tempfile
 from unittest.mock import MagicMock
 
+import pytest
+
 from example_agent import ExampleAgent
 from intents.language import LanguageCode, IntentResponseGroup, TextIntentResponse
 from intents.helpers import coffee_agent as ca 
@@ -28,10 +30,13 @@ def test_predict_default_language():
         LanguageCode.ITALIAN: MockSnipsEngine()
     }
     result = c.predict("Fake text, response is mocked anyway...")
-    assert result.intent == ca.AskEspresso()
-    assert result.confidence == 0.677
-    assert result.fulfillment_message_dict == {
+    expected_messages = {
         IntentResponseGroup.DEFAULT: [
             TextIntentResponse(choices=["medium roast espresso, good choice!", "Alright, medium roasted espresso for you"])
         ]
     }
+    assert result.intent == ca.AskEspresso()
+    assert result.confidence == 0.677
+    assert result.fulfillment_messages == expected_messages
+    with pytest.warns(DeprecationWarning):
+        assert result.fulfillment_message_dict == expected_messages

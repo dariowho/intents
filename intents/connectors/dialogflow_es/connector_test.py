@@ -1,5 +1,6 @@
 from unittest.mock import patch
 
+import pytest
 from google.cloud.dialogflow_v2.types import DetectIntentResponse
 
 from intents.connectors.dialogflow_es.connector import DialogflowEsConnector
@@ -52,9 +53,7 @@ def test_predict(mock_df_client_class, *args):
 
     df = DialogflowEsConnector('/fake/path/to/credentials.json', ExampleAgent)
     predicted = df.predict("A fake sentence")
-    assert isinstance(predicted.intent, travels.UserWantsTravel)
-    assert predicted.fulfillment_text == df_response_quick_replies.query_result.fulfillment_text
-    assert predicted.fulfillment_message_dict == {
+    expected_responses = {
         language.IntentResponseGroup.DEFAULT: [
             language.TextIntentResponse(choices=["If you like I can recommend you an hotel. Or I can send you some holiday pictures"])
         ],
@@ -63,6 +62,13 @@ def test_predict(mock_df_client_class, *args):
             language.QuickRepliesIntentResponse(replies=["Recommend an hotel", "Send holiday photo"])
         ]
     }
+    assert isinstance(predicted.intent, travels.UserWantsTravel)
+    # pylint: disable=no-member # (protobuf...)
+    assert predicted.fulfillment_text == df_response_quick_replies.query_result.fulfillment_text
+    assert predicted.fulfillment_messages == expected_responses
+
+    with pytest.warns(DeprecationWarning):
+        assert predicted.fulfillment_message_dict == expected_responses
 
 @patch("intents.connectors.dialogflow_es.connector.resolve_credentials")
 @patch("intents.connectors.dialogflow_es.connector.EventInput")
@@ -111,13 +117,18 @@ def test_fulfillment_messages():
     prediction = Prediction(
         intent=None,
         confidence=0.5,
-        fulfillment_message_dict={
+        fulfillment_messages=language.IntentResponseDict({
             language.IntentResponseGroup.DEFAULT: mock_default_messages,
             language.IntentResponseGroup.RICH: mock_rich_messages
-        },
+        }),
         fulfillment_text="Fake fulfillment text"
     )
 
-    assert prediction.fulfillment_messages() == mock_rich_messages
-    assert prediction.fulfillment_messages(language.IntentResponseGroup.DEFAULT) == mock_default_messages
-    assert prediction.fulfillment_messages(language.IntentResponseGroup.RICH) == mock_rich_messages
+    assert prediction.fulfillment_messages.for_group() == mock_rich_messages
+    assert prediction.fulfillment_messages.for_group(language.IntentResponseGroup.DEFAULT) == mock_default_messages
+    assert prediction.fulfillment_messages.for_group(language.IntentResponseGroup.RICH) == mock_rich_messages
+
+    with pytest.warns(DeprecationWarning):
+        assert prediction.fulfillment_messages() == mock_rich_messages
+        assert prediction.fulfillment_messages(language.IntentResponseGroup.DEFAULT) == mock_default_messages
+        assert prediction.fulfillment_messages(language.IntentResponseGroup.RICH) == mock_rich_messages

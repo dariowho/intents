@@ -18,15 +18,19 @@ specifically to:
 
 More details can be found in the :class:`Connector` interface.
 """
+import logging
+import warnings
 from uuid import uuid1
 from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Union
 from dataclasses import dataclass, field
 
-from intents import Intent, Agent, Entity
+from intents import Intent, Agent, Entity, FulfillmentRequest, FulfillmentResponse
 from intents.types import IntentType, EntityType
-from intents.language import IntentResponse, IntentResponseGroup, LanguageCode, ensure_language_code, agent_supported_languages
+from intents.language import IntentResponse, IntentResponseGroup, IntentResponseDict, LanguageCode, ensure_language_code, agent_supported_languages
 from intents.model.entity import EntityMixin, SystemEntityMixin
+
+logger = logging.getLogger(__name__)
 
 # TODO: turn it to an abstract class, when pylint will support dataclass
 # implementation of abstract properties
@@ -259,52 +263,20 @@ class Prediction:
     Args:
         intent: An instance of the predicted Intent
         confidence: A confidence value on the service prediction
-        fulfillment_message_dict: A map of Intent Responses, as they were
-            returned by the Service. Consider using
-            :meth:`Prediction.fulfillment_messages` for convenience
+        fulfillment_messages: A map of Intent Responses, as they were
+            returned by the Service.
         fulfillment_text: A plain-text version of the response
     """
     intent: Intent
     confidence: float
-    fulfillment_message_dict: Dict[IntentResponseGroup, List[IntentResponse]] = field(repr=False)
+    fulfillment_messages: IntentResponseDict = field(repr=False)
     fulfillment_text: str = None
 
-    def fulfillment_messages(
-        self,
-        response_group: IntentResponseGroup=IntentResponseGroup.RICH
-    ) -> List[IntentResponse]:
-        """
-        Return a list of fulfillment messages that are suitable for the given
-        Response Group. The following scenarios may happen:
-
-        * :class:`language.IntentResponseGroup.DEFAULT` is requested -> Message
-          in the `DEFAULT` group will be returned
-        * :class:`language.IntentResponseGroup.RICH` is requested
-
-            * `RICH` messages are defined -> `RICH` messages are returned
-            * No `RICH` message is defined -> `DEFAULT` messages are returned
-
-        If present, messages in the "rich" group will be returned:
-
-        >>> prediction.fulfillment_messages()
-        [TextIntentResponse(choices=['I like travelling too! How can I help?']),
-         QuickRepliesIntentResponse(replies=['Recommend a hotel', 'Send holiday photo', 'Where the station?'])]
-         
-        Alternatively, I can ask for plain-text default messages:
-
-        >>> from intents.language import IntentResponseGroup
-        >>> prediction.fulfillment_messages(IntentResponseGroup.DEFAULT)
-        [TextIntentResponse(choices=['Nice, I can send you holiday pictures, or recommend an hotel'])]
-        
-        Args:
-
-            response_group: The Response Group to fetch responses for
-        """
-        if response_group == IntentResponseGroup.RICH and \
-           not self.fulfillment_message_dict.get(response_group):
-            response_group = IntentResponseGroup.DEFAULT
-
-        return self.fulfillment_message_dict.get(response_group, [])
+    @property
+    def fulfillment_message_dict(self):
+        warnings.warn("Prediction.fulfillment_message_dict is deprecated. Please update "
+                      "your code to use Prediction.fulfillment_messages instead.", DeprecationWarning)
+        return self.fulfillment_messages
 
 def deserialize_intent_parameters(
     service_parameters: Dict[str, Any],
@@ -435,6 +407,16 @@ class Connector(ABC):
             session: Any string identifying a conversation
             language: A LanguageCode object, or a ISO 639-1 string (e.g. "en")
         """
+
+    # @abstractmethod
+    # def fulfill(self, fulfillment_request: FulfillmentRequest) -> FulfillmentResponse:
+    #     """
+    #     This method is used internally by fulfillment interfaces. It receives
+    #     the fulfillment request (the Service is calling the fulfillment
+    #     webhook), builds the Intent object and check if the Intent defines a
+    #     :meth:`Intent.fulfill` method. If so, run the method and return whatever
+    #     that method returns.
+    #     """
 
     @abstractmethod
     def upload(self):

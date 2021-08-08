@@ -8,7 +8,7 @@ from google.protobuf.json_format import MessageToDict
 from google.cloud.dialogflow_v2 import types as pb
 
 from intents.connectors.dialogflow_es import prediction_format as df
-from intents.language import IntentResponseGroup, IntentResponse, TextIntentResponse, QuickRepliesIntentResponse, CardIntentResponse
+from intents.language import IntentResponseGroup, IntentResponseDict, IntentResponse, TextIntentResponse, QuickRepliesIntentResponse, CardIntentResponse
 
 logger = logging.getLogger(__name__)
 
@@ -208,7 +208,7 @@ def build_response_message(df_message: df.QueryResultMessage):
 
     raise ValueError(f"Unsupported Fulfillment Message: {df_message}")
 
-def intent_responses(df_body: PredictionBody) -> Dict[IntentResponseGroup, List[IntentResponse]]:
+def intent_responses(df_body: PredictionBody) -> IntentResponseDict:
     """
     Return the responses in the prediction as standard instances of
     :class:`IntentResponse` and grouped by response group
