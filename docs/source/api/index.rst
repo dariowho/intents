@@ -13,6 +13,7 @@ service; once your Agent is defined you can use one of the built-in
  
     agent
     intent
+    types
     relations
     entity
     language

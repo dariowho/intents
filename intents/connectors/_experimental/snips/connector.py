@@ -29,8 +29,8 @@ from typing import Union
 import snips_nlu
 
 from intents import Intent, Entity, LanguageCode
-from intents.model.agent import _AgentMetaclass
-from intents.model.entity import _EntityMetaclass
+from intents.model.agent import AgentType
+from intents.model.entity import EntityType
 from intents.language import agent_supported_languages, ensure_language_code
 from intents.service_connector import Connector, ServiceEntityMappings
 from intents.connectors._experimental.snips.prediction import SnipsPrediction, SnipsPredictionComponent
@@ -68,7 +68,7 @@ class SnipsConnector(Connector):
     prediction_component: SnipsPredictionComponent
 
     def __init__(self,
-        agent_cls: _AgentMetaclass,
+        agent_cls: AgentType,
         default_session: str=None,
         default_language: Union[LanguageCode, str]=None
     ):
@@ -87,7 +87,7 @@ class SnipsConnector(Connector):
             from example_agent.agent import ExampleAgent
             from intents.connectors._experimental.snips import SnipsConnector
 
-            snips = SnipsConnector(ExampleAgent, "any invocation")
+            snips = SnipsConnector(ExampleAgent)
             snips.export("./TMP_SNIPS")
 
         The export will generate one JSON file per language, they can be loaded
@@ -191,7 +191,7 @@ class SnipsConnector(Connector):
         language = ensure_language_code(language)
         return self.prediction_component.prediction_from_intent(intent, language)
 
-    def _entity_service_name(self, entity_cls: _EntityMetaclass) -> str:
+    def _entity_service_name(self, entity_cls: EntityType) -> str:
         mapping = self.entity_mappings.lookup(entity_cls)
         if mapping.entity_cls is Entity:
             return entity_cls.name

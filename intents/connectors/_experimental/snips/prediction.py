@@ -4,8 +4,7 @@ from typing import Dict, List, Any
 from collections import defaultdict
 
 from intents import Intent, LanguageCode
-from intents.model.intent import _IntentMetaclass
-from intents.model.agent import _AgentMetaclass
+from intents.types import IntentType, AgentType
 from intents.service_connector import deserialize_intent_parameters, Prediction, ServiceEntityMappings
 from intents.language import intent_language, IntentLanguageData, IntentResponse, IntentResponseGroup
 from intents.connectors._experimental.snips import prediction_format as f
@@ -22,10 +21,10 @@ class SnipsPredictionComponent:
     prediction and trigger calls.
     """
 
-    agent_cls: _AgentMetaclass
+    agent_cls: AgentType
     entity_mappings: ServiceEntityMappings
 
-    def __init__(self, agent_cls: _AgentMetaclass, entity_mappings: ServiceEntityMappings):
+    def __init__(self, agent_cls: AgentType, entity_mappings: ServiceEntityMappings):
         self.agent_cls = agent_cls
         self.entity_mappings = entity_mappings
 
@@ -81,7 +80,7 @@ class SnipsPredictionComponent:
         )
 
 def _slot_list_to_param_dict(
-    intent_cls: _IntentMetaclass,
+    intent_cls: IntentType,
     result_slots: List[f.ParseResultSlot]
 ) -> Dict[str, Any]:
     """

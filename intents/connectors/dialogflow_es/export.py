@@ -11,8 +11,8 @@ from dataclasses import asdict
 from typing import List, Dict, Iterable
 
 from intents import Intent, language
-from intents.model.intent import _IntentMetaclass
-from intents.model.entity import SystemEntityMixin, _EntityMetaclass
+from intents.types import IntentType, EntityType
+from intents.model.entity import SystemEntityMixin
 from intents.model.relations import related_intents
 import intents.connectors.dialogflow_es.agent_format as df
 from intents.connectors.dialogflow_es.entities import MAPPINGS as ENTITY_MAPPINGS
@@ -110,15 +110,15 @@ def render_agent(connector: "intents.DialogflowEsConnector",  agent_name: str, l
 # Intent
 #
 
-def get_input_contexts(connector: "DialogflowEsConnector", intent_cls: _IntentMetaclass) -> List[str]:
+def get_input_contexts(connector: "DialogflowEsConnector", intent_cls: IntentType) -> List[str]:
     result = [connector._context_name(r.intent_cls) for r in related_intents(intent_cls).follow]
     
     return result
 
 def get_output_contexts(
     connector: "DialogflowEsConnector",
-    intent_cls: _IntentMetaclass,
-    visited: List[_IntentMetaclass]=None
+    intent_cls: IntentType,
+    visited: List[IntentType]=None
 ) -> List[df.AffectedContext]:
     """
     An Intent can output its own context (e.g. intent `OrderFish` can spawn
@@ -147,7 +147,7 @@ def get_output_contexts(
 
     return result
 
-def render_intent(connector: "DialogflowEsConnector", intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
+def render_intent(connector: "DialogflowEsConnector", intent_cls: IntentType, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
     response = df.Response(
         affectedContexts=get_output_contexts(connector, intent_cls),
         parameters=render_parameters(intent_cls, language_data),
@@ -166,7 +166,7 @@ def render_intent(connector: "DialogflowEsConnector", intent_cls: _IntentMetacla
         events=[df.Event(connector._event_name(intent_cls))]
     )
 
-def render_parameters(intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
+def render_parameters(intent_cls: IntentType, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
     result = []
     for param_name, param_metadata in intent_cls.parameter_schema.items():
         entity_cls = param_metadata.entity_cls
@@ -244,7 +244,7 @@ def render_response(response: language.IntentResponse, language_code: language.L
     else:
         raise ValueError(f"Unsupported response type: {response}")
 
-def render_responses(intent_cls: _IntentMetaclass, language_data: Dict[language.LanguageCode, language.IntentLanguageData], rich_platforms: Iterable[str]):
+def render_responses(intent_cls: IntentType, language_data: Dict[language.LanguageCode, language.IntentLanguageData], rich_platforms: Iterable[str]):
     result = []
 
     for language_code, language_code_data in language_data.items():
@@ -286,7 +286,7 @@ def render_utterance_chunk(chunk: language.UtteranceChunk):
 
     raise ValueError(f"Unsupported Utterance Chunk Type: {chunk}")
 
-def render_intent_usersays(agent_cls: type, intent: _IntentMetaclass, language_code: language.LanguageCode, examples: List[language.ExampleUtterance]):
+def render_intent_usersays(agent_cls: type, intent: IntentType, language_code: language.LanguageCode, examples: List[language.ExampleUtterance]):
     result = []
     for e in examples:
         result.append(df.IntentUsersays(
@@ -300,7 +300,7 @@ def render_intent_usersays(agent_cls: type, intent: _IntentMetaclass, language_c
 # Entity
 #
 
-def render_entity(entity_cls: _EntityMetaclass) -> df.Entity:
+def render_entity(entity_cls: EntityType) -> df.Entity:
     metadata = entity_cls.metadata
     return df.Entity(
         id=str(uuid1()),
@@ -310,7 +310,7 @@ def render_entity(entity_cls: _EntityMetaclass) -> df.Entity:
         allowFuzzyExtraction=metadata.fuzzy_matching
     )
 
-def render_entity_entries(entity_cls: _EntityMetaclass, entries: List[language.EntityEntry]) -> List[df.EntityEntry]:
+def render_entity_entries(entity_cls: EntityType, entries: List[language.EntityEntry]) -> List[df.EntityEntry]:
     result = []
     for e in entries:
         result.append(df.EntityEntry(

@@ -22,7 +22,7 @@ from dataclasses import dataclass
 
 from intents.model import names
 
-class _EntityMetaclass(type):
+class EntityType(type):
 
     name: str = None
     __entity_language_data__: Dict["language.LanguageCode", List["language.EntityEntry"]] = None
@@ -56,7 +56,7 @@ class _EntityMetaclass(type):
 
         return meta
 
-class EntityMixin(metaclass=_EntityMetaclass):
+class EntityMixin(metaclass=EntityType):
     """
     This is a mixin class for entities, that adds :meth:`from_df_response`, to
     build the Entity object from the match data in Dialogflow Responses.

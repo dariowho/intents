@@ -13,8 +13,8 @@ from types import ModuleType
 from typing import List, Dict, Union, Set
 from dataclasses import dataclass
 
-from intents.model.intent import Intent, _IntentMetaclass, IntentParameterMetadata
-from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
+from intents.model.intent import Intent, IntentType, IntentParameterMetadata
+from intents.model.entity import EntityMixin, SystemEntityMixin, EntityType
 from intents import language
 
 logger = logging.getLogger(__name__)
@@ -28,7 +28,7 @@ class RegisteredParameter:
     metadata: IntentParameterMetadata
     used_in: List[type(Intent)]
 
-class _AgentMetaclass(type):
+class AgentType(type):
 
     languages: List[language.LanguageCode] = None
 
@@ -54,7 +54,7 @@ class _AgentMetaclass(type):
 
         return result_cls
 
-class Agent(metaclass=_AgentMetaclass):
+class Agent(metaclass=AgentType):
     """
     As the name suggests, Agent is the base class that models an Agent
     definition within the *Intents* framework.
@@ -92,12 +92,12 @@ class Agent(metaclass=_AgentMetaclass):
     intents: List[Intent] = None
     _intents_by_name: Dict[str, Intent] = None
     _intents_by_norm_name: Dict[str, Intent] = None # my_module.HelloWorld -> mymodulehelloworld
-    _entities_by_name: Dict[str, _EntityMetaclass] = None
+    _entities_by_name: Dict[str, EntityType] = None
     _parameters_by_name: Dict[str, RegisteredParameter] = None
     _referenced_sys_entities: Set[SystemEntityMixin] = None # All
 
     @classmethod
-    def register(cls, resource: Union[_IntentMetaclass, ModuleType]):
+    def register(cls, resource: Union[IntentType, ModuleType]):
         """
         Register the given resource in Agent. The resource could be:
 
@@ -141,7 +141,7 @@ class Agent(metaclass=_AgentMetaclass):
         :param resource: The resource to register (an Intent, or a module
                          containing Intents)
         """
-        if isinstance(resource, _IntentMetaclass):
+        if isinstance(resource, IntentType):
             cls._register_intent(resource)
 
         elif isinstance(resource, ModuleType):
@@ -150,7 +150,7 @@ class Agent(metaclass=_AgentMetaclass):
                     cls._register_intent(member)
 
     @classmethod
-    def _register_intent(cls, intent_cls: _IntentMetaclass):
+    def _register_intent(cls, intent_cls: IntentType):
         """
         Register a single intent in the Agent class and check that language data is
         present for all supported languages (examples and responses).
@@ -202,7 +202,7 @@ class Agent(metaclass=_AgentMetaclass):
         existing_param.used_in.append(intent_cls)
 
     @classmethod
-    def _register_entity(cls, entity_cls: _EntityMetaclass, parameter_name: str, intent_name: str):
+    def _register_entity(cls, entity_cls: EntityType, parameter_name: str, intent_name: str):
         if not issubclass(entity_cls, EntityMixin):
             raise ValueError(f"Invalid type '{entity_cls}' for parameter '{parameter_name}' in Intent '{intent_name}': must be an Entity. Try system entities such as 'intents.Sys.Integer', or define your own custom entity.")
 

@@ -15,8 +15,7 @@ from google.cloud.dialogflow_v2.services.agents import AgentsClient
 from google.cloud.dialogflow_v2 import types as pb
 
 from intents import Agent, Intent
-from intents.model.agent import _AgentMetaclass
-from intents.model.intent import _IntentMetaclass
+from intents.types import AgentType, IntentType
 from intents.model.relations import related_intents
 from intents.service_connector import Connector, Prediction, deserialize_intent_parameters
 from intents.connectors.dialogflow_es.auth import resolve_credentials
@@ -208,8 +207,8 @@ class DialogflowEsConnector(Connector):
     def _df_body_to_intent(
         self,
         df_body: PredictionBody,
-        build_related_cls: _IntentMetaclass=None,
-        visited_intents: Set[_IntentMetaclass]=None
+        build_related_cls: IntentType=None,
+        visited_intents: Set[IntentType]=None
     ) -> Intent:
         """
         Convert a Dialogflow prediction response into an instance of
@@ -265,11 +264,11 @@ class DialogflowEsConnector(Connector):
         return intent in self._need_context_set
 
     @staticmethod
-    def _context_name(intent_cls: _IntentMetaclass) -> str:
+    def _context_name(intent_cls: IntentType) -> str:
         return "c_" + intent_cls.name.replace(".", "_") # TODO: refine
 
     @staticmethod
-    def _event_name(intent_cls: _IntentMetaclass) -> str:
+    def _event_name(intent_cls: IntentType) -> str:
         """
         Generate the default event name that we associate with every intent.
 
@@ -292,7 +291,7 @@ def _build_need_context_set(agent_cls: type(Agent)) -> Set[Intent]:
             result.add(parent.intent_cls)
     return result
 
-def _build_intents_by_context(agent_cls: _AgentMetaclass) -> Dict[str, _IntentMetaclass]:
+def _build_intents_by_context(agent_cls: AgentType) -> Dict[str, IntentType]:
     result = {}
     for intent_cls in agent_cls.intents:
         context_name = DialogflowEsConnector._context_name(intent_cls)

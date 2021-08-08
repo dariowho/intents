@@ -83,7 +83,7 @@ import dataclasses
 from dataclasses import dataclass, field
 
 from intents import Intent
-from intents.model.intent import _IntentMetaclass
+from intents.model.intent import IntentType
 
 class RelationType(Enum):
     """
@@ -131,7 +131,7 @@ class RelatedIntent:
     """
     field_name: str
     relation_type: RelationType
-    intent_cls: _IntentMetaclass
+    intent_cls: IntentType
 
 @dataclass
 class RelatedIntents:

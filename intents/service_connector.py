@@ -24,9 +24,9 @@ from typing import Dict, Any, List, Union
 from dataclasses import dataclass, field
 
 from intents import Intent, Agent, Entity
-from intents.model.intent import _IntentMetaclass
+from intents.types import IntentType, EntityType
 from intents.language import IntentResponse, IntentResponseGroup, LanguageCode, ensure_language_code, agent_supported_languages
-from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
+from intents.model.entity import EntityMixin, SystemEntityMixin
 
 # TODO: turn it to an abstract class, when pylint will support dataclass
 # implementation of abstract properties
@@ -47,7 +47,7 @@ class EntityMapping():
     """
 
     @property
-    def entity_cls(self) -> _EntityMetaclass:
+    def entity_cls(self) -> EntityType:
         """
         This is the internal entity type that is being mapped.
 
@@ -131,7 +131,7 @@ class StringEntityMapping(EntityMapping):
             Service
     """
 
-    entity_cls: _EntityMetaclass = None
+    entity_cls: EntityType = None
     service_name: str = None
 
     def from_service(self, service_data: Any) -> SystemEntityMixin:
@@ -158,7 +158,7 @@ class PatchedEntityMapping(EntityMapping):
     are (de)serialized as simple strings. If a Connector have different
     required, it should define a custom subclass of `PatchedEntityMapping`.
     """
-    entity_cls: _EntityMetaclass = None
+    entity_cls: EntityType = None
     builtin_entity: Entity = None
 
     @property
@@ -182,7 +182,7 @@ class ServiceEntityMappings(dict):
     * Flexible lookup with :meth:`ServiceEntityMapping.lookup`
     """
 
-    def lookup(self, entity_cls: _EntityMetaclass) -> EntityMapping:
+    def lookup(self, entity_cls: EntityType) -> EntityMapping:
         """
         Return the mapping in the dictionary that is associated with the given
         `entity_cls`. In addition to a simple `mappings[entity_cls]`, this
@@ -205,7 +205,7 @@ class ServiceEntityMappings(dict):
             raise KeyError(f"Failed to lookup entity {entity_cls} in mappings. Mapped entities: {mapped_entities}")
         return self[entity_cls]
 
-    def is_mapped(self, entity_cls: _EntityMetaclass, lang: LanguageCode) -> bool:
+    def is_mapped(self, entity_cls: EntityType, lang: LanguageCode) -> bool:
         """
         Return `False` if no mapping is defined for the given entity. Also
         return `False` if a mapping exists, but the mapping defines
@@ -308,7 +308,7 @@ class Prediction:
 
 def deserialize_intent_parameters(
     service_parameters: Dict[str, Any],
-    intent_cls: _IntentMetaclass,
+    intent_cls: IntentType,
     mappings: ServiceEntityMappings
 ) -> Dict[str, EntityMixin]:
     """

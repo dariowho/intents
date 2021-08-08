@@ -60,10 +60,9 @@ import yaml
 
 # pylint: disable=unused-import
 import intents # Needed to generate docs
+from intents.model.intent import Intent, IntentType
+from intents.model.entity import EntityType
 from intents.language import agent_language, LanguageCode
-# from intents.model.agent import _AgentMetaclass
-from intents.model.intent import Intent, _IntentMetaclass
-from intents.model.entity import _EntityMetaclass
 
 #
 # Example Utterances
@@ -87,7 +86,7 @@ class EntityUtteranceChunk(UtteranceChunk):
     """
     An Utterance Chunk that is a matched entity
     """
-    entity_cls: _EntityMetaclass
+    entity_cls: EntityType
     parameter_name: str
     parameter_value: str
 
@@ -492,8 +491,8 @@ class IntentLanguageData:
     responses: Dict[IntentResponseGroup, List[IntentResponse]] = field(default_factory=list)
 
 def intent_language_data(
-    agent_cls: "intents.model.agent._AgentMetaclass",
-    intent_cls: _IntentMetaclass,
+    agent_cls: "intents.model.agent.AgentType",
+    intent_cls: IntentType,
     language_code: LanguageCode=None
 ) -> Dict[LanguageCode, IntentLanguageData]:
     """

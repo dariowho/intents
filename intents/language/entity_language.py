@@ -27,7 +27,7 @@ import yaml
 
 # pylint: disable=unused-import
 import intents # (needed for building docs)
-from intents.model.entity import _EntityMetaclass
+from intents.model.entity import EntityType
 from intents.language.language_codes import LanguageCode
 from intents.language.agent_language import agent_language_folder
 
@@ -67,8 +67,8 @@ def make_language_data(entries: List[Union[str, List[str]]]) -> List[EntityEntry
     return result
 
 def entity_language_data(
-    agent_cls: "intents.model.agent._AgentMetaclass",
-    entity_cls: _EntityMetaclass,
+    agent_cls: "intents.model.agent.AgentType",
+    entity_cls: EntityType,
     language_code: LanguageCode=None
 ) -> Dict[LanguageCode, List[EntityEntry]]:
     """

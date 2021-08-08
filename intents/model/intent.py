@@ -41,12 +41,12 @@ class IntentParameterMetadata:
             tagged in the User's utterance
     """
     name: str
-    entity_cls: entity._EntityMetaclass
+    entity_cls: entity.EntityType
     is_list: bool
     required: bool
     default: Any
 
-class _IntentMetaclass(type):
+class IntentType(type):
 
     name: str = None
 
@@ -135,7 +135,7 @@ class _IntentMetaclass(type):
 
         return result
 
-class Intent(metaclass=_IntentMetaclass):
+class Intent(metaclass=IntentType):
     """
     Represents a predicted intent. This is also used as a base class for the
     intent classes that model a Dialogflow Agent in Python code.
@@ -211,7 +211,7 @@ class Intent(metaclass=_IntentMetaclass):
     def parameter_schema(self) -> Dict[str, IntentParameterMetadata]:
         return self.__class__.parameter_schema
 
-def _intent_name_from_class(intent_cls: _IntentMetaclass) -> str:
+def _intent_name_from_class(intent_cls: IntentType) -> str:
     full_name = f"{intent_cls.__module__}.{intent_cls.__name__}"
     if intent_cls.__module__.startswith("_"):
         full_name = intent_cls.__name__

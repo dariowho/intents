@@ -11,7 +11,11 @@
     * `connectors.dialogflow_es.response_format` renamed to `prediction_format`
     * `DialogflowIntentResponse` classes moved from `prediction_format` to
       `prediction` 
-    * Replaced protobuf parameters with dataclass equivalents
+    * Replace protobuf parameters with dataclass equivalents
+* (#21) Breaking change (internal): Rename metaclasses and move to `intents.types`
+* (#11) Breaking change: remove deprecated `Context` interface, `Intent.events`
+  and `Intent.parameter_schema()` (`Intent.parameter_schema` is the way to
+  access that information)
 * (#19) Fix name constraints not enforced on Entities
 
 # v0.2.0
