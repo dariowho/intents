@@ -5,9 +5,9 @@ from collections import defaultdict
 
 from intents import Intent, LanguageCode
 from intents.model.intent import _IntentMetaclass
-from intents.service_connector import deserialize_intent_parameters, Prediction
+from intents.model.agent import _AgentMetaclass
+from intents.service_connector import deserialize_intent_parameters, Prediction, ServiceEntityMappings
 from intents.language import intent_language, IntentLanguageData, IntentResponse, IntentResponseGroup
-from intents.connectors._experimental.snips import SnipsConnector
 from intents.connectors._experimental.snips import prediction_format as f
 
 logger = logging.getLogger(__name__)
@@ -16,15 +16,69 @@ logger = logging.getLogger(__name__)
 class SnipsPrediction(Prediction):
     parse_result: f.ParseResult = None
 
-def intent_from_parse_result(connector: SnipsConnector, parse_result: f.ParseResult) -> Intent:
-    intent_cls = connector.agent_cls._intents_by_name.get(parse_result.intent.intentName)
-    if not intent_cls:
-        raise ValueError(f"Snips returned intent with name '{intent_cls}', but this was not found in the Agent "
-                         f"definition. Make sure that the model is updated by running SnipsConnector.fit() again,"
-                         f"and if the problem persists please open an issue on the Intents repository.")
-    snips_parameters = _slot_list_to_param_dict(intent_cls, parse_result.slots)
-    parameter_dict = deserialize_intent_parameters(snips_parameters, intent_cls, connector.entity_mappings)
-    return intent_cls(**parameter_dict)
+class SnipsPredictionComponent:
+    """
+    This is the component of SnipsConnector that is responsible for handling
+    prediction and trigger calls.
+    """
+
+    agent_cls: _AgentMetaclass
+    entity_mappings: ServiceEntityMappings
+
+    def __init__(self, agent_cls: _AgentMetaclass, entity_mappings: ServiceEntityMappings):
+        self.agent_cls = agent_cls
+        self.entity_mappings = entity_mappings
+
+    def intent_from_parse_result(self, parse_result: f.ParseResult) -> Intent:
+        """
+        Turn SnipsNLU output into an Intent class
+        """
+        intent_name = parse_result.intent.intentName
+        intent_cls = self.agent_cls._intents_by_name.get(intent_name)
+        if not intent_cls:
+            raise ValueError(f"Snips returned intent with name '{intent_name}', but this was not found in the Agent "
+                            f"definition. Make sure that the model is updated by running SnipsConnector.fit() again,"
+                            f"and if the problem persists please open an issue on the Intents repository.")
+        snips_parameters = _slot_list_to_param_dict(intent_cls, parse_result.slots)
+        parameter_dict = deserialize_intent_parameters(snips_parameters, intent_cls, self.entity_mappings)
+        return intent_cls(**parameter_dict)
+
+    def prediction_from_parse_result(self, parse_result: f.ParseResult, lang: LanguageCode) -> SnipsPrediction:
+        """
+        Turn SnipsNLU output into a Prediction object
+        """
+        intent = self.intent_from_parse_result(parse_result)
+        language_data = intent_language.intent_language_data(self.agent_cls, intent.__class__, lang)
+        language_data = language_data[lang]
+        fulfillment_messages, fulfillment_text = _render_responses(intent, language_data)
+        return SnipsPrediction(
+            intent=intent,
+            confidence=parse_result.intent.probability,
+            fulfillment_message_dict=fulfillment_messages,
+            fulfillment_text=fulfillment_text,
+            parse_result=parse_result
+        )
+
+    def prediction_from_intent(self, intent: Intent, lang: LanguageCode) -> SnipsPrediction:
+        """
+        This is used to generate prediction objects in trigger requests. Normally a
+        trigger is a request to a prediction service, and the response is turned
+        into a prediction. As Snips runs locally, we can just return the Intent
+        object as it is received.
+
+        Note that intent relations are not implemented yet. In the future, they must
+        be solved as well.
+        """
+        language_data = intent_language.intent_language_data(self.agent_cls, intent.__class__, lang)
+        language_data = language_data[lang]
+        fulfillment_messages, fulfillment_text = _render_responses(intent, language_data)
+        return SnipsPrediction(
+            intent=intent,
+            confidence=1.0,
+            fulfillment_message_dict=fulfillment_messages,
+            fulfillment_text=fulfillment_text,
+            parse_result=None
+        )
 
 def _slot_list_to_param_dict(
     intent_cls: _IntentMetaclass,
@@ -50,15 +104,15 @@ def _slot_list_to_param_dict(
     for slot_name, slot_values in result_lists.items():
         if slot_name not in schema:
             raise KeyError(f"Slot {slot_name} not found in intent {intent_cls} with schema: "
-                           f"{schema}. Make sure your trained model is up to date with the "
-                           "latest Agent definition. If it is, please file a bug in the Intents "
-                           "repository")
+                        f"{schema}. Make sure your trained model is up to date with the "
+                        "latest Agent definition. If it is, please file a bug in the Intents "
+                        "repository")
         if schema[slot_name].is_list:
             result[slot_name] = slot_values
         else:
             if len(slot_values) > 1:
                 logger.warning("Prediction returned more than one value for slot %s: %s. "
-                               "Only the first value will be considered.")
+                            "Only the first value will be considered.")
             result[slot_name] = slot_values[0]
     return result
 
@@ -69,16 +123,3 @@ def _render_responses(intent: Intent, language_data: IntentLanguageData):
     rendered_plaintext = [r.random() for r in result_messages.get(IntentResponseGroup.DEFAULT, [])]
     result_plaintext = " ".join(rendered_plaintext)
     return result_messages, result_plaintext
-
-def prediction_from_parse_result(connector: SnipsConnector, parse_result: f.ParseResult, lang: LanguageCode):
-    intent = intent_from_parse_result(connector, parse_result)
-    language_data = intent_language.intent_language_data(connector.agent_cls, intent.__class__, lang)
-    language_data = language_data[lang]
-    fulfillment_messages, fulfillment_text = _render_responses(intent, language_data)
-    return SnipsPrediction(
-        intent=intent,
-        confidence=parse_result.intent.probability,
-        fulfillment_message_dict=fulfillment_messages,
-        fulfillment_text=fulfillment_text,
-        parse_result=parse_result
-    )

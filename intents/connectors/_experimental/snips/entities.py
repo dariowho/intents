@@ -91,13 +91,13 @@ class DateMapping(EntityMapping):
                            "instead. This may cause unpredictable behavior.", grain)
 
         dt = datetime.fromisoformat(service_data["value"])
-        return dt.date()
+        return Sys.Date.from_py_date(dt.date())
 
     def to_service(self, entity: Union[date, datetime, str]):
                                       # ^ Sys.Date is subclass of date
-        if isinstance(data, datetime):
-            data = data.date()
-        return str(data)
+        if isinstance(entity, datetime):
+            entity = entity.date()
+        return str(entity)
 
 ENTITY_MAPPINGS = ServiceEntityMappings.from_list([
     SnipsStringEntityMapping(Entity, None),

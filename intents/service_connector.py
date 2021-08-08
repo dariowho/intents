@@ -20,14 +20,12 @@ More details can be found in the :class:`Connector` interface.
 """
 from uuid import uuid1
 from abc import ABC, abstractmethod
-from typing import Dict, Any, List
+from typing import Dict, Any, List, Union
 from dataclasses import dataclass, field
 
 from intents import Intent, Agent, Entity
-from intents.language import IntentResponse, IntentResponseGroup
-from intents.model.intent import IntentParameterMetadata, _IntentMetaclass
-from intents.language import IntentResponse, IntentResponseGroup, LanguageCode
 from intents.model.intent import _IntentMetaclass
+from intents.language import IntentResponse, IntentResponseGroup, LanguageCode, ensure_language_code, agent_supported_languages
 from intents.model.entity import EntityMixin, SystemEntityMixin, _EntityMetaclass
 
 # TODO: turn it to an abstract class, when pylint will support dataclass
@@ -350,16 +348,26 @@ class Connector(ABC):
     """
     Connect the given Agent to a Prediction Service.
 
-    :param agent_cls: The Agent to connect
-    :param default_session: A default session ID (conversation channel) for predictions
-    :param default_language: A default language for predictions
+    Args:
+        agent_cls: The Agent to connect
+        default_session: A default session ID (conversation channel) for predictions
+        default_language: A default language for predictions. If None, Connector
+            will use the Agent's firs defined language.
     """
-
     agent_cls: type(Agent)
     default_session: str
     default_language: str
 
-    def __init__(self, agent_cls: type(Agent), default_session: str=None, default_language: str="en"):
+    def __init__(
+        self,
+        agent_cls: type(Agent),
+        default_session: str=None,
+        default_language: Union[LanguageCode, str]=None
+    ):
+        if not default_language:
+            default_language = agent_supported_languages(agent_cls)[0]
+        default_language = ensure_language_code(default_language)
+        
         if not default_session:
             default_session = f"py-{str(uuid1())}"
         
@@ -376,7 +384,7 @@ class Connector(ABC):
         """
 
     @abstractmethod
-    def predict(self, message: str, session: str=None, language: str=None) -> Prediction:
+    def predict(self, message: str, session: str=None, language: Union[LanguageCode, str]=None) -> Prediction:
         """
         Predict the given User message in the given session using the given
         language. When `session` or `language` are None, `predict` will use the
@@ -401,11 +409,11 @@ class Connector(ABC):
         Args:
             message: The User message to predict
             session: Any string identifying a conversation
-            language: A ISO 639-1 language code (e.g. "en")
+            language: A LanguageCode object, or a ISO 639-1 string (e.g. "en")
         """
 
     @abstractmethod
-    def trigger(self, intent: Intent, session: str=None, language: str=None) -> Prediction:
+    def trigger(self, intent: Intent, session: str=None, language: Union[LanguageCode, str]=None) -> Prediction:
         """
         Trigger the given Intent in the given session using the given language.
         When `session` or `language` are None, `predict` will use the default
@@ -425,7 +433,7 @@ class Connector(ABC):
         Args:
             intent: The Intent instance to trigger
             session: Any string identifying a conversation
-            language: A ISO 639-1 language code (e.g. "en")
+            language: A LanguageCode object, or a ISO 639-1 string (e.g. "en")
         """
 
     @abstractmethod

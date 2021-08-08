@@ -24,25 +24,26 @@ import os
 import json
 import shutil
 import logging
-import tempfile
+from typing import Union
 
 import snips_nlu
 
-from intents import Entity, LanguageCode
+from intents import Intent, Entity, LanguageCode
 from intents.model.agent import _AgentMetaclass
 from intents.model.entity import _EntityMetaclass
-from intents.language import agent_supported_languages
+from intents.language import agent_supported_languages, ensure_language_code
 from intents.service_connector import Connector, ServiceEntityMappings
+from intents.connectors._experimental.snips.prediction import SnipsPrediction, SnipsPredictionComponent
 from intents.connectors._experimental.snips import entities, prediction_format
 
 logger = logging.getLogger(__name__)
 
 class SnipsConnector(Connector):
     """
-    This is a Connector that runs entirely locally, without needing any resident
+    This is a :class:`~intents.service_connector.Connector` that runs entirely locally, without needing any resident
     service to operate. Predictions are made by calling the `snips-nlu` Python
     API.
-    
+
     .. warning::
 
         `SnipsConnector` is **experimental**: expect running into relevant rough
@@ -64,16 +65,18 @@ class SnipsConnector(Connector):
     entity_mappings: ServiceEntityMappings = entities.ENTITY_MAPPINGS
 
     nlu_engine: snips_nlu.SnipsNLUEngine = None
+    prediction_component: SnipsPredictionComponent
 
     def __init__(self,
         agent_cls: _AgentMetaclass,
         default_session: str=None,
-        default_language: str=None
+        default_language: Union[LanguageCode, str]=None
     ):
         super().__init__(agent_cls, default_session, default_language)
         self.nlu_engines = {
             lang: snips_nlu.SnipsNLUEngine() for lang in agent_supported_languages(agent_cls)
         }
+        self.prediction_component = SnipsPredictionComponent(agent_cls, self.entity_mappings)
 
     def export(self, destination: str):
         """
@@ -107,6 +110,13 @@ class SnipsConnector(Connector):
                 json.dump(data, f, indent=4)
 
     def upload(self):
+        """
+        As Snips runs locally as a Python library, there is no external service
+        to upload the model to. Instead, `upload` will train Snips local models.
+
+        Currently there is no persistence for trained models. This means that
+        `upload` should be called every time :class:`SnipsConnector` is instantiated.
+        """
         from intents.connectors._experimental.snips import export
         for lang, rendered in export.render(self).items():
             self.nlu_engines[lang].fit(rendered)
@@ -114,16 +124,72 @@ class SnipsConnector(Connector):
     def fulfill(self):
         raise NotImplementedError()
 
-    def predict(self, message: str, lang: LanguageCode=None):
-        if not lang:
-            lang = self.default_language
-        from intents.connectors._experimental.snips import prediction
-        parse_result_dict = self.nlu_engines[lang].parse(message)
-        parse_result = prediction_format.from_dict(parse_result_dict)
-        return prediction.prediction_from_parse_result(self, parse_result, lang)
+    def predict(self, message: str, session: str=None, language: Union[LanguageCode, str]=None) -> SnipsPrediction:
+        """
+        Predict the given User message in the given session using the given
+        language. When `session` or `language` are None, `predict` will use the
+        default values that are specified in :meth:`__init__`.
 
-    def trigger(self):
-        raise NotImplementedError()
+        *predict* will return an instance of :class:`Prediction`, representing
+        the service response.
+
+        >>> from intents.connectors._experimental.snips import SnipsConnector
+        >>> from example_agent import ExampleAgent
+        >>> snips = SnipsConnector(ExampleAgent)
+        >>> snips.upload() # This trains the models
+        >>> prediction = snips.predict("Hi, my name is Guido")
+        >>> prediction.intent
+        UserNameGive(user_name='Guido')
+        >>> prediction.intent.user_name
+        "Guido"
+        >>> prediction.fulfillment_text
+        "Hi Guido, I'm Bot"
+        >>> prediction.confidence
+        0.62
+
+        Note that the Italian version of :class:`~example_agent.ExampleAgent`
+        won't be traines, as :class:`Sys.Date` is not available for the Italian
+        language in Snips.
+
+        Args:
+            message: The User message to predict
+            session: Any string identifying a conversation
+            language: A LanguageCode object, or a ISO 639-1 string (e.g. "en")
+        """
+        if not language:
+            language = self.default_language
+        language = ensure_language_code(language)
+        parse_result_dict = self.nlu_engines[language].parse(message)
+        parse_result = prediction_format.from_dict(parse_result_dict)
+        return self.prediction_component.prediction_from_parse_result(parse_result, language)
+
+    def trigger(self, intent: Intent, session: str=None, language: Union[LanguageCode, str]=None) -> SnipsPrediction:
+        """
+        As Snips runs locally and intent relation resolution is not supported,
+        Triggers don't do much more at the moment than returing the intent as it
+        was passed in input.
+
+        >>> from intents.connectors._experimental.snips import SnipsConnector
+        >>> from example_agent import ExampleAgent, smalltalk
+        >>> snips = SnipsConnector(ExampleAgent)
+        >>> snips.upload() # This trains the models
+        >>> prediction = snips.trigger(smalltalk.AgentNameGive(agent_name='Alice'))
+        >>> prediction.intent
+        AgentNameGive(agent_name='Alice')
+        >>> prediction.fulfillment_text
+        "Howdy Human, I'm Alice"
+        >>> prediction.confidence
+        1.0
+
+        Args:
+            intent: The Intent instance to trigger
+            session: Any string identifying a conversation
+            language: A LanguageCode object, or a ISO 639-1 string (e.g. "en")
+        """
+        if not language:
+            language = self.default_language
+        language = ensure_language_code(language)
+        return self.prediction_component.prediction_from_intent(intent, language)
 
     def _entity_service_name(self, entity_cls: _EntityMetaclass) -> str:
         mapping = self.entity_mappings.lookup(entity_cls)

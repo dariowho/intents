@@ -4,6 +4,8 @@
 * (#19) Add builtin entities module and `service_connector.PatchEntityMapping`
     * Add `Color`, `Language`, `MusicGenre` and `FirstName` builtin entities
 * (#19) Add `EntityMapping.supported_languages` property
+* (#19) Change ServiceConnector to accept `LanguageCode` values as language
+  codes, in addition to ISO strings
 * (#17) Add dataclass model for Dialogflow Responses and Webhook requests
 * (#17) Breaking changes (internal):
     * `connectors.dialogflow_es.response_format` renamed to `prediction_format`

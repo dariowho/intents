@@ -20,7 +20,7 @@ Your `language/` folder will contain one subfloder per language (i.e.
     (https://github.com/dariowho/intents/tree/master/example_agent/language)
     to get more insight on the format and naming conventions of language files.
 """
-from intents.language.language_codes import LanguageCode, LANGUAGE_CODES
+from intents.language.language_codes import LanguageCode, LANGUAGE_CODES, ensure_language_code
 from intents.language.agent_language import agent_language_folder, agent_supported_languages
 from intents.language.intent_language import intent_language_data, IntentResponseGroup, IntentResponse, TextIntentResponse, ImageIntentResponse, QuickRepliesIntentResponse, CardIntentResponse, CustomPayloadIntentResponse, IntentLanguageData, ExampleUtterance, UtteranceChunk, TextUtteranceChunk, EntityUtteranceChunk
 from intents.language.entity_language import entity_language_data, EntityEntry
