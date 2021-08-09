@@ -14,6 +14,9 @@ class DummyConnector(Connector):
     def trigger(self, intent, session, language):
         return None
     
+    def fulfill(self, fulfillment_request):
+        return None
+        
     def upload(self):
         return None
 

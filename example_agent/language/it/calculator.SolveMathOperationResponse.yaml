@@ -1,0 +1,6 @@
+responses:
+  default:
+    - text:
+      - Certo, il risultato è $operation_result
+      - Con piacere, fa $operation_result
+      - Il risultato è $operation_result

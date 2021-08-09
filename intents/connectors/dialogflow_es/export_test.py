@@ -5,7 +5,7 @@ from dataclasses import dataclass
 
 from example_agent import ExampleAgent
 from intents import Agent, Intent, follow
-from intents.connectors.dialogflow_es import export, connector, entities
+from intents.connectors.dialogflow_es import export, connector, entities, names
 from intents.connectors.dialogflow_es import agent_format as df
 
 #
@@ -79,17 +79,17 @@ def test_get_input_contexts():
     assert result == []
 
     result = export.get_input_contexts(mock_connector, FollowingIntent)
-    assert result == [mock_connector._context_name(FollowedIntent)]
+    assert result == [names.context_name(FollowedIntent)]
 
     result = export.get_input_contexts(mock_connector, FollowingIntentSubclass)
-    assert result == [mock_connector._context_name(FollowedIntent)]
+    assert result == [names.context_name(FollowedIntent)]
 
     result = export.get_input_contexts(mock_connector, FollowingSubclassIntent)
-    assert result == [mock_connector._context_name(FollowedIntentSubclass)]
+    assert result == [names.context_name(FollowedIntentSubclass)]
 
 def test_get_output_contexts():
     mock_connector = MockDialogflowConnector(MockAgent)
-    _c = lambda x: mock_connector._context_name(x)
+    _c = lambda x: names.context_name(x)
 
     result = export.get_output_contexts(mock_connector, FollowedIntent)
     assert result == [

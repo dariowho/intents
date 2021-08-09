@@ -1,0 +1,16 @@
+entries:
+  "+":
+    - plus
+    - addition
+    - summed to
+  "-":
+    - minus
+    - subtract
+  "*":
+    - multiplied by
+    - times
+    - product
+  "/":
+    - divided
+    - divided by
+    - over

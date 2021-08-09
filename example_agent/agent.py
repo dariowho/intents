@@ -17,10 +17,9 @@ particularly:
     more about your topic of interest
 
   """
-
 from intents import Agent
 
-from example_agent import smalltalk, restaurant, travels, shop
+from example_agent import smalltalk, restaurant, travels, shop, calculator
 
 class ExampleAgent(Agent):
     """
@@ -31,3 +30,4 @@ ExampleAgent.register(smalltalk)
 ExampleAgent.register(restaurant)
 ExampleAgent.register(travels)
 ExampleAgent.register(shop)
+ExampleAgent.register(calculator)

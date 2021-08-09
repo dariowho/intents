@@ -19,7 +19,6 @@ More details about Snips can be found at
 * https://github.com/snipsco/snips-nlu
 * https://snips-nlu.readthedocs.io/
 """
-
 import os
 import json
 import shutil
@@ -29,8 +28,8 @@ from typing import Union
 import snips_nlu
 
 from intents import Intent, Entity, LanguageCode
-from intents.model.agent import AgentType
-from intents.model.entity import EntityType
+from intents.types import AgentType, EntityType
+from intents.model.fulfillment import FulfillmentRequest
 from intents.language import agent_supported_languages, ensure_language_code
 from intents.service_connector import Connector, ServiceEntityMappings
 from intents.connectors._experimental.snips.prediction import SnipsPrediction, SnipsPredictionComponent
@@ -121,9 +120,6 @@ class SnipsConnector(Connector):
         for lang, rendered in export.render(self).items():
             self.nlu_engines[lang].fit(rendered)
 
-    def fulfill(self):
-        raise NotImplementedError()
-
     def predict(self, message: str, session: str=None, language: Union[LanguageCode, str]=None) -> SnipsPrediction:
         """
         Predict the given User message in the given session using the given
@@ -190,6 +186,12 @@ class SnipsConnector(Connector):
             language = self.default_language
         language = ensure_language_code(language)
         return self.prediction_component.prediction_from_intent(intent, language)
+
+    def fulfill(self, fulfillment_request: FulfillmentRequest) -> dict:
+        """
+        *Not implemented*
+        """
+        raise NotImplementedError()
 
     def _entity_service_name(self, entity_cls: EntityType) -> str:
         mapping = self.entity_mappings.lookup(entity_cls)

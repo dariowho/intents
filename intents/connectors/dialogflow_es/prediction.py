@@ -24,7 +24,7 @@ class DfResponseContext:
     lifespan: int
     parameters: Dict[str, DfResponseContextParameter]
 
-class PredictionBody():
+class PredictionBody:
     """
     This is a superclass for :class:`DetectIntentBody` and
     :class:`WebhookRequestBody`, which both send a `query_result` field
@@ -99,11 +99,15 @@ class DetectIntentBody(PredictionBody):
 class WebhookRequestBody(PredictionBody):
     """
     This is a fulfillment webhook request that Dialogflow sends us.
+
+    Note that, even though there are protobuf schemas for webhook requests
+    (`pb.WebhookRequest`), this class is instantiated with a dict. This is
+    because webhook requests typically come from REST calls that Dialogflow
+    makes to a fulfillment endpoint.
     """
     webhook_request: df.WebhookRequest
 
-    def __init__(self, webhook_request_protobuf: pb.WebhookRequest):
-        webhook_request_dict = MessageToDict(webhook_request_protobuf._pb)
+    def __init__(self, webhook_request_dict: dict):
         self.webhook_request = df.from_dict(
             data_class=df.WebhookRequest,
             data=webhook_request_dict,

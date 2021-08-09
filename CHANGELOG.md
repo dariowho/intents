@@ -6,6 +6,8 @@
 * (#19) Add `EntityMapping.supported_languages` property
 * (#19) Change ServiceConnector to accept `LanguageCode` values as language
   codes, in addition to ISO strings
+* (#17) Add Intent Fulfillment interfaces and Dialogflow implementation
+* (#17) Add development fulfillment service
 * (#17) Add dataclass model for Dialogflow Responses and Webhook requests
 * (#17) Change (with deprecation) `Prediction.fulfillment_messages()` to be a
   property of type `IntentResponseDict`. Remove
@@ -20,6 +22,8 @@
   and `Intent.parameter_schema()` (`Intent.parameter_schema` is the way to
   access that information)
 * (#19) Fix name constraints not enforced on Entities
+* (#17) Fix Entity export in Dialogflow (canonical value needed to be in
+  synonyms as well)
 
 # v0.2.0
 

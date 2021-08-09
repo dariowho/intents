@@ -15,6 +15,7 @@ from intents.types import IntentType, EntityType
 from intents.model.entity import SystemEntityMixin
 from intents.model.relations import related_intents
 import intents.connectors.dialogflow_es.agent_format as df
+import intents.connectors.dialogflow_es.names as df_names
 from intents.connectors.dialogflow_es.entities import MAPPINGS as ENTITY_MAPPINGS
 
 logger = logging.getLogger(__name__)
@@ -111,7 +112,7 @@ def render_agent(connector: "intents.DialogflowEsConnector",  agent_name: str, l
 #
 
 def get_input_contexts(connector: "DialogflowEsConnector", intent_cls: IntentType) -> List[str]:
-    result = [connector._context_name(r.intent_cls) for r in related_intents(intent_cls).follow]
+    result = [df_names.context_name(r.intent_cls) for r in related_intents(intent_cls).follow]
     
     return result
 
@@ -137,7 +138,7 @@ def get_output_contexts(
 
     result = []
     if connector._intent_needs_context(intent_cls):
-        name = connector._context_name(intent_cls)
+        name = df_names.context_name(intent_cls)
         result.append(df.AffectedContext(name, 5)) # TODO: allow custom lifespan
 
     visited.append(intent_cls)
@@ -163,7 +164,7 @@ def render_intent(connector: "DialogflowEsConnector", intent_cls: IntentType, la
         # TODO: re-enable
         # webhookUsed=intent_cls.metadata.intent_webhook_enabled,
         # webhookForSlotFilling=intent_cls.metadata.slot_filling_webhook_enabled,
-        events=[df.Event(connector._event_name(intent_cls))]
+        events=[df.Event(df_names.event_name(intent_cls))]
     )
 
 def render_parameters(intent_cls: IntentType, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
@@ -315,7 +316,7 @@ def render_entity_entries(entity_cls: EntityType, entries: List[language.EntityE
     for e in entries:
         result.append(df.EntityEntry(
             value=e.value,
-            synonyms=e.synonyms
+            synonyms=[e.value] + e.synonyms
         ))
     return result
 

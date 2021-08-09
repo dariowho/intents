@@ -3,7 +3,7 @@ import sys
 import logging
 from typing import List
 
-from intents.language.language_codes import LanguageCode, LANGUAGE_CODES
+from intents.language import LanguageCode, LANGUAGE_CODES
 
 logger = logging.getLogger(__name__)
 

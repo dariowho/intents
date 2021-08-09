@@ -1,0 +1,11 @@
+examples:
+  - Quanto fa $operand_1{2} $operator{times} $operand_2{3}?
+  - Sapresti calcolare $operand_1{due} $operator{-} $operand_2{1}?
+  - Dimmi il risultato di $operand_1{6} $operator{divided by} $operand_2{tre}
+
+# This intent uses a webhook to produce an answer: if User sees these responses,
+# it means that something went wrong in the webhook call
+responses:
+  default:
+    - text:
+      - Spiacente, sembra esserci stato un problema tecnico. La tua richiesta non puo' essere completata.

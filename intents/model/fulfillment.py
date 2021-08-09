@@ -29,11 +29,13 @@ object and a :class:`FulfillmentContext` object
 #. Connector returns the response to the fulfillment framework
 #. Fulfillment framework returns the Connector's response 
 """
+import json
+import http.server
 from typing import List
 from dataclasses import dataclass, field
 
-from intents import Intent
-from intents.language import LanguageCode, IntentResponse, IntentResponseDict
+from intents import LanguageCode
+# from intents.language import LanguageCode, IntentResponse, IntentResponseDict
 
 @dataclass
 class FulfillmentRequest:
@@ -61,7 +63,7 @@ class FulfillmentContext:
     """
     confidence: float
     fulfillment_text: str
-    fulfillment_messages: IntentResponseDict
+    fulfillment_messages: "intents.language.intent_language.IntentResponseDict"
     language: LanguageCode
 
 @dataclass
@@ -70,6 +72,53 @@ class FulfillmentResult:
     `FulfillmentResult` are produced by `~intents.model.intent.Intent.fulfill`,
     and then converted by Connectors into Service-actionable responses.
     """
-    replace_intent: Intent = None
-    fulfillment_messages: List[IntentResponse] = None
+    trigger: "intents.model.Intent" = None
     fulfillment_text: List[str] = None
+    fulfillment_messages: List["intents.language.intent_language.IntentResponse"] = None
+
+#
+# Development Server
+#
+import json
+import http.server
+
+def run_dev_server(connector: "intents.service_connector.Connector", host='', port=8000):
+    server_address = (host, port)
+
+    class DevWebhookHttpHandler(http.server.BaseHTTPRequestHandler):
+
+            def do_POST(self):
+                print("rfile", self.rfile)
+                content_len = int(self.headers.get('Content-Length'))
+                post_body = self.rfile.read(content_len)
+                post_body = json.loads(post_body)
+                print("post_body", post_body)
+
+                fulfillment_request = FulfillmentRequest(
+                    body=post_body
+                )
+                result = connector.fulfill(fulfillment_request)
+                result = json.dumps(result)
+                # result = json.dumps({"foo": "bar"})
+                
+                self.send_response(200)
+                self.send_header('Content-type', 'application/json')
+                self.end_headers()
+                # self.send_response(http.server.HTTPStatus.OK, "intents ok")
+
+                result = bytes(result, 'utf-8')
+                self.wfile.write(result)
+                self.wfile.flush()
+
+    httpd = http.server.HTTPServer(('', 8000), DevWebhookHttpHandler)
+    httpd.serve_forever()
+
+
+# from example_agent import ExampleAgent
+# from intents.connectors import DialogflowEsConnector, WebhookConfiguration
+# df = DialogflowEsConnector(
+#     '/home/dario/lavoro/dialogflow-agents/_tmp_agents/learning-dialogflow-5827a2d16c34.json',
+#     ExampleAgent,
+#     default_session='testing-session'
+# )
+# run_dev_server(df)

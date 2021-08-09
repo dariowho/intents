@@ -15,7 +15,7 @@ import dataclasses
 from dataclasses import dataclass
 from typing import List, Dict, Any, _GenericAlias
 
-from intents.model import entity, names
+from intents.model import entity, names, fulfillment
 from intents.helpers.data_classes import is_dataclass_strict
 
 logger = logging.getLogger(__name__)
@@ -210,6 +210,43 @@ class Intent(metaclass=IntentType):
     @property
     def parameter_schema(self) -> Dict[str, IntentParameterMetadata]:
         return self.__class__.parameter_schema
+
+    def parameter_dict(self) -> Dict[str, Any]:
+        result = {}
+        for parameter_name in self.parameter_schema.keys():
+            result[parameter_name] = getattr(self, parameter_name)
+        return result
+
+    def fulfill(self, context: fulfillment.FulfillmentContext) -> fulfillment.FulfillmentResult:
+        """
+        This method defines how an Intent handles a prediction, for instance:
+
+        .. code-block:: python
+
+            @dataclass
+            class UserConfirmsPayment(Intent):
+                
+                parent_order: UserOrdersSomething = follow()
+
+                def fulfill(self, context):
+                    if bank_api.check_balance() >= parent_order.amount:
+                        # make payment
+                        # send order
+                        return FulfillmentResult(trigger=OrderSuccessResponse())
+                    else:
+                        return FulfillmentResponse(trigger=OrderFailedResponse())
+                        
+        More details about fulfillments can be found in the
+        :mod:`~intents.model.fulfillment` module documentation.
+
+        Args:
+            context: Context information about the fulfillment request
+                (confidence, language, ...)
+        Returns:
+            A `FulfillmentResult` object, that can contain a followup intent to
+            trigger, or just some responses to post back to user.
+        """
+        return None
 
 def _intent_name_from_class(intent_cls: IntentType) -> str:
     full_name = f"{intent_cls.__module__}.{intent_cls.__name__}"

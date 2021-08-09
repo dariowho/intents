@@ -25,9 +25,10 @@ from abc import ABC, abstractmethod
 from typing import Dict, Any, List, Union
 from dataclasses import dataclass, field
 
-from intents import Intent, Agent, Entity, FulfillmentRequest, FulfillmentResponse
+from intents import Intent, Agent, Entity
+from intents.model.fulfillment import FulfillmentRequest
 from intents.types import IntentType, EntityType
-from intents.language import IntentResponse, IntentResponseGroup, IntentResponseDict, LanguageCode, ensure_language_code, agent_supported_languages
+from intents.language import IntentResponseDict, LanguageCode, ensure_language_code, agent_supported_languages
 from intents.model.entity import EntityMixin, SystemEntityMixin
 
 logger = logging.getLogger(__name__)
@@ -408,15 +409,31 @@ class Connector(ABC):
             language: A LanguageCode object, or a ISO 639-1 string (e.g. "en")
         """
 
-    # @abstractmethod
-    # def fulfill(self, fulfillment_request: FulfillmentRequest) -> FulfillmentResponse:
-    #     """
-    #     This method is used internally by fulfillment interfaces. It receives
-    #     the fulfillment request (the Service is calling the fulfillment
-    #     webhook), builds the Intent object and check if the Intent defines a
-    #     :meth:`Intent.fulfill` method. If so, run the method and return whatever
-    #     that method returns.
-    #     """
+    @abstractmethod
+    def fulfill(self, fulfillment_request: FulfillmentRequest) -> dict:
+        """
+        This method is responsible for handling requests coming from a
+        fulfillment interface. We are at that point in the flow when an intent
+        was triggered/predicted, and Service is calling the webhook service for
+        fulfillment.
+
+        In this method, Connector interprets the body of the request, builds a
+        :class:`~intents.model.fulfillment.FulfillmentContext` object, builds
+        the :class:`~intents.model.Intent` object that is references in the
+        request, and calls its :meth:`~intents.model.intent.Intent.fulfill`
+        method.
+
+        This will produce a
+        :class:`~intents.model.fulfillment.FulfillmentResult` object, that
+        Connector will translate into a Service-compatible response (a
+        dictionary) and return to caller.
+
+        Args:
+            fulfillment_request: A raw fulfillment request, as it is sent by the
+                Prediction service (typically via a standard REST webhook call)
+        Returns:
+            An object containing a response that Service can read
+        """
 
     @abstractmethod
     def upload(self):

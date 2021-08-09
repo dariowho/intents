@@ -1,0 +1,4 @@
+responses:
+  default:
+    - text:
+      - Mi spiace, non posso fare questo calcolo. Puoi provare a formularlo diversamente?

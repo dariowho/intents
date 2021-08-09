@@ -3,7 +3,7 @@ This module defines general purpose helpers that are used throughout the project
 """
 from enum import Enum
 import dataclasses
-from dataclasses import field
+from dataclasses import asdict, field
 
 class CustomFields(Enum):
     OMIT_NONE = "OMIT_NONE"
@@ -57,3 +57,6 @@ def is_dataclass_strict(obj):
     """
     cls = obj if isinstance(obj, type) else type(obj)
     return dataclasses._FIELDS in cls.__dict__
+
+def to_dict(dataclass_obj):
+    return asdict(dataclass_obj, dict_factory=custom_asdict_factory())

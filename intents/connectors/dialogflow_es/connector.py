@@ -14,15 +14,18 @@ from google.cloud.dialogflow_v2.services.sessions import SessionsClient
 from google.cloud.dialogflow_v2.services.agents import AgentsClient
 from google.cloud.dialogflow_v2 import types as pb
 
-from intents import Agent, Intent
+from intents import Agent, Intent, LanguageCode
+from intents.model.fulfillment import FulfillmentRequest, FulfillmentContext
 from intents.types import AgentType, IntentType
 from intents.model.relations import related_intents
 from intents.service_connector import Connector, Prediction, deserialize_intent_parameters
 from intents.connectors.dialogflow_es.auth import resolve_credentials
 from intents.connectors.dialogflow_es.util import dict_to_protobuf
+from intents.connectors.dialogflow_es import webhook
+from intents.connectors.dialogflow_es import names as df_names
 from intents.connectors.dialogflow_es import entities as df_entities
 from intents.connectors.dialogflow_es import export as df_export
-from intents.connectors.dialogflow_es.prediction import PredictionBody, DetectIntentBody, intent_responses
+from intents.connectors.dialogflow_es.prediction import PredictionBody, DetectIntentBody, WebhookRequestBody, intent_responses
 from intents.connectors.commons import WebhookConfiguration
 
 logger = logging.getLogger(__name__)
@@ -165,7 +168,7 @@ class DialogflowEsConnector(Connector):
             language = self.default_language
 
         intent_name = intent.name
-        event_name = self._event_name(intent.__class__)
+        event_name = df_names.event_name(intent.__class__)
         event_parameters = {}
         for param_name, param_metadata in intent.parameter_schema.items():
             param_mapping = df_entities.MAPPINGS[param_metadata.entity_cls]
@@ -193,6 +196,24 @@ class DialogflowEsConnector(Connector):
         df_response = DetectIntentBody(df_result)
 
         return self._df_body_to_prediction(df_response)
+
+    def fulfill(self, fulfillment_request: FulfillmentRequest) -> dict:
+        webhook_body = WebhookRequestBody(fulfillment_request.body)
+        intent = self._df_body_to_intent(webhook_body)
+        context = self._df_body_to_fulfillment_context(webhook_body)
+        fulfillment_result = intent.fulfill(context)
+        print(fulfillment_result)
+        if fulfillment_result:
+            return webhook.fulfillment_result_to_response(fulfillment_result, context)
+        return {}
+
+    def _df_body_to_fulfillment_context(self, df_body: DetectIntentBody) -> DialogflowPrediction:
+        return FulfillmentContext(
+            confidence=df_body.queryResult.intentDetectionConfidence,
+            fulfillment_messages=intent_responses(df_body),
+            fulfillment_text=df_body.queryResult.fulfillmentText,
+            language=LanguageCode(df_body.queryResult.languageCode)
+        )
 
     def _df_body_to_prediction(self, df_body: DetectIntentBody) -> DialogflowPrediction:
         return DialogflowPrediction(
@@ -228,7 +249,11 @@ class DialogflowEsConnector(Connector):
         # Slot filling in progress
         # TODO: use queryResult.allRequiredParamsPresent instead
         # TODO: also check queryResult.cancelsSlotFilling
-        if "__system_counters__" in contexts:
+        # if "__system_counters__" in contexts:
+        if not df_body.queryResult.allRequiredParamsPresent:
+            logger.warning("Prediction doesn't have values for all required parameters. "
+                           "Slot filling may be in progress, but this is not modeled yet: "
+                           "Intent object will be None")
             return None
 
         if build_related_cls:
@@ -262,20 +287,6 @@ class DialogflowEsConnector(Connector):
     def _intent_needs_context(self, intent: Intent) -> bool:
         return intent in self._need_context_set
 
-    @staticmethod
-    def _context_name(intent_cls: IntentType) -> str:
-        return "c_" + intent_cls.name.replace(".", "_") # TODO: refine
-
-    @staticmethod
-    def _event_name(intent_cls: IntentType) -> str:
-        """
-        Generate the default event name that we associate with every intent.
-
-        >>> df._event_name('test.intent_name')
-        'E_TEST_INTENT_NAME'
-        """
-        return "E_" + intent_cls.name.upper().replace('.', '_')
-
 def _build_need_context_set(agent_cls: type(Agent)) -> Set[Intent]:
     """
     Return a list of intents that need to spawn a context, based on their
@@ -293,7 +304,7 @@ def _build_need_context_set(agent_cls: type(Agent)) -> Set[Intent]:
 def _build_intents_by_context(agent_cls: AgentType) -> Dict[str, IntentType]:
     result = {}
     for intent_cls in agent_cls.intents:
-        context_name = DialogflowEsConnector._context_name(intent_cls)
+        context_name = df_names.context_name(intent_cls)
         if context_name in result:
             raise ValueError(f"Intents '{intent_cls.name}' and '{result[context_name].name}' " +
                 "have ambiguous context name. This is a bug: please file an issue on the " +

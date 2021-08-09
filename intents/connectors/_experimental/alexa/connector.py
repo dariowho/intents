@@ -20,6 +20,7 @@ import shutil
 import logging
 
 from intents import Agent, Intent, Entity
+from intents.model.fulfillment import FulfillmentRequest
 from intents.language import entity_language
 from intents.service_connector import Connector, ServiceEntityMappings
 from intents.connectors._experimental.alexa.export import render
@@ -95,6 +96,12 @@ class AlexaConnector(Connector):
         raise NotImplementedError()
 
     def trigger(self, intent: Intent, session: str=None, language: str=None) -> Intent:
+        """
+        *Not implemented*
+        """
+        raise NotImplementedError()
+
+    def fulfill(self, fulfillment_request: FulfillmentRequest) -> dict:
         """
         *Not implemented*
         """

@@ -1,0 +1,14 @@
+entries:
+  "+":
+    - più
+    - sommato a
+  "-":
+    - meno
+    - sottratto a
+  "*":
+    - per
+    - moltiplicato per
+  "/":
+    - diviso
+    - diviso per
+    - fratto

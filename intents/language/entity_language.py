@@ -27,8 +27,8 @@ import yaml
 
 # pylint: disable=unused-import
 import intents # (needed for building docs)
+from intents import LanguageCode
 from intents.model.entity import EntityType
-from intents.language.language_codes import LanguageCode
 from intents.language.agent_language import agent_language_folder
 
 @dataclass
