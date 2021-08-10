@@ -1,8 +1,9 @@
 """
 This module defines general purpose helpers that are used throughout the project
 """
-from enum import Enum
 import dataclasses
+from enum import Enum
+from datetime import datetime
 from dataclasses import asdict, field
 
 class CustomFields(Enum):
@@ -31,6 +32,8 @@ def custom_asdict_factory():
         def convert_value(obj):
             if isinstance(obj, Enum):
                 return obj.value
+            if isinstance(obj, datetime):
+                return str(obj)
             return obj
 
         return dict((k, convert_value(v)) for k, v in data if v != CustomFields.OMIT_NONE)
