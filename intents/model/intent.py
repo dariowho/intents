@@ -13,7 +13,7 @@ import inspect
 import logging
 import dataclasses
 from dataclasses import dataclass
-from typing import List, Dict, Any, _GenericAlias
+from typing import List, Dict, Union, Any, _GenericAlias
 
 from intents.model import entity, names, fulfillment
 from intents.helpers.data_classes import is_dataclass_strict
@@ -217,7 +217,10 @@ class Intent(metaclass=IntentType):
             result[parameter_name] = getattr(self, parameter_name)
         return result
 
-    def fulfill(self, context: fulfillment.FulfillmentContext) -> fulfillment.FulfillmentResult:
+    def fulfill(self,
+    context: fulfillment.FulfillmentContext,
+    **kwargs
+    ) -> Union[fulfillment.FulfillmentResult, "Intent"]:
         """
         This method defines how an Intent handles a prediction, for instance:
 

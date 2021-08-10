@@ -23,13 +23,14 @@ import os
 import json
 import shutil
 import logging
-from typing import Union
+from typing import List, Union
+from dataclasses import replace
 
 import snips_nlu
 
 from intents import Intent, Entity, LanguageCode
 from intents.types import AgentType, EntityType
-from intents.model.fulfillment import FulfillmentRequest
+from intents.model.fulfillment import FulfillmentRequest, FulfillmentContext
 from intents.language import agent_supported_languages, ensure_language_code
 from intents.service_connector import Connector, ServiceEntityMappings
 from intents.connectors._experimental.snips.prediction import SnipsPrediction, SnipsPredictionComponent
@@ -157,7 +158,8 @@ class SnipsConnector(Connector):
         language = ensure_language_code(language)
         parse_result_dict = self.nlu_engines[language].parse(message)
         parse_result = prediction_format.from_dict(parse_result_dict)
-        return self.prediction_component.prediction_from_parse_result(parse_result, language)
+        prediction = self.prediction_component.prediction_from_parse_result(parse_result, language)
+        return self.prediction_component.fulfill_local(prediction, language)
 
     def trigger(self, intent: Intent, session: str=None, language: Union[LanguageCode, str]=None) -> SnipsPrediction:
         """
@@ -185,7 +187,8 @@ class SnipsConnector(Connector):
         if not language:
             language = self.default_language
         language = ensure_language_code(language)
-        return self.prediction_component.prediction_from_intent(intent, language)
+        prediction = self.prediction_component.prediction_from_intent(intent, language)
+        return self.prediction_component.fulfill_local(prediction, language)
 
     def fulfill(self, fulfillment_request: FulfillmentRequest) -> dict:
         """

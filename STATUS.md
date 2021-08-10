@@ -20,7 +20,7 @@ colors: 🟢 complete, 🟡 partial, 🔴 missing, ⚪ not planned
 | Required Parameters with prompts | 🟢            | 🔴     | 🔴     |
 | Default Text Responses           | 🟢            | 🔴     | 🟢     |
 | Platform Text/Rich Responses     | 🟢            | 🔴     | 🟢     |
-| Custom Payload Responses         | 🟢            | 🔴     | 🟢     |
+| Custom Payload Responses         | 🟢            | ⚪     | 🟢     |
 | Agent Webhook Settings           | 🟢            | 🔴     | ⚪     |
 | Multi-Language Agents            | 🟢            | 🟢     | 🟢     |
 | "Follow" Intent Relation         | 🟢            | 🔴     | 🔴     |
@@ -44,7 +44,6 @@ Extended System Entities and such) are not supported.
 | Feature                       | Dialogflow ES | Alexa | Snips |
 |-------------------------------|---------------|-------|-------|
 | Predict Intent                | 🟢            | ⚪    | 🟢    |
-| Trigger Intent                | 🟢            | ⚪    | 🔴    |
-| Webhook Fulfillment interface | 🔴            | 🔴    | 🔴    |
+| Trigger Intent                | 🟢            | ⚪    | 🟢    |
+| Webhook Fulfillment interface | 🟢            | 🔴    | 🟢    |
 | Contexts Persistence          | 🔴            | 🔴    | 🔴    |
-

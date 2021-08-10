@@ -31,7 +31,7 @@ object and a :class:`FulfillmentContext` object
 """
 import json
 import http.server
-from typing import List
+from typing import List, Union
 from dataclasses import dataclass, field
 
 from intents import LanguageCode
@@ -72,18 +72,32 @@ class FulfillmentResult:
     `FulfillmentResult` are produced by `~intents.model.intent.Intent.fulfill`,
     and then converted by Connectors into Service-actionable responses.
     """
-    trigger: "intents.model.Intent" = None
+    trigger: "intents.model.intent.Intent" = None
     fulfillment_text: List[str] = None
     fulfillment_messages: List["intents.language.intent_language.IntentResponse"] = None
+
+def ensure_fulfillment_result(fulfill_return_value: Union[FulfillmentResult, "intents.model.intent.Intent"]) -> FulfillmentResult:
+    if fulfill_return_value is None:
+        return
+
+    if isinstance(fulfill_return_value, FulfillmentResult):
+        return fulfill_return_value
+
+    from intents import Intent
+    if isinstance(fulfill_return_value, Intent):
+        return FulfillmentResult(trigger=fulfill_return_value)
+
+    raise ValueError(f"Unsupported fulfillment return value: {fulfill_return_value}")
 
 #
 # Development Server
 #
-import json
-import http.server
 
 def run_dev_server(connector: "intents.service_connector.Connector", host='', port=8000):
     server_address = (host, port)
+
+    # doesn't work..
+    # http.server.HTTPServer.allow_reuse_address = True
 
     class DevWebhookHttpHandler(http.server.BaseHTTPRequestHandler):
 
@@ -101,16 +115,15 @@ def run_dev_server(connector: "intents.service_connector.Connector", host='', po
                 result = json.dumps(result)
                 # result = json.dumps({"foo": "bar"})
                 
-                self.send_response(200)
+                self.send_response(http.server.HTTPStatus.OK)
                 self.send_header('Content-type', 'application/json')
                 self.end_headers()
-                # self.send_response(http.server.HTTPStatus.OK, "intents ok")
 
                 result = bytes(result, 'utf-8')
                 self.wfile.write(result)
                 self.wfile.flush()
 
-    httpd = http.server.HTTPServer(('', 8000), DevWebhookHttpHandler)
+    httpd = http.server.HTTPServer(server_address, DevWebhookHttpHandler)
     httpd.serve_forever()
 
 

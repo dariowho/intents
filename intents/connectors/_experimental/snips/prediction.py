@@ -1,10 +1,11 @@
 import logging
-from dataclasses import dataclass
+from dataclasses import dataclass, replace, field
 from typing import Dict, List, Any, Tuple
 from collections import defaultdict
 
 from intents import Intent, LanguageCode
 from intents.types import IntentType, AgentType
+from intents.model.fulfillment import FulfillmentContext, ensure_fulfillment_result
 from intents.service_connector import deserialize_intent_parameters, Prediction, ServiceEntityMappings
 from intents.language import intent_language, IntentLanguageData, IntentResponse, IntentResponseGroup, IntentResponseDict
 from intents.connectors._experimental.snips import prediction_format as f
@@ -13,7 +14,7 @@ logger = logging.getLogger(__name__)
 
 @dataclass
 class SnipsPrediction(Prediction):
-    parse_result: f.ParseResult = None
+    parse_result: f.ParseResult = field(default=None, repr=False)
 
 class SnipsPredictionComponent:
     """
@@ -78,6 +79,60 @@ class SnipsPredictionComponent:
             fulfillment_text=fulfillment_text,
             parse_result=None
         )
+
+    def fulfill_local(self, prediction: SnipsPrediction, lang: LanguageCode, _stack: List[str]=None) -> SnipsPrediction:
+        """
+        Simulate the fulfillment flow in a local procedure. This method is called
+        internally by :meth:`~SnipsConnector.predict` and
+        :meth:`~SnipsConnector.trigger` to solve fulfillments before returning
+        the Prediction to User.
+
+        Fulfillments are solved **recursively**, but at the moment loops are
+        not allowed: intent A can trigger intent B in fulfillment, but cannot
+        trigger itself. Intent B can trigger every other intent but A and B, and
+        so on.
+
+        Args:
+            prediction: A prediction object, as it is built before solving
+                fulfillment
+            lang: Language code of the prediction
+            _stack: This is used internally to prevent loops in recursion
+        Returns:
+            The triggered intent that is returned by predicted
+            :meth:`Intent.fulfill`. If :meth:`fulfill` is not defined, or if it
+            returns `None`, return the input `prediction` object
+        """
+        if not _stack:
+            _stack = []
+    
+        if not prediction.intent:
+            logger.warning("Prediction contains no intent: %s", prediction)
+            return prediction
+
+        if prediction.intent.name in _stack:
+            raise RecursionError("Circular fulfillment calls detected: intent '%s' is being "
+                                 "fulfilled twice. Stack: %s. Make sure intents aren't fulfilled "
+                                 "recursively. If this is intended, open a feature request issue "
+                                 "on the Intents repository", prediction.intent.name, _stack)
+
+        _stack.append(prediction.intent.name)
+
+        context = FulfillmentContext(
+            confidence=prediction.confidence,
+            fulfillment_text=prediction.fulfillment_text,
+            fulfillment_messages=prediction.fulfillment_messages,
+            language=lang
+        )
+        fulfillment_result = ensure_fulfillment_result(prediction.intent.fulfill(context))
+        if fulfillment_result:
+            if fulfillment_result.trigger:
+                triggered = self.prediction_from_intent(fulfillment_result.trigger, lang)
+                return self.fulfill_local(triggered, lang)
+            else:
+                logger.warning("Intent returned a fulfillment result without trigger. Trigger "
+                               "is the only supported response in SnipsConnector. Other elements "
+                               "will be ignored.")
+        return prediction
 
 def _slot_list_to_param_dict(
     intent_cls: IntentType,

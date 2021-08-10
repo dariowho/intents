@@ -174,3 +174,28 @@ def test_intent_from_parse__list_parameter_single_slot():
     print("NAME", parse_result.intent.intentName)
     result = prediction_component.intent_from_parse_result(parse_result)
     assert result == UserSaysManyColors(user_color_list=['Green'])
+
+#
+# Fulfillment
+#
+
+def test_fulfillment_recursion_is_blocked():
+    # TODO: set timeout on this test
+
+    @dataclass
+    class RecursiveFulfillmentIntent(Intent):
+        def fulfill(self, context):
+            return RecursiveFulfillmentIntent()
+
+    RecursiveFulfillmentIntent.__intent_language_data__ = ca.mock_language_data(
+        RecursiveFulfillmentIntent, [], ["fake response"], LanguageCode.ENGLISH
+    )
+
+    class MyAgent(Agent):
+        languages = ['en']
+    MyAgent.register(RecursiveFulfillmentIntent)
+
+    prediction_component = prediction.SnipsPredictionComponent(MyAgent, entities.ENTITY_MAPPINGS)
+    pred = prediction_component.prediction_from_intent(RecursiveFulfillmentIntent(), LanguageCode.ENGLISH)
+    with pytest.raises(RecursionError):
+        prediction_component.fulfill_local(pred, LanguageCode.ENGLISH)

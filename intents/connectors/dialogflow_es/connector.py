@@ -15,7 +15,7 @@ from google.cloud.dialogflow_v2.services.agents import AgentsClient
 from google.cloud.dialogflow_v2 import types as pb
 
 from intents import Agent, Intent, LanguageCode
-from intents.model.fulfillment import FulfillmentRequest, FulfillmentContext
+from intents.model.fulfillment import FulfillmentRequest, FulfillmentContext, ensure_fulfillment_result
 from intents.types import AgentType, IntentType
 from intents.model.relations import related_intents
 from intents.service_connector import Connector, Prediction, deserialize_intent_parameters
@@ -201,7 +201,7 @@ class DialogflowEsConnector(Connector):
         webhook_body = WebhookRequestBody(fulfillment_request.body)
         intent = self._df_body_to_intent(webhook_body)
         context = self._df_body_to_fulfillment_context(webhook_body)
-        fulfillment_result = intent.fulfill(context)
+        fulfillment_result = ensure_fulfillment_result(intent.fulfill(context))
         print(fulfillment_result)
         if fulfillment_result:
             return webhook.fulfillment_result_to_response(fulfillment_result, context)
