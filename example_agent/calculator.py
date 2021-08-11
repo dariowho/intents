@@ -24,13 +24,13 @@ class SolveMathOperation(Intent):
     | U: How much is 21 times two?
     | A: That's 42
     """
-    operand_1: Sys.Integer
-    operand_2: Sys.Integer
+    first_operand: Sys.Integer
+    second_operand: Sys.Integer
     operator: CalculatorOperator
 
     def fulfill(self, context: FulfillmentContext):
         try:
-            result = do_calculation(self.operand_1, self.operand_2, self.operator)
+            result = do_calculation(self.first_operand, self.second_operand, self.operator)
             response_intent = SolveMathOperationResponse(operation_result=result)
             return FulfillmentResult(trigger=response_intent)
         except ValueError:
@@ -50,7 +50,7 @@ class SolveMathOperationError(Intent):
     This is triggered by fulfillment if something goes wrong in calculations.
     """
 
-def do_calculation(operand_1: int, operand_2: int, operator: str):
+def do_calculation(first_operand: int, second_operand: int, operator: str):
     """
     This is a helper function that solves a simple math operation
 
@@ -58,12 +58,12 @@ def do_calculation(operand_1: int, operand_2: int, operator: str):
     5
     """
     if operator == "+":
-        return operand_1 + operand_2
+        return first_operand + second_operand
     elif operator == "-":
-        return operand_1 - operand_2
+        return first_operand - second_operand
     elif operator == "*":
-        return operand_1 * operand_2
+        return first_operand * second_operand
     elif operator == "/":
-        return operand_1 / operand_2
+        return first_operand / second_operand
 
     raise ValueError(f"Unsupported operator: {operator}")

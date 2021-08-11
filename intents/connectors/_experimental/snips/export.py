@@ -64,7 +64,7 @@ def render_intent(
                 utterance_data.append(af.DatasetIntentUtteranceTextSegment(chunk.text))
             elif isinstance(chunk, intent_language.EntityUtteranceChunk):
                 chunk: intent_language.EntityUtteranceChunk
-                entity_name = connector._entity_service_name(chunk.entity_cls)
+                entity_name = snips_entities.ENTITY_MAPPINGS.service_name(chunk.entity_cls)
                 utterance_data.append(af.DatasetIntentUtteranceEntitySegment(
                     text=chunk.parameter_value,
                     entity=entity_name,
@@ -107,7 +107,7 @@ def render_all_entities(
         if not connector.entity_mappings.is_mapped(e, lang):
             raise NotImplementedError(f"Agent references System Entity '{e}', but that is not "
                                       f"supported by Snips NLU for language '{lang}'")
-    result.update({connector._entity_service_name(e): {} for e in builtin_entities})
+    result.update({snips_entities.ENTITY_MAPPINGS.service_name(e): {} for e in builtin_entities})
 
     # Patched Sys entities
     patched_mappings = [m for m in snips_entities.PATCHED_MAPPINGS]
@@ -142,7 +142,7 @@ def render_entity(
     for e in language_data:
         entries.append(af.DatasetEntityEntry(value=e.value, synonyms=e.synonyms))
     
-    service_name = connector._entity_service_name(entity_cls)
+    service_name = snips_entities.ENTITY_MAPPINGS.service_name(entity_cls)
     return {
         service_name: af.DatasetEntity(
             data=entries,
@@ -156,7 +156,7 @@ def render_placeholder_entity(
     connector: SnipsConnector,
     entity_cls: str,
 ):
-    service_name = connector._entity_service_name(entity_cls)
+    service_name = snips_entities.ENTITY_MAPPINGS.service_name(entity_cls)
     return {
         service_name: af.DatasetEntity(
             use_synonyms=True,

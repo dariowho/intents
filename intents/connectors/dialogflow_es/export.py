@@ -171,11 +171,7 @@ def render_parameters(intent_cls: IntentType, language_data: Dict[language.Langu
     result = []
     for param_name, param_metadata in intent_cls.parameter_schema.items():
         entity_cls = param_metadata.entity_cls
-        # TODO: use Connector._entity_service_name()
-        if issubclass(entity_cls, SystemEntityMixin):
-            data_type = ENTITY_MAPPINGS[entity_cls].service_name
-        else:
-            data_type = entity_cls.name
+        data_type = ENTITY_MAPPINGS.service_name(entity_cls)
 
         prompts = []
         for language_code, language_code_data in language_data.items():
@@ -272,12 +268,8 @@ def render_utterance_chunk(chunk: language.UtteranceChunk):
 
     if isinstance(chunk, language.EntityUtteranceChunk):
         chunk: language.EntityUtteranceChunk
-        # TODO: user Connector._entity_service_name()
-        if issubclass(chunk.entity_cls, SystemEntityMixin):
-            meta = ENTITY_MAPPINGS[chunk.entity_cls].service_name
-        else:
-            meta = chunk.entity_cls.name
-
+        meta = ENTITY_MAPPINGS.service_name(chunk.entity_cls)
+        
         return df.UsersaysEntityChunk(
             text=chunk.parameter_value,
             alias=chunk.parameter_name,

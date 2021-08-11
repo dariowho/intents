@@ -195,9 +195,3 @@ class SnipsConnector(Connector):
         *Not implemented*
         """
         raise NotImplementedError()
-
-    def _entity_service_name(self, entity_cls: EntityType) -> str:
-        mapping = self.entity_mappings.lookup(entity_cls)
-        if mapping.entity_cls is Entity:
-            return entity_cls.name
-        return mapping.service_name

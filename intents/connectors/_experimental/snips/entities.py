@@ -4,6 +4,7 @@ from typing import Union
 from datetime import datetime, date
 
 from intents import Sys, Entity
+from intents.types import EntityType
 from intents.language import LanguageCode
 from intents.resources.builtin_entities import color, language, music_genre, first_name
 from intents.service_connector import EntityMapping, StringEntityMapping, PatchedEntityMapping, ServiceEntityMappings
@@ -99,8 +100,15 @@ class DateMapping(EntityMapping):
             entity = entity.date()
         return str(entity)
 
-ENTITY_MAPPINGS = ServiceEntityMappings.from_list([
-    SnipsStringEntityMapping(Entity, None),
+class SnipsEntityMappings(ServiceEntityMappings):
+
+    def custom_entity_mapping(self, entity_cls: EntityType):
+        return SnipsStringEntityMapping(
+            entity_cls=entity_cls,
+            service_name=entity_cls.name
+        )
+
+ENTITY_MAPPINGS = SnipsEntityMappings.from_list([
     SnipsPatchedEntityMapping(Sys.Person, first_name.I_IntentsFirstName),
     SnipsPatchedEntityMapping(Sys.Color, color.I_IntentsColor),
     DateMapping(),

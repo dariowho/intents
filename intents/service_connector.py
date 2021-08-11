@@ -204,11 +204,42 @@ class ServiceEntityMappings(dict):
         """
         # `Entity` objects are custom entities
         if issubclass(entity_cls, Entity) and entity_cls not in self:
-            entity_cls = Entity
+            return self.custom_entity_mapping(entity_cls)
         if entity_cls not in self:
-            mapped_entities = [m.entity_cls for m in self]
+            mapped_entities = [m.entity_cls for m in self.values()]
             raise KeyError(f"Failed to lookup entity {entity_cls} in mappings. Mapped entities: {mapped_entities}")
         return self[entity_cls]
+
+    def custom_entity_mapping(self, entity_cls: EntityType) -> EntityMapping:
+        """
+        Generate an entity mapping for the given custom entity. This is needed
+        because, while System entities are static, Custom ones need to be
+        handled dynamically at run time.
+
+        By default, this returns a simple :class:`StringEntityMapping`, where
+        `service_name` is `entity_cls.name`. Connectors may override this method
+        to implement custom behavior.
+        """
+        return StringEntityMapping(
+            entity_cls=entity_cls,
+            service_name=entity_cls.name
+        )
+
+    def service_name(self, entity_cls: EntityType):
+        """
+        Return the name of the given entity in the specific service; this can be
+        the class name itself, or an :class:`EntityMapping` lookup in the case
+        of System Entities.
+
+        For instance, a :class:`Sys.Person` Entity will need to be looked up in
+        the mappings to find out its service name (`sys.person` in Dialogflow,
+        `AMAZON.Person` in Alexa, and so on). A custom entity (e.g. `PizzaType`)
+        will use its class name instead.
+        """
+        mapping = self.lookup(entity_cls)
+        if mapping.entity_cls is Entity:
+            return entity_cls.name
+        return mapping.service_name
 
     def is_mapped(self, entity_cls: EntityType, lang: LanguageCode) -> bool:
         """
@@ -348,14 +379,6 @@ class Connector(ABC):
         self.default_session = default_session
         self.default_language = default_language
 
-    @property
-    @abstractmethod
-    def entity_mappings(self) -> ServiceEntityMappings:
-        """
-        A Service Connector must know the Entity Mappings of its Prediction
-        Service. They will be used to lookup entity names during export.
-        """
-
     @abstractmethod
     def predict(self, message: str, session: str=None, language: Union[LanguageCode, str]=None) -> Prediction:
         """
@@ -453,18 +476,3 @@ class Connector(ABC):
 
         :param destination: destination path of the exported Agent
         """
-
-    def _entity_service_name(self, entity_cls: SystemEntityMixin) -> str:
-        """
-        Return the name of the given entity in the specific service; this can be
-        the class name itself, or an :class:`EntityMapping` lookup in the case
-        of System Entities.
-
-        For instance, a :class:`Sys.Person` Entity will need to be looked up in
-        the mappings to find out its service name (`sys.person` in Dialogflow,
-        `AMAZON.Person` in Alexa, and so on). A custom entity (e.g. `PizzaType`)
-        can use its class name instead.
-        """
-        if issubclass(entity_cls, SystemEntityMixin):
-            return self.entity_mappings[entity_cls].service_name
-        return entity_cls.name

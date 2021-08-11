@@ -19,7 +19,7 @@ class FulfillmentSessionApplication:
 @dataclass
 class FulfillmentSessionUser:
     userId: str
-    accessToken: str
+    accessToken: str = None
     permissions: dict = None # deprecated: https://developer.amazon.com/en-US/docs/alexa/custom-skills/request-and-response-json-reference.html#session-object
 
 @dataclass
@@ -27,8 +27,8 @@ class FulfillmentSession:
     new: bool
     sessionId: str
     application: FulfillmentSessionApplication
-    attributes: Dict[str, Any]
     user: FulfillmentSessionUser
+    attributes: Dict[str, Any] = field(default_factory=dict)
 
 #
 # Context
@@ -73,7 +73,7 @@ class FulfillmentContextSystemPerson:
 @dataclass
 class FulfillmentContextSystemUser:
     userId: str
-    accessToken: str
+    accessToken: str = None
     permissions: dict = None # deprecated
 
 @dataclass
@@ -82,23 +82,23 @@ class FulfillmentContextSystem:
     apiEndpoint: str
     application: FulfillmentContextSystemApplication # TODO: use this to verify that request is authentic
     device: FulfillmentContextSystemDevice
-    unit: FulfillmentContextSystemUnit
-    person: FulfillmentContextSystemPerson # the person that is talking to Alexa (recognized by voice)
-    user: FulfillmentContextSystemUser     # the person who owns the account that installed the skill
+    user: FulfillmentContextSystemUser            # the person who owns the account that installed the skill
+    person: FulfillmentContextSystemPerson = None # the person that is talking to Alexa (recognized by voice)
+    unit: FulfillmentContextSystemUnit = None
     
 # -----
 # https://developer.amazon.com/en-US/docs/alexa/alexa-presentation-language/apl-interface.html#viewport-properties
 
 class ViewportMode(Enum):
-    HUB: "HUB"
-    TV: "TV"
-    PC: "PC"
-    MOBILE: "MOBILE"
-    AUTO: "AUTO"
+    HUB = "HUB"
+    TV = "TV"
+    PC = "PC"
+    MOBILE = "MOBILE"
+    AUTO = "AUTO"
 
 class ViewportShape(Enum):
-    ROUND: "ROUND"
-    RECTANGLE: "RECTANGLE"
+    ROUND = "ROUND"
+    RECTANGLE = "RECTANGLE"
 
 @dataclass
 class FulfillmentContextViewportExperience:
@@ -143,7 +143,7 @@ class RequestType(Enum):
 class FulfillmentRequest:
     type: RequestType
     requestId: str
-    timestamp: datetime
+    timestamp: datetime # TODO: timezone? This will be checked to prevent reply attacks
     locale: str
 
 @dataclass

@@ -89,7 +89,6 @@ class DateEntityMapping(EntityMapping):
 
 
 MAPPINGS = ServiceEntityMappings.from_list([
-    StringEntityMapping(Entity, None),
     # StringEntityMapping(Sys.Any, "sys.any"),
     DateEntityMapping(),
     TimeEntityMapping(),

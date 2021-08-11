@@ -30,12 +30,15 @@ object and a :class:`FulfillmentContext` object
 #. Fulfillment framework returns the Connector's response 
 """
 import json
+import logging
 import http.server
 from typing import List, Union
 from dataclasses import dataclass, field
 
 from intents import LanguageCode
 # from intents.language import LanguageCode, IntentResponse, IntentResponseDict
+
+logger = logging.getLogger(__name__)
 
 @dataclass
 class FulfillmentRequest:
@@ -102,11 +105,10 @@ def run_dev_server(connector: "intents.service_connector.Connector", host='', po
     class DevWebhookHttpHandler(http.server.BaseHTTPRequestHandler):
 
             def do_POST(self):
-                print("rfile", self.rfile)
                 content_len = int(self.headers.get('Content-Length'))
                 post_body = self.rfile.read(content_len)
                 post_body = json.loads(post_body)
-                print("post_body", post_body)
+                logger.info("POST BODY: %s", post_body)
 
                 fulfillment_request = FulfillmentRequest(
                     body=post_body

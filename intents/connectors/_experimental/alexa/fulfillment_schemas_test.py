@@ -126,7 +126,6 @@ def test_parse_docs_request():
         request=fs.FulfillmentIntentRequest(
             type=fs.RequestType.INTENT,
             requestId="amzn1.echo-api.request.fake-request-id",
-            # timestamp="2021-08-10T19:12:25Z",
             timestamp=datetime(year=2021, month=8, day=10, hour=19, minute=12, second=25),
             locale="en-US",
             intent=fs.FulfillmentIntentRequestIntent(

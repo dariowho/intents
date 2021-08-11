@@ -37,7 +37,7 @@ class SnipsPredictionComponent:
         intent_cls = self.agent_cls._intents_by_name.get(intent_name)
         if not intent_cls:
             raise ValueError(f"Snips returned intent with name '{intent_name}', but this was not found in the Agent "
-                            f"definition. Make sure that the model is updated by running SnipsConnector.fit() again,"
+                            f"definition. Make sure that the model is updated by running SnipsConnector.upload() again,"
                             f"and if the problem persists please open an issue on the Intents repository.")
         snips_parameters = _slot_list_to_param_dict(intent_cls, parse_result.slots)
         parameter_dict = deserialize_intent_parameters(snips_parameters, intent_cls, self.entity_mappings)

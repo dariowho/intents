@@ -1,7 +1,7 @@
 examples:
-  - Quanto fa $operand_1{2} $operator{times} $operand_2{3}?
-  - Sapresti calcolare $operand_1{due} $operator{-} $operand_2{1}?
-  - Dimmi il risultato di $operand_1{6} $operator{divided by} $operand_2{tre}
+  - Quanto fa $first_operand{2} $operator{times} $second_operand{3}?
+  - Sapresti calcolare $first_operand{due} $operator{-} $second_operand{1}?
+  - Dimmi il risultato di $first_operand{6} $operator{divided by} $second_operand{tre}
 
 # This intent uses a webhook to produce an answer: if User sees these responses,
 # it means that something went wrong in the webhook call

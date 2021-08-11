@@ -1,4 +1,6 @@
-from intents import Sys, Agent
+import pytest
+
+from intents import Sys, Agent, Entity
 from intents.language import LanguageCode
 from intents.service_connector import Connector, StringEntityMapping, ServiceEntityMappings
 
@@ -30,10 +32,6 @@ def test_default_session_is_not_none():
     connector = DummyConnector(DummyAgent)
     assert connector.default_session
 
-def test_system_service_entity_name_lookup():
-    connector = DummyConnector(DummyAgent)
-    assert connector._entity_service_name(Sys.Person) == "fake-person-service-name"
-
 def test_language_code_string_is_cast():
     connector = DummyConnector(DummyAgent, default_language="en")
     assert connector.default_language == LanguageCode.ENGLISH
@@ -44,3 +42,38 @@ def test_language_code_string_is_cast():
 def test_first_language_is_default():
     connector = DummyConnector(DummyAgent)
     assert connector.default_language == LanguageCode.ITALIAN
+
+def test_entity_mappings__system_entity():
+    m = StringEntityMapping(Sys.Person, "fake-person-service-name")
+    mappings = ServiceEntityMappings.from_list([m])
+
+    assert mappings.lookup(Sys.Person) is m
+    assert mappings.service_name(Sys.Person) == "fake-person-service-name"
+
+def test_entity_mappings__custom_entity():
+    mappings = ServiceEntityMappings()
+
+    class MockCustomEntity(Entity):
+        pass
+
+    class MockCustomEntityWithName(Entity):
+        name = "my_entity_name"
+
+    assert mappings.lookup(MockCustomEntity) == StringEntityMapping(MockCustomEntity, "MockCustomEntity")
+    assert mappings.lookup(MockCustomEntityWithName) == StringEntityMapping(MockCustomEntityWithName, "my_entity_name")
+
+    assert mappings.service_name(MockCustomEntity) == "MockCustomEntity"
+    assert mappings.service_name(MockCustomEntityWithName) == "my_entity_name"
+
+def test_entity_mappings__key_error():
+    m = StringEntityMapping(Sys.Person, "fake-person-service-name")
+    mappings = ServiceEntityMappings.from_list([m])
+
+    class MockCustomEntity(Entity):
+        pass
+
+    with pytest.raises(KeyError):
+        mappings.lookup(Sys.PhoneNumber)
+
+    with pytest.raises(KeyError):
+        mappings.service_name(Sys.PhoneNumber)

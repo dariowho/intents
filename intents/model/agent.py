@@ -32,6 +32,13 @@ class AgentType(type):
 
     languages: List[language.LanguageCode] = None
 
+    intents: List[Intent] = None
+    _intents_by_name: Dict[str, Intent] = None
+    _intents_by_norm_name: Dict[str, Intent] = None # my_module.HelloWorld -> mymodulehelloworld
+    _entities_by_name: Dict[str, EntityType] = None
+    _parameters_by_name: Dict[str, RegisteredParameter] = None
+    _referenced_sys_entities: Set[SystemEntityMixin] = None # All
+
     def __new__(cls, name, bases, dct):
         result_cls = super().__new__(cls, name, bases, dct)
         
@@ -86,15 +93,6 @@ class Agent(metaclass=AgentType):
     intents and resources with :meth:`Agent.register`, or passing it to a
     :class:`Connector` to make predictions.
     """
-
-    languages: List[language.LanguageCode] = None
-
-    intents: List[Intent] = None
-    _intents_by_name: Dict[str, Intent] = None
-    _intents_by_norm_name: Dict[str, Intent] = None # my_module.HelloWorld -> mymodulehelloworld
-    _entities_by_name: Dict[str, EntityType] = None
-    _parameters_by_name: Dict[str, RegisteredParameter] = None
-    _referenced_sys_entities: Set[SystemEntityMixin] = None # All
 
     @classmethod
     def register(cls, resource: Union[IntentType, ModuleType]):

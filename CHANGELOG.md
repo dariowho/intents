@@ -1,29 +1,39 @@
 # v0.3.0 (in development)
 
+Add:
+
 * (#19) Add basic SnipsNLU Connector
 * (#19) Add builtin entities module and `service_connector.PatchEntityMapping`
     * Add `Color`, `Language`, `MusicGenre` and `FirstName` builtin entities
 * (#19) Add `EntityMapping.supported_languages` property
-* (#19) Change ServiceConnector to accept `LanguageCode` values as language
-  codes, in addition to ISO strings
 * (#17) Add Intent Fulfillment interfaces and Dialogflow implementation
 * (#17) Add development fulfillment service
 * (#17) Add dataclass model for Dialogflow Responses and Webhook requests
+
+Change:
+
+* (#11) Breaking change: remove deprecated `Context` interface, `Intent.events`
+  and `Intent.parameter_schema()` (`Intent.parameter_schema` is the way to
+  access that information)
+* (#19) Change ServiceConnector to accept `LanguageCode` values as language
+  codes, in addition to ISO strings
 * (#17) Change (with deprecation) `Prediction.fulfillment_messages()` to be a
   property of type `IntentResponseDict`. Remove
   `Prediction.fulfillment_response_dict` (with deprecation)
-* (#17) Breaking changes (internal):
+* (#17) (internal) Refactor `ServiceEntityMappings` handling of Custom Entities 
+* (#17) (internal) Refactor Dialogflow prediction modules:
     * `connectors.dialogflow_es.response_format` renamed to `prediction_format`
     * `DialogflowIntentResponse` classes moved from `prediction_format` to
       `prediction` 
     * Replace protobuf parameters with dataclass equivalents
-* (#21) Breaking change (internal): Rename metaclasses and move to `intents.types`
-* (#11) Breaking change: remove deprecated `Context` interface, `Intent.events`
-  and `Intent.parameter_schema()` (`Intent.parameter_schema` is the way to
-  access that information)
-* (#19) Fix name constraints not enforced on Entities
+* (#21) (internal) Rename metaclasses and move to `intents.types`
+
+Fix:
+
+* (#19) Enforce name constraints on Entities
 * (#17) Fix Entity export in Dialogflow (canonical value needed to be in
   synonyms as well)
+* (#17) Patch entity entries with invalid characters in Alexa
 
 # v0.2.0
 

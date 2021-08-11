@@ -19,11 +19,10 @@ import json
 import shutil
 import logging
 
-from intents import Agent, Intent, Entity
+from intents import Agent, Intent
 from intents.model.fulfillment import FulfillmentRequest
-from intents.language import entity_language
 from intents.service_connector import Connector, ServiceEntityMappings
-from intents.connectors._experimental.alexa.export import render
+from intents.connectors._experimental.alexa import names, export, language
 from intents.connectors._experimental.alexa.slot_types import ENTITY_MAPPINGS
 
 logger = logging.getLogger(__name__)
@@ -45,6 +44,9 @@ class AlexaConnector(Connector):
     entity_mappings: ServiceEntityMappings = ENTITY_MAPPINGS
 
     invocation_name: str
+    names_component: names.AlexaNamesComponent
+    language_component: language.AlexaLanguageComponent
+    export_component: export.AlexaExportComponent
 
     def __init__(
         self,
@@ -56,6 +58,14 @@ class AlexaConnector(Connector):
         super().__init__(agent_cls, default_session=default_session,
                          default_language=default_language)
         self.invocation_name = invocation_name # TODO: model constraints
+        self.names_component = names.AlexaNamesComponent(agent_cls)
+        self.language_component = language.AlexaLanguageComponent(agent_cls)
+        self.export_component = export.AlexaExportComponent(
+            agent_cls,
+            self.names_component,
+            self.language_component,
+            invocation_name
+        )
     
     def export(self, destination: str):
         """
@@ -72,7 +82,7 @@ class AlexaConnector(Connector):
         The export will generate one JSON file per language, they can be imported
         from the Alexa console. Destination will be overwritten if already existing.
         """
-        rendered = render(self)
+        rendered = self.export_component.render()
 
         if os.path.isdir(destination):
             logger.warning("Removing existing export folder: %s", destination)
@@ -106,10 +116,3 @@ class AlexaConnector(Connector):
         *Not implemented*
         """
         raise NotImplementedError()
-
-    def entity_value_id(self, entity_cls: type(Entity), entity_value: entity_language.EntityEntry):
-        """
-        Entity entries in Alexa have IDs. This is a centralized function to
-        compute them.
-        """
-        return entity_cls.name + entity_value.value
