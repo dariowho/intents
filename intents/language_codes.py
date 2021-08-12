@@ -19,6 +19,43 @@ class LanguageCode(Enum):
 
 LANGUAGE_CODES = [x.value for x in LanguageCode]
 
+FALLBACK_LANGUAGE = {
+    LanguageCode.ENGLISH: [
+        LanguageCode.ENGLISH_UK,
+        LanguageCode.ENGLISH_US
+    ],
+    LanguageCode.ENGLISH_US: [
+        LanguageCode.ENGLISH,
+        LanguageCode.ENGLISH_UK
+    ],
+    LanguageCode.ENGLISH_UK: [
+        LanguageCode.ENGLISH,
+        LanguageCode.ENGLISH_US
+    ],
+    LanguageCode.ITALIAN: [],
+    LanguageCode.SPANISH: [
+        LanguageCode.SPANISH_LATIN_AMERICA
+    ],
+    LanguageCode.SPANISH_SPAIN: [
+        LanguageCode.SPANISH,
+        LanguageCode.SPANISH_LATIN_AMERICA
+    ],
+    LanguageCode.SPANISH_LATIN_AMERICA: [
+        LanguageCode.SPANISH,
+        LanguageCode.SPANISH_SPAIN
+    ],
+    LanguageCode.GERMAN: [],
+    LanguageCode.FRENCH: [],
+    LanguageCode.DUTCH: [],
+    LanguageCode.CHINESE: [
+        LanguageCode.CHINESE_PRC
+    ],
+    LanguageCode.CHINESE_PRC: [
+        LanguageCode.CHINESE
+    ],
+    LanguageCode.CHINESE_HONG_KONG: []
+}
+
 def ensure_language_code(lang: Union[LanguageCode, str]) -> LanguageCode:
     """
     Make sure `lang` is a :class:`LanguageCode` value. If not, return

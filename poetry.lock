@@ -1092,6 +1092,17 @@ socks = ["PySocks (>=1.5.6,<1.5.7 || >1.5.7)", "win-inet-pton"]
 use_chardet_on_py3 = ["chardet (>=3.0.2,<5)"]
 
 [[package]]
+category = "dev"
+description = "a python refactoring library..."
+name = "rope"
+optional = false
+python-versions = "*"
+version = "0.19.0"
+
+[package.extras]
+dev = ["pytest"]
+
+[[package]]
 category = "main"
 description = "Pure-Python RSA implementation"
 marker = "python_version >= \"3.6\""
@@ -1492,7 +1503,7 @@ version = "1.12.1"
 snips = ["snips-nlu"]
 
 [metadata]
-content-hash = "a93214cfc9a24d65c963922beca6aa4c015a30bc0131960e0998de2716f9998e"
+content-hash = "0de3e0b71a49f2a0607b39e4af594705725797ff726fc23f4eb131718b6c92b0"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -2243,6 +2254,9 @@ recommonmark = [
 requests = [
     {file = "requests-2.26.0-py2.py3-none-any.whl", hash = "sha256:6c1246513ecd5ecd4528a0906f910e8f0f9c6b8ec72030dc9fd154dc1a6efd24"},
     {file = "requests-2.26.0.tar.gz", hash = "sha256:b8aa58f8cf793ffd8782d3d8cb19e66ef36f7aba4353eec859e74678b01b07a7"},
+]
+rope = [
+    {file = "rope-0.19.0.tar.gz", hash = "sha256:64e6d747532e1f5c8009ec5aae3e5523a5bcedf516f39a750d57d8ed749d90da"},
 ]
 rsa = [
     {file = "rsa-4.7.2-py3-none-any.whl", hash = "sha256:78f9a9bf4e7be0c5ded4583326e7461e3a3c5aae24073648b4bdfa797d78c9d2"},

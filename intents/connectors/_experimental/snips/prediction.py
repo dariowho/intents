@@ -50,7 +50,7 @@ class SnipsPredictionComponent:
         intent = self.intent_from_parse_result(parse_result)
         language_data = intent_language.intent_language_data(self.agent_cls, intent.__class__, lang)
         language_data = language_data[lang]
-        fulfillment_messages, fulfillment_text = _render_responses(intent, language_data)
+        fulfillment_messages, fulfillment_text = intent_language.render_responses(intent, language_data)
         return SnipsPrediction(
             intent=intent,
             confidence=parse_result.intent.probability,
@@ -71,7 +71,7 @@ class SnipsPredictionComponent:
         """
         language_data = intent_language.intent_language_data(self.agent_cls, intent.__class__, lang)
         language_data = language_data[lang]
-        fulfillment_messages, fulfillment_text = _render_responses(intent, language_data)
+        fulfillment_messages, fulfillment_text = intent_language.render_responses(intent, language_data)
         return SnipsPrediction(
             intent=intent,
             confidence=1.0,
@@ -127,7 +127,7 @@ class SnipsPredictionComponent:
         if fulfillment_result:
             if fulfillment_result.trigger:
                 triggered = self.prediction_from_intent(fulfillment_result.trigger, lang)
-                return self.fulfill_local(triggered, lang)
+                return self.fulfill_local(triggered, lang, _stack=_stack)
             else:
                 logger.warning("Intent returned a fulfillment result without trigger. Trigger "
                                "is the only supported response in SnipsConnector. Other elements "
@@ -169,11 +169,3 @@ def _slot_list_to_param_dict(
                             "Only the first value will be considered.")
             result[slot_name] = slot_values[0]
     return result
-
-def _render_responses(intent: Intent, language_data: IntentLanguageData) -> Tuple[IntentResponseDict, str]:
-    result_messages: IntentResponseDict = IntentResponseDict()
-    for group, response_list in language_data.responses.items():
-        result_messages[group] = [r.render(intent) for r in response_list]
-    rendered_plaintext = [r.random() for r in result_messages.get(IntentResponseGroup.DEFAULT, [])]
-    result_plaintext = " ".join(rendered_plaintext)
-    return result_messages, result_plaintext

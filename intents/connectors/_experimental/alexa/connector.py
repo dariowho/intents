@@ -21,8 +21,9 @@ import logging
 
 from intents import Agent, Intent
 from intents.model.fulfillment import FulfillmentRequest
+from intents.helpers.data_classes import to_dict
 from intents.service_connector import Connector, ServiceEntityMappings
-from intents.connectors._experimental.alexa import names, export, language
+from intents.connectors._experimental.alexa import names, export, language, fulfillment, fulfillment_schemas
 from intents.connectors._experimental.alexa.slot_types import ENTITY_MAPPINGS
 
 logger = logging.getLogger(__name__)
@@ -46,6 +47,7 @@ class AlexaConnector(Connector):
     invocation_name: str
     names_component: names.AlexaNamesComponent
     language_component: language.AlexaLanguageComponent
+    fulfillment_component: fulfillment.AlexaFulfillmentComponent
     export_component: export.AlexaExportComponent
 
     def __init__(
@@ -60,6 +62,11 @@ class AlexaConnector(Connector):
         self.invocation_name = invocation_name # TODO: model constraints
         self.names_component = names.AlexaNamesComponent(agent_cls)
         self.language_component = language.AlexaLanguageComponent(agent_cls)
+        self.fulfillment_component = fulfillment.AlexaFulfillmentComponent(
+            agent_cls,
+            self.names_component,
+            self.language_component
+        )
         self.export_component = export.AlexaExportComponent(
             agent_cls,
             self.names_component,
@@ -112,7 +119,9 @@ class AlexaConnector(Connector):
         raise NotImplementedError()
 
     def fulfill(self, fulfillment_request: FulfillmentRequest) -> dict:
-        """
-        *Not implemented*
-        """
-        raise NotImplementedError()
+        body_dict = fulfillment_request.body
+        request_body = fulfillment_schemas.from_dict(body_dict)
+        response_body = self.fulfillment_component.handle_fulfillment(request_body)
+        result = to_dict(response_body)
+        print("RETURNING:", result)
+        return result

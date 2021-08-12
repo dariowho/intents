@@ -8,6 +8,108 @@ from dataclasses import dataclass, field
 
 import dacite
 
+from intents.helpers.data_classes import OmitNone
+
+
+class IntentConfirmationStatus(Enum):
+    NONE = "NONE"
+    CONFIRMED = "CONFIRMED"
+    DENIED = "DENIED"
+
+class SlotType(Enum):
+    SIMPLE = "Simple"
+    LIST = "List"
+
+@dataclass
+class IntentSlotValueResolutionItemValueValue:
+    id: str
+    name: str
+
+@dataclass
+class IntentSlotValueResolutionItemValue:
+    value: IntentSlotValueResolutionItemValueValue # ☠
+
+@dataclass
+class IntentSlotValueResolutionItem:
+    authority: str
+    status: dict # TODO: model
+    values: List[IntentSlotValueResolutionItemValue]
+
+@dataclass
+class IntentSlotValueResolution:
+    resolutionsPerAuthority: List[IntentSlotValueResolutionItem]
+
+@dataclass
+class IntentSlotValue:
+    type: SlotType
+    value: str = None # Only included when type=SIMPLE
+    values: List["IntentSlotValue"] = None # Only included when type=LIST
+    resolutions: IntentSlotValueResolution = None
+
+@dataclass
+class IntentSlot:
+    confirmationStatus: IntentConfirmationStatus
+    name: str
+    # The following seem to be None when slot is returned but not matched
+    source: str = None # always USER...
+    slotValue: IntentSlotValue = None
+    value: str = None
+    resolutions: dict = None # model
+
+
+#############
+# RESPONSE  #
+#############
+
+class OutputSpeechType(Enum):
+    PlainText = "PlainText"
+    SSML = "SSML"
+
+class PlayBehavior(Enum):
+    ENQUEUE = "ENQUEUE"
+    REPLACE_ALL = "REPLACE_ALL"
+    REPLACE_ENQUEUED = "PlainText"
+
+@dataclass
+class FulfillmentResponseOutputSpeech:
+    type: OutputSpeechType
+    text: str = OmitNone()
+    ssml: str = OmitNone()
+    playBehavior = PlayBehavior
+
+@dataclass
+class FulfillmentResponseDirective:
+    type: str
+
+@dataclass
+class FulfillmentResponseDialogDelegateUpdatedIntent:
+    name: str
+    confirmationStatus: IntentConfirmationStatus
+    slots: Dict[str, IntentSlot]
+
+@dataclass
+class FulfillmentResponseDialogDelegateDirective(FulfillmentResponseDirective):
+    type: str = "Dialog.Delegate"
+    updatedIntent: FulfillmentResponseDialogDelegateUpdatedIntent=None
+
+@dataclass
+class FulfillmentResponse:
+    outputSpeech: FulfillmentResponseOutputSpeech = None
+    card: dict = OmitNone()    # TODO: model
+    reprompt: dict = OmitNone()    # TODO: model
+    shouldEndSession: bool = True
+    directives: List[FulfillmentResponseDirective] = OmitNone() # TODO: model
+
+@dataclass
+class FulfillmentResponseBody:
+    version: str = "1.0"
+    sessionAttributes: dict = field(default_factory=dict)
+    response: FulfillmentResponse=OmitNone()
+
+#############
+# REQUEST   #
+#############
+
 #
 # Session
 #
@@ -150,36 +252,11 @@ class FulfillmentRequest:
 class FulfillmentLaunchRequest(FulfillmentRequest):
     pass
 
-class IntentConfirmationStatus(Enum):
-    NONE = "NONE"
-    CONFIRMED = "CONFIRMED"
-    DENIED = "DENIED"
-
-class SlotType(Enum):
-    SIMPLE = "Simple"
-    LIST = "List"
-
-@dataclass
-class FulfillmentIntentRequestIntentSlotValue:
-    type: SlotType
-    value: str = None # Only included when type=SIMPLE
-    values: List["FulfillmentIntentRequestIntentSlotValue"] = None # Only included when type=LIST
-    resolutions: dict = None # TODO: model
-
-@dataclass
-class FulfillmentIntentRequestIntentSlot:
-    confirmationStatus: IntentConfirmationStatus
-    name: str
-    slotValue: FulfillmentIntentRequestIntentSlotValue
-    source: str # always USER...
-    value: str = None
-    resolutions: dict = None # model
-
 @dataclass
 class FulfillmentIntentRequestIntent:
     name: str
     confirmationStatus: IntentConfirmationStatus
-    slots: Dict[str, FulfillmentIntentRequestIntentSlot] = field(default_factory=dict)
+    slots: Dict[str, IntentSlot] = field(default_factory=dict)
 
 @dataclass
 class FulfillmentIntentRequest(FulfillmentRequest):
@@ -240,7 +317,26 @@ def from_dict(data: dict, data_class: type=FulfillmentBody):
     Args:
         data_class: The dataclass to use as schema
         data: Will be converted into a dataclass instance
-    """
+    """    
+    if data_class is FulfillmentBody:
+        request_type = RequestType(data["request"]["type"])
+       
+        if request_type == RequestType.INTENT:
+            request = from_dict(data["request"], data_class=FulfillmentIntentRequest)
+        elif request_type == RequestType.LAUNCH:
+            request = from_dict(data["request"], data_class=FulfillmentLaunchRequest)
+        elif request_type == RequestType.SESSION_ENDED:
+            request = from_dict(data["request"], data_class=FulfillmentSessionEndedRequest)
+        elif request_type == RequestType.CAN_FULFILL_INTENT:
+            request = from_dict(data["request"], data_class=FulfillmentCanFulfillIntentRequest)
+            
+        return FulfillmentBody(
+            version=data["version"],
+            session=from_dict(data["session"], data_class=FulfillmentSession),
+            context=from_dict(data["context"], data_class=FulfillmentContext),
+            request=request
+        )
+
     return dacite.from_dict(
         data_class=data_class,
         data=data,

@@ -127,7 +127,7 @@ class OrderKipper(OrderFish):
         amount: The amount of kipper to buy
     """
 
-    def fulfill(self):
+    def fulfill(self, context, *args):
         """
         Use :class:`CartApi` to add kippers to cart. The amount is specified by
         :attr:`OrderKipper.amount`
@@ -165,7 +165,7 @@ class ChangeAmount(Intent):
 
     parent_order_kipper: OrderKipper = follow()
 
-    def fulfill(self):
+    def fulfill(self, context, *args):
         """
         Use :class:`CartApi` to update the amount of kippers in cart to :attr:`ChangeAmount.amount`
         """

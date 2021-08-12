@@ -48,15 +48,14 @@ Let's look at the sections of this file.
     :class:`CardIntentResponse` and :class:`CustomPayloadIntentResponse`
 
 """
-
 import os
 import re
 import random
 import logging
 import warnings
 from enum import Enum
-from typing import List, Dict, Union
 from dataclasses import dataclass, field
+from typing import List, Dict, Union, Tuple
 
 import yaml
 
@@ -619,6 +618,23 @@ def intent_language_data(
     except Exception as e:
         raise RuntimeError(f"Failed to load language data for intent {intent_cls.name} (see stacktrace above for root cause).") from e
 
+def render_responses(intent: Intent, language_data: IntentLanguageData) -> Tuple[IntentResponseDict, str]:
+    """
+    Return a copy of responses in `language_data` where intent parameter references are
+    replaced with their values from the given :class:`Intent` instance.
+
+    Args:
+        intent: The intent to read parameters from
+        language_data: A collection of responses for the given intent
+    Return:
+        Intent responses, and plaintext version
+    """
+    result_messages: IntentResponseDict = IntentResponseDict()
+    for group, response_list in language_data.responses.items():
+        result_messages[group] = [r.render(intent) for r in response_list]
+    rendered_plaintext = [r.random() for r in result_messages.get(IntentResponseGroup.DEFAULT, [])]
+    result_plaintext = " ".join(rendered_plaintext)
+    return result_messages, result_plaintext
 
 def _build_responses(responses_data: dict):
     result = {}

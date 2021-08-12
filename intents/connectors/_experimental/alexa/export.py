@@ -19,7 +19,7 @@ from typing import List, Dict
 from dataclasses import asdict
 
 from intents.types import AgentType, IntentType, EntityType
-from intents.language import intent_language, intent_language_data, entity_language, entity_language_data, agent_supported_languages, LanguageCode
+from intents.language import intent_language, intent_language_data, agent_supported_languages, LanguageCode
 from intents.connectors._experimental.alexa import agent_schemas as ask_schema
 from intents.connectors._experimental.alexa import names, language
 
@@ -157,7 +157,7 @@ class AlexaExportComponent:
     #
 
     def render_slot_type(self, entity_cls: EntityType, lang: LanguageCode) -> ask_schema.LanguageModelType:
-        language_data = self.language_component.entity_language_data(self.agent_cls, entity_cls, lang)
+        language_data = self.language_component.entity_language_data(entity_cls, lang)
         language_data = language_data[lang]
         slot_values = [self.render_slot_value(entity_cls, entry) for entry in language_data]
         slot_values = [v for v in slot_values if v]
@@ -168,7 +168,7 @@ class AlexaExportComponent:
 
     def render_slot_value(self, entity_cls: EntityType, entity_entry: language.AlexaEntityEntry) -> ask_schema.LanguageModelTypeValue:
         return ask_schema.LanguageModelTypeValue(
-            id=self.language_component.entity_value_id(entity_cls, entity_entry.alexa_value),
+            id=self.language_component.entry_value_id(entity_cls, entity_entry),
             name=ask_schema.LanguageModelTypeValueName(
                 value=entity_entry.alexa_value,
                 synonyms=entity_entry.alexa_synonyms
