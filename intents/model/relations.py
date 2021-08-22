@@ -30,6 +30,7 @@ the meaning of the other intent. When an intent is a subclass of another:
 
     * It will inherit all **parameters**, types and default values of the parent intent
     * It will inherit all the other **relations** of the parent intent
+    * It will inherit the parent's **fulfillment** method
     * It will be rendered as a separate, independent intent
 
       * It will **not** inherit language data such as example utterances and responses
@@ -97,6 +98,8 @@ def follow() -> dataclasses.Field:
     This can be used as a value for an Intent Relation field, e.g.
 
     .. code-block:: python
+    
+        from intents import follow
         
         @dataclass
         class AddMilk(Intent):

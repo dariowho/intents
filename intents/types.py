@@ -21,7 +21,7 @@ However, it is not as convenient to do the same for classes:
     def print_intent_definition(intent_cls: type):
         print(intent_cls.parameter_schema)
 
-The annotation above doesn't tell us much about the parameter. To make typing
+The annotation above doesn't tell us much about `intent_cls`. To make typing
 annotation easier and more meaningful, here we collect the **metaclasses** that
 are used to define :class:`~intents.model.agent.Agent`,
 :class:`~intents.model.intent.Intent` and :class:`~intents.model.entity.Entity`.

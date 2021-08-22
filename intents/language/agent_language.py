@@ -7,7 +7,7 @@ from intents.language_codes import LanguageCode, LANGUAGE_CODES, FALLBACK_LANGUA
 
 logger = logging.getLogger(__name__)
 
-def agent_language_folder(agent_cls: "agent.AgentType") -> str:
+def agent_language_folder(agent_cls: "intents.types.AgentType") -> str:
     main_agent_package_name = agent_cls.__module__.split('.')[0]
     main_agent_package = sys.modules[main_agent_package_name]
     if '__path__' not in main_agent_package.__dict__:
@@ -22,7 +22,7 @@ def agent_language_folder(agent_cls: "agent.AgentType") -> str:
 
     return language_folder
 
-def agent_supported_languages(agent_cls: "intents.model.agent.AgentType") -> List[LanguageCode]:
+def agent_supported_languages(agent_cls: "intents.types.AgentType") -> List[LanguageCode]:
     if agent_cls.languages:
         return agent_cls.languages
 
@@ -38,7 +38,7 @@ def agent_supported_languages(agent_cls: "intents.model.agent.AgentType") -> Lis
 
     return result
 
-def match_agent_language(agent_cls: "intents.model.agent.AgentType", language: LanguageCode) -> LanguageCode:
+def match_agent_language(agent_cls: "intents.types.AgentType", language: LanguageCode) -> LanguageCode:
     """
     Return a Language Code among the ones supported by Agent that matches
     `language`.

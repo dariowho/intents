@@ -232,6 +232,9 @@ def _render_response(data: Union[str, list], parameter_dict: Dict[str, str]):
     Render some response data by replacing parameter references with the one contained in `parameter_dict`. This
     function is called by :meth:`IntentResponse.render` on each of the Response members.
     """
+    if not data:
+        return data
+        
     if isinstance(data, str):
         result = data
         for k, v in parameter_dict.items():

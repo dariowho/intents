@@ -13,6 +13,7 @@ from types import ModuleType
 from typing import List, Dict, Union, Set
 from dataclasses import dataclass
 
+from intents import LanguageCode
 from intents.model.intent import Intent, IntentType, IntentParameterMetadata
 from intents.model.entity import EntityMixin, SystemEntityMixin, EntityType
 from intents import language
@@ -30,7 +31,7 @@ class RegisteredParameter:
 
 class AgentType(type):
 
-    languages: List[language.LanguageCode] = None
+    languages: List[LanguageCode] = None
 
     intents: List[Intent] = None
     _intents_by_name: Dict[str, Intent] = None
@@ -51,10 +52,10 @@ class AgentType(type):
 
         languages = []
         for lan in result_cls.languages:
-            if isinstance(lan, language.LanguageCode):
+            if isinstance(lan, LanguageCode):
                 languages.append(lan)
             elif isinstance(lan, str):
-                languages.append(language.LanguageCode(lan))
+                languages.append(LanguageCode(lan))
             else:
                 raise ValueError(f"Unsupported language '{lan}' for Agent '{result_cls}'. Must be a value of 'intents.LanguageCode'")
         result_cls.languages = languages
@@ -86,7 +87,7 @@ class Agent(metaclass=AgentType):
             \"\"\"A little docstring for your Agent\"\"\"
             languages = ["en", "it"]
 
-    Languages are values from :class:`intents.language.LanguageCode`. If omitted,
+    Languages are values from :class:`LanguageCode`. If omitted,
     *Intents* will discover language resources by itself.
 
     You won't do much more with your *Agent* class, other than registering
@@ -99,7 +100,7 @@ class Agent(metaclass=AgentType):
         """
         Register the given resource in Agent. The resource could be:
 
-        * An :class:`Intent`
+        * An :class:`~intents.model.intent.Intent`
         * A module. In this case, the module is scanned (non recursively) for
           Intents, and each Intent is added individually
 

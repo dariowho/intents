@@ -202,7 +202,7 @@ def test_build_intent_single_parameter():
                         "resolutions": {
                             "resolutionsPerAuthority": [
                                 {
-                                    "authority": "amzn1.er-authority.echo-sdk.amzn1.ask.skill.40360d45-4a9d-49e7-8933-ed0153989b6c.PizzaType",
+                                    "authority": "amzn1.er-authority.echo-sdk.amzn1.ask.skill.fake-application-id.PizzaType",
                                     "status": {
                                         "code": "ER_SUCCESS_MATCH"
                                     },
@@ -225,7 +225,7 @@ def test_build_intent_single_parameter():
                             "resolutions": {
                                 "resolutionsPerAuthority": [
                                     {
-                                        "authority": "amzn1.er-authority.echo-sdk.amzn1.ask.skill.40360d45-4a9d-49e7-8933-ed0153989b6c.PizzaType",
+                                        "authority": "amzn1.er-authority.echo-sdk.amzn1.ask.skill.fake-application-id.PizzaType",
                                         "status": {
                                             "code": "ER_SUCCESS_MATCH"
                                         },
@@ -292,7 +292,7 @@ def test_build_intent_normalizes_entity_values():
                         "resolutions": {
                             "resolutionsPerAuthority": [
                                 {
-                                    "authority": "amzn1.er-authority.echo-sdk.amzn1.ask.skill.40360d45-4a9d-49e7-8933-ed0153989b6c.CalculatorOperator",
+                                    "authority": "amzn1.er-authority.echo-sdk.amzn1.ask.skill.fake-application-id.CalculatorOperator",
                                     "status": {
                                         "code": "ER_SUCCESS_MATCH"
                                     },
@@ -315,7 +315,7 @@ def test_build_intent_normalizes_entity_values():
                             "resolutions": {
                                 "resolutionsPerAuthority": [
                                     {
-                                        "authority": "amzn1.er-authority.echo-sdk.amzn1.ask.skill.40360d45-4a9d-49e7-8933-ed0153989b6c.CalculatorOperator",
+                                        "authority": "amzn1.er-authority.echo-sdk.amzn1.ask.skill.fake-application-id.CalculatorOperator",
                                         "status": {
                                             "code": "ER_SUCCESS_MATCH"
                                         },
@@ -627,3 +627,42 @@ SLOTS_UNFILLED_REQUEST = json.loads("""{
     }
 }"""
 )
+
+UNMATCHED_CUSTOM_ENTITY_REQUEST = {
+    'version': '1.0',
+    'session': {'new': False, 'sessionId': 'amzn1.echo-api.session.fake-session-id', 'application': {'applicationId': 'amzn1.ask.skill.fake-application-id'}, 'user': {'userId': 'amzn1.ask.account.fake-account'}},
+    'context': {
+        'Viewports': [{'type': 'APL', 'id': 'main', 'shape': 'RECTANGLE', 'dpi': 213, 'presentationType': 'STANDARD', 'canRotate': False, 'configuration': {'current': {'mode': 'HUB', 'video': {'codecs': ['H_264_42', 'H_264_41']}, 'size': {'type': 'DISCRETE', 'pixelWidth': 1280, 'pixelHeight': 800}}}}],
+        'Viewport': {'experiences': [{'arcMinuteWidth': 346, 'arcMinuteHeight': 216, 'canRotate': False, 'canResize': False}], 'mode': 'HUB', 'shape': 'RECTANGLE', 'pixelWidth': 1280, 'pixelHeight': 800, 'dpi': 213, 'currentPixelWidth': 1280, 'currentPixelHeight': 800, 'touch': ['SINGLE'], 'video': {'codecs': ['H_264_42', 'H_264_41']}},
+        'Extensions': {'available': {'aplext:backstack:10': {}}},
+        'System': {'application': {'applicationId': 'amzn1.ask.skill.fake-application-id'}, 'user': {'userId': 'amzn1.ask.account.fake-account'}, 'device': {'deviceId': 'amzn1.ask.device.fake-device-id', 'supportedInterfaces': {'Alexa.Presentation.APL': {'runtime': {'maxVersion': '1.7'}}}}, 'apiEndpoint': 'https://api.amazonalexa.com', 'apiAccessToken': 'fake-access-token'}
+    },
+    'request': {
+        'type': 'IntentRequest',
+        'requestId': 'amzn1.echo-api.request.fake-request-id',
+        'locale': 'en-US',
+        'timestamp': '2021-08-13T19:20:45Z',
+        'intent': {
+            'name': 'restaurant_OrderPizza',
+            'confirmationStatus': 'NONE',
+            'slots': {
+                'amount': {
+                    'name': 'amount',
+                    'value': '2',
+                    'confirmationStatus': 'NONE',
+                    'source': 'USER',
+                    'slotValue': {'type': 'Simple', 'value': '2'}
+                },
+                'pizza_type': {
+                    'name': 'pizza_type',
+                    'value': 'margherita pizzas',
+                    'resolutions': {
+                        'resolutionsPerAuthority': [{'authority': 'amzn1.er-authority.echo-sdk.amzn1.ask.skill.fake-application-id.PizzaType', 'status': {'code': 'ER_SUCCESS_NO_MATCH'}}]},
+                        'confirmationStatus': 'NONE',
+                        'source': 'USER',
+                        'slotValue': {'type': 'Simple', 'value': 'margherita pizzas', 'resolutions': {'resolutionsPerAuthority': [{'authority': 'amzn1.er-authority.echo-sdk.amzn1.ask.skill.fake-application-id.PizzaType', 'status': {'code': 'ER_SUCCESS_NO_MATCH'}}]}}
+                }
+            }
+        }
+    }
+}

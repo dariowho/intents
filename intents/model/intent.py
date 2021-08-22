@@ -13,9 +13,12 @@ import inspect
 import logging
 import dataclasses
 from dataclasses import dataclass
-from typing import List, Dict, Union, Any, _GenericAlias
+from typing import List, Dict, Any, _GenericAlias
 
-from intents.model import entity, names, fulfillment
+# pylint: disable=unused-import # needed for docs
+import intents
+from intents import LanguageCode
+from intents.model import entity, names
 from intents.helpers.data_classes import is_dataclass_strict
 
 logger = logging.getLogger(__name__)
@@ -28,8 +31,14 @@ logger = logging.getLogger(__name__)
 class IntentParameterMetadata:
     """
     Model metadata of a single Intent parameter. `IntentParameterMetadata`
-    objects are built internally by :meth:`Intent.parameter_schema` based on the
+    objects are built internally by :attr:`Intent.parameter_schema` based on the
     Intent dataclass fields.
+
+    >>> OrderPizzaIntent.parameter_schema
+    {
+        'pizza_type': IntentParameterMetadata(name='pizza_type', entity_cls=<...PizzaType'>, is_list=False, required=True, default=None),
+        'amount': IntentParameterMetadata(name='amount', entity_cls=<...Sys.Integer'>, is_list=False, required=False, default=1)
+    }
 
     Args:
         name: Parameter name
@@ -45,6 +54,32 @@ class IntentParameterMetadata:
     is_list: bool
     required: bool
     default: Any
+
+@dataclass
+class FulfillmentContext:
+    """
+    `FulfillmentContext` objects are produced by Connectors and are input
+    arguments to :meth:`Intent.fulfill`.
+    """
+    confidence: float
+    fulfillment_text: str
+    fulfillment_messages: "intents.language.intent_language.IntentResponseDict"
+    language: LanguageCode
+
+@dataclass
+class FulfillmentResult:
+    """
+    `FulfillmentResult` are produced by `Intent.fulfill`, and then converted by
+    Connectors into Service-actionable responses.
+
+    .. note::
+
+        At the moment this class is only used internally. It is safe to return
+        simple :class:`Intent` instances in :meth:`Intent.fulfill`
+    """
+    trigger: "Intent" = None
+    fulfillment_text: List[str] = None
+    fulfillment_messages: List["intents.language.intent_language.IntentResponse"] = None
 
 class IntentType(type):
 
@@ -76,12 +111,6 @@ class IntentType(type):
 
     @property
     def parameter_schema(cls) -> Dict[str, IntentParameterMetadata]:
-        """
-        Return a dict representing the Intent parameter definition. A key is a
-        parameter name, a value is a :class:`IntentParameterMetadata` object.
-
-        TODO: This property doesn't show up in documentation
-        """
         if cls is Intent:
             return {}
 
@@ -137,8 +166,8 @@ class IntentType(type):
 
 class Intent(metaclass=IntentType):
     """
-    Represents a predicted intent. This is also used as a base class for the
-    intent classes that model a Dialogflow Agent in Python code.
+    This is a base class for user defined intents, which are the fundamental
+    building blocks of your Agent.
 
     In its simplest form, an Intent can be defined as follows:
 
@@ -151,7 +180,7 @@ class Intent(metaclass=IntentType):
 
     *Intents* will then look for language resources in the folder where your
     Agent class is defined, and specifically in
-    `language/<LANGUAGE-CODE>/smalltalk.user_says_hello.yaml`. Note that the
+    `language/<LANGUAGE-CODE>/smalltalk.UserSaysHello.yaml`. Note that the
     name of the module where the Intent is defined (`smalltalk.py`) is used as a
     prefix. More details in :mod:`intents.language`.
 
@@ -171,10 +200,10 @@ class Intent(metaclass=IntentType):
             name = "hello_custom_name"
 
     This Intent has a custom name, so it will appear as "hello_custom_name" when
-    exported to Dialogflow, and its language file will just be
-    `hello_custom_name.yaml`, without module prefix. See
-    :func:`~intents.model.names.check_name` for more details on the rules that intent names
-    must follow.
+    exported to prediction services such as Dialogflow, and its language file
+    will just be `hello_custom_name.yaml`, without module prefix. See
+    :func:`~intents.model.names.check_name` for more details on the rules that
+    intent names must follow.
 
     Most importantly, this intent has a `user_name` **parameter** of type
     :class:`Sys.Person` (check out :class:`intents.model.entity.Sys` for
@@ -209,6 +238,12 @@ class Intent(metaclass=IntentType):
 
     @property
     def parameter_schema(self) -> Dict[str, IntentParameterMetadata]:
+        """
+        Return a dict representing the Intent parameter definition. A key is a
+        parameter name, a value is a :class:`IntentParameterMetadata` object.
+
+        TODO: this doesn't show up in docs
+        """
         return self.__class__.parameter_schema
 
     def parameter_dict(self) -> Dict[str, Any]:
@@ -218,11 +253,13 @@ class Intent(metaclass=IntentType):
         return result
 
     def fulfill(self,
-    context: fulfillment.FulfillmentContext,
-    **kwargs
-    ) -> Union[fulfillment.FulfillmentResult, "Intent"]:
+        context: FulfillmentContext,
+        **kwargs
+    ) -> "Intent":
         """
-        This method defines how an Intent handles a prediction, for instance:
+        Override this method to define a custom procedure that will be invoked
+        when the Intent is predicted, possibly triggering another intent as a
+        result. For instance:
 
         .. code-block:: python
 
@@ -232,13 +269,19 @@ class Intent(metaclass=IntentType):
                 parent_order: UserOrdersSomething = follow()
 
                 def fulfill(self, context):
-                    if bank_api.check_balance() >= parent_order.amount:
-                        # make payment
-                        # send order
-                        return FulfillmentResult(trigger=OrderSuccessResponse())
+                    if shop_api.is_item_available(parent_order.item_id):
+                        shop_api.make_order(parent_order.item_id)
+                        return OrderSuccessResponse()
                     else:
-                        return FulfillmentResponse(trigger=OrderFailedResponse())
+                        return OrderFailedResponse()
                         
+        In the example, when `UserConfirmsPayment` is predicted, it will run
+        some business logic, and choose a different response depending on the
+        result. Note that response objects are full-fledged Intents, and even
+        though they probably won't include example utterances, they can
+        define parameters, relations, and their own :meth:`fulfillment`
+        implementation, that will be executed recursively.
+
         More details about fulfillments can be found in the
         :mod:`~intents.model.fulfillment` module documentation.
 

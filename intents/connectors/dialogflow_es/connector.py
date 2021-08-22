@@ -84,12 +84,15 @@ class DialogflowEsConnector(Connector):
     * Predict an utterance with :meth:`DialogflowEsConnector.predict`
     * Trigger an Intent with :meth:`DialogflowEsConnector.trigger`
 
-    :param google_credentials: Path to service account JSON credentials, or a Credentials object
-    :param agent_cls: The Agent to connect
-    :param default_session: An arbitrary string to identify the conversation during predictions. Will be generated randomly if None
-    :param dedefault_language: Default language to use during predictions
-    :param rich_platforms: Platforms to include when exporting Rich response messages
-    :param webhook_configuration: Webhook connection parameters
+    Args:
+        google_credentials: Path to service account JSON credentials, or a Credentials object
+        agent_cls: The Agent to connect
+        default_session: An arbitrary string to identify the conversation during
+            predictions. If None, Connector will generate a random string
+        default_language: Default language to use during predictions. If None, Connector
+            will use the Agent's firs defined language.
+        rich_platforms: Platforms to include when exporting Rich response messages
+        webhook_configuration: Webhook connection parameters
     """
     entity_mappings = df_entities.MAPPINGS
     rich_platforms: Iterable[str]
@@ -105,7 +108,7 @@ class DialogflowEsConnector(Connector):
         google_credentials: Union[str, google.auth.credentials.Credentials],
         agent_cls: type(Agent),
         default_session: str=None,
-        default_language: str="en",
+        default_language: Union[LanguageCode, str]=None,
         rich_platforms: Iterable[str]=("telegram",),
         webhook_configuration: WebhookConfiguration=None
     ):

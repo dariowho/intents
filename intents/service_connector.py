@@ -354,7 +354,8 @@ class Connector(ABC):
 
     Args:
         agent_cls: The Agent to connect
-        default_session: A default session ID (conversation channel) for predictions
+        default_session: A default session ID (conversation channel) for
+            predictions. If None, Connector will generate a random string
         default_language: A default language for predictions. If None, Connector
             will use the Agent's firs defined language.
     """
