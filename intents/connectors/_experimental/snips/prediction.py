@@ -3,10 +3,9 @@ from dataclasses import dataclass, replace, field
 from typing import Dict, List, Any, Tuple
 from collections import defaultdict
 
-from intents import Intent, LanguageCode
+from intents import Intent, LanguageCode, FulfillmentContext, FulfillmentResult
 from intents.types import IntentType, AgentType
-from intents.model.fulfillment import FulfillmentContext, ensure_fulfillment_result
-from intents.service_connector import deserialize_intent_parameters, Prediction, ServiceEntityMappings
+from intents.connectors.interface import deserialize_intent_parameters, Prediction, ServiceEntityMappings
 from intents.language import intent_language, IntentLanguageData, IntentResponse, IntentResponseGroup, IntentResponseDict
 from intents.connectors._experimental.snips import prediction_format as f
 
@@ -123,7 +122,7 @@ class SnipsPredictionComponent:
             fulfillment_messages=prediction.fulfillment_messages,
             language=lang
         )
-        fulfillment_result = ensure_fulfillment_result(prediction.intent.fulfill(context))
+        fulfillment_result = FulfillmentResult.ensure(prediction.intent.fulfill(context))
         if fulfillment_result:
             if fulfillment_result.trigger:
                 triggered = self.prediction_from_intent(fulfillment_result.trigger, lang)

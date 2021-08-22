@@ -14,8 +14,7 @@ class SessionEntity:
 
 from intents.language_codes import LanguageCode
 
-from intents.model.intent import Intent
+from intents.model.intent import Intent, FulfillmentContext, FulfillmentResult
 from intents.model.entity import Entity, Sys
 from intents.model.agent import Agent
 from intents.model.relations import follow
-# from intents.model.fulfillment import FulfillmentContext, FulfillmentResult

@@ -2,7 +2,7 @@ import logging
 import datetime
 
 from intents.model.entity import Sys, Entity
-from intents.service_connector import EntityMapping, StringEntityMapping, ServiceEntityMappings
+from intents.connectors.interface import EntityMapping, StringEntityMapping, ServiceEntityMappings
 
 class PersonEntityMapping(EntityMapping):
     """

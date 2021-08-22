@@ -82,7 +82,7 @@ def entity_language_data(
     """
     # Custom language data
     if entity_cls.__entity_language_data__:
-        # TODO: check custom language data
+        # TODO: validate custom language data
         if language_code:
             return {language_code: entity_cls.__entity_language_data__[language_code]}
         return entity_cls.__entity_language_data__

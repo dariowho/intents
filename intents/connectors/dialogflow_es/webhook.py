@@ -3,9 +3,9 @@ Here we manage webhook results
 """
 import logging
 
+from intents import FulfillmentResult, FulfillmentContext
 from intents.language_codes import ensure_language_code
 from intents.helpers.data_classes import to_dict
-from intents.model.fulfillment import FulfillmentResult, FulfillmentContext
 from intents.connectors.dialogflow_es.names import event_name
 from intents.connectors.dialogflow_es import webhook_format as wf
 

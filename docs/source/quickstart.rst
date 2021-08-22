@@ -112,7 +112,7 @@ We can use the same Connector as a **prediction client** for the agent you just 
     prediction.fulfillment_text    # "Hi Guido, I'm Bot"
     prediction.confidence          # 0.84
 
-Intents can also be triggered programmatically with :meth:`~intents.service_connector.Connector.trigger`.
+Intents can also be triggered programmatically with :meth:`~intents.connectors.interface.Connector.trigger`.
 
 Sessions
 --------

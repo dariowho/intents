@@ -14,11 +14,10 @@ from google.cloud.dialogflow_v2.services.sessions import SessionsClient
 from google.cloud.dialogflow_v2.services.agents import AgentsClient
 from google.cloud.dialogflow_v2 import types as pb
 
-from intents import Agent, Intent, LanguageCode
-from intents.model.fulfillment import FulfillmentRequest, FulfillmentContext, ensure_fulfillment_result
+from intents import Agent, Intent, LanguageCode, FulfillmentContext, FulfillmentResult
 from intents.types import AgentType, IntentType
 from intents.model.relations import related_intents
-from intents.service_connector import Connector, Prediction, deserialize_intent_parameters
+from intents.connectors.interface import Connector, Prediction, FulfillmentRequest, WebhookConfiguration, deserialize_intent_parameters
 from intents.connectors.dialogflow_es.auth import resolve_credentials
 from intents.connectors.dialogflow_es.util import dict_to_protobuf
 from intents.connectors.dialogflow_es import webhook
@@ -26,7 +25,6 @@ from intents.connectors.dialogflow_es import names as df_names
 from intents.connectors.dialogflow_es import entities as df_entities
 from intents.connectors.dialogflow_es import export as df_export
 from intents.connectors.dialogflow_es.prediction import PredictionBody, DetectIntentBody, WebhookRequestBody, intent_responses
-from intents.connectors.commons import WebhookConfiguration
 
 logger = logging.getLogger(__name__)
 
@@ -35,14 +33,14 @@ RICH_RESPONSE_PLATFORMS = ["telegram", "facebook", "slack", "line", "hangouts"]
 # Dialogflow makes use of Protobuffer for its data structures, and protobuf may be
 # tricky to deal with. For instance, `MessageToDict` will convert snake_case to
 # lowerCamelCase, so API is documented snake_case, protobuf is snake_case,
-# dialogflow results are camelCase, protobuf converted to dict is camelCase
+# REST dialogflow results are camelCase, protobuf converted to dict is camelCase
 # (unless you use a flag, in that case it could also be snake_case) 💀 This is one
 # of the reasons this library exists.
 
 @dataclass
 class DialogflowPrediction(Prediction):
     """
-    This is an implementation of :class:`~intents.service_connector.Prediction`
+    This is an implementation of :class:`~intents.connectors.interface.Prediction`
     that comes from Dialogflow. It adds a `df_response` field, through which the
     full Dialogflow prediction payload can be accessed. Note that this is a tool
     for debugging: relying on Dialogflow data in your business logic is likely
@@ -65,7 +63,7 @@ class DialogflowPrediction(Prediction):
 
 class DialogflowEsConnector(Connector):
     """
-    This is an implementation of :class:`~intents.service_connector.Connector`
+    This is an implementation of :class:`~intents.connectors.interface.Connector`
     that enables Agents to work as Dialogflow projects.
 
     An Agent can be connected to Dialogflow by providing its :class:`~intents.model.agent.Agent`
@@ -204,7 +202,7 @@ class DialogflowEsConnector(Connector):
         webhook_body = WebhookRequestBody(fulfillment_request.body)
         intent = self._df_body_to_intent(webhook_body)
         context = self._df_body_to_fulfillment_context(webhook_body)
-        fulfillment_result = ensure_fulfillment_result(intent.fulfill(context))
+        fulfillment_result = FulfillmentResult.ensure(intent.fulfill(context))
         print(fulfillment_result)
         if fulfillment_result:
             return webhook.fulfillment_result_to_response(fulfillment_result, context)

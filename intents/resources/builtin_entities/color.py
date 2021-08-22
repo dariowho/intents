@@ -1,4 +1,6 @@
 """
+Patches :class:`~intents.model.entity.Sys.Color`
+
 Sources:
 
 * https://simple.wikipedia.org/wiki/List_of_colors

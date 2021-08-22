@@ -1,4 +1,6 @@
 """
+Patches :class:`~intents.model.entity.Sys.Person`
+
 Sources:
 
 * https://www.ssa.gov/oact/babynames/ (top 100)

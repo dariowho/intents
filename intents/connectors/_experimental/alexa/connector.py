@@ -20,9 +20,8 @@ import shutil
 import logging
 
 from intents import Agent, Intent
-from intents.model.fulfillment import FulfillmentRequest
 from intents.helpers.data_classes import to_dict
-from intents.service_connector import Connector, ServiceEntityMappings
+from intents.connectors.interface import Connector, ServiceEntityMappings, FulfillmentRequest
 from intents.connectors._experimental.alexa import names, export, language, fulfillment, fulfillment_schemas
 from intents.connectors._experimental.alexa.slot_types import ENTITY_MAPPINGS
 

@@ -42,6 +42,7 @@ Documentation Content
 
    api/index
    connectors/index
+   builtin_entities
    example_agent
 
 .. toctree::

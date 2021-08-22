@@ -6,9 +6,12 @@ Add:
 * (#19) Add builtin entities module and `service_connector.PatchEntityMapping`
     * Add `Color`, `Language`, `MusicGenre` and `FirstName` builtin entities
 * (#19) Add `EntityMapping.supported_languages` property
-* (#17) Add Intent Fulfillment interfaces and Dialogflow implementation
-* (#17) Add development fulfillment service
-* (#17) Add dataclass model for Dialogflow Responses and Webhook requests
+* (#17) Add Fulfillment interface with support for Dialogflow, Alexa and Snips
+  * (#17) Add dataclass model for Dialogflow Responses, Webhook requests and
+    Webhook responses
+  * (#17) Add dataclass model for Alexa Fulfillment requests and responses
+  * (#17) Implement recursive local fulfillment for Snips and Alexa
+* (#17) Implement development fulfillment server
 
 Change:
 
@@ -20,6 +23,7 @@ Change:
 * (#17) Change (with deprecation) `Prediction.fulfillment_messages()` to be a
   property of type `IntentResponseDict`. Remove
   `Prediction.fulfillment_response_dict` (with deprecation)
+* (#17) Move `service_connector` to `connectors.interface` (with deprecation)
 * (#17) (internal) Refactor `ServiceEntityMappings` handling of Custom Entities 
 * (#17) (internal) Refactor Dialogflow prediction modules:
     * `connectors.dialogflow_es.response_format` renamed to `prediction_format`

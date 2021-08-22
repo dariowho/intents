@@ -7,7 +7,7 @@ from intents import Sys, Entity
 from intents.types import EntityType
 from intents.language import LanguageCode
 from intents.resources.builtin_entities import color, language, music_genre, first_name
-from intents.service_connector import EntityMapping, StringEntityMapping, PatchedEntityMapping, ServiceEntityMappings
+from intents.connectors.interface import EntityMapping, StringEntityMapping, PatchedEntityMapping, ServiceEntityMappings
 
 logger = logging.getLogger(__name__)
 

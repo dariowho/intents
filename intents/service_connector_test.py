@@ -2,7 +2,7 @@ import pytest
 
 from intents import Sys, Agent, Entity
 from intents.language import LanguageCode
-from intents.service_connector import Connector, StringEntityMapping, ServiceEntityMappings
+from intents.connectors.interface import Connector, StringEntityMapping, ServiceEntityMappings
 
 class DummyConnector(Connector):
 

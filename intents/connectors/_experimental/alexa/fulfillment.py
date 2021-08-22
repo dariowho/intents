@@ -8,10 +8,9 @@ from dataclasses import dataclass, replace, field
 from typing import Dict, List, Any, Tuple
 from collections import defaultdict
 
-from intents import Intent, LanguageCode
+from intents import Intent, LanguageCode, FulfillmentContext, FulfillmentResult
 from intents.types import IntentType, AgentType
-from intents.model.fulfillment import FulfillmentContext, FulfillmentResult, ensure_fulfillment_result
-from intents.service_connector import deserialize_intent_parameters, Prediction, ServiceEntityMappings
+from intents.connectors.interface import deserialize_intent_parameters, Prediction, ServiceEntityMappings
 from intents.language import intent_language, IntentLanguageData, IntentResponse, IntentResponseGroup, IntentResponseDict
 from intents.connectors._experimental.alexa import fulfillment_schemas as fs
 from intents.connectors._experimental.alexa import names, slot_types, language
@@ -24,7 +23,7 @@ class AlexaPrediction(Prediction):
 
 class AlexaFulfillmentComponent:
     """
-    This is the component of SnipsConnector that is responsible for handling
+    This is the component of AlexaConnector that is responsible for handling
     fulfillment requests and... TODO: complete.
     """
 
@@ -83,7 +82,7 @@ class AlexaFulfillmentComponent:
             fulfillment_messages=rendered_messages,
             language=lang
         )
-        fulfillment_result = ensure_fulfillment_result(intent.fulfill(context))
+        fulfillment_result = FulfillmentResult.ensure(intent.fulfill(context))
 
         if fulfillment_result:
             if fulfillment_result.trigger:
@@ -131,7 +130,7 @@ class AlexaFulfillmentComponent:
 
         # TODO: doesn't work
         # Fulfillment result -> trigger
-        fulfillment_result = ensure_fulfillment_result(fulfillment_result)
+        fulfillment_result = FulfillmentResult.ensure(fulfillment_result)
         if fulfillment_result.trigger:
             intent: Intent = fulfillment_result.trigger
             return fs.FulfillmentResponseBody(

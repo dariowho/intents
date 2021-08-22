@@ -23,16 +23,14 @@ import os
 import json
 import shutil
 import logging
-from typing import List, Union
-from dataclasses import replace
+from typing import Union
 
 import snips_nlu
 
-from intents import Intent, Entity, LanguageCode
-from intents.types import AgentType, EntityType
-from intents.model.fulfillment import FulfillmentRequest, FulfillmentContext
+from intents import Intent, LanguageCode
+from intents.types import AgentType
 from intents.language import agent_supported_languages, ensure_language_code
-from intents.service_connector import Connector, ServiceEntityMappings
+from intents.connectors.interface import Connector, ServiceEntityMappings, FulfillmentRequest
 from intents.connectors._experimental.snips.prediction import SnipsPrediction, SnipsPredictionComponent
 from intents.connectors._experimental.snips import entities, prediction_format
 
@@ -40,7 +38,7 @@ logger = logging.getLogger(__name__)
 
 class SnipsConnector(Connector):
     """
-    This is a :class:`~intents.service_connector.Connector` that runs entirely locally, without needing any resident
+    This is a :class:`~intents.connectors.interface.Connector` that runs entirely locally, without needing any resident
     service to operate. Predictions are made by calling the `snips-nlu` Python
     API.
 

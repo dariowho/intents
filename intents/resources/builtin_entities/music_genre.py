@@ -1,4 +1,6 @@
 """
+Patches :class:`~intents.model.entity.Sys.MusicGenre`
+
 Sources:
 
 * https://www.musicgenreslist.com/

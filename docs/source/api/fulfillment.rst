@@ -1,5 +1,5 @@
 Fulfillments
 ============
 
-.. automodule:: intents.model.fulfillment
+.. automodule:: intents.fulfillment
    :members:

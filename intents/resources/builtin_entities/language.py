@@ -1,4 +1,6 @@
 """
+Patches :class:`~intents.model.entity.Sys.Language`
+
 Sources:
 
 * https://en.wikipedia.org/wiki/List_of_languages_by_number_of_native_speakers

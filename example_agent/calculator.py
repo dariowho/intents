@@ -5,8 +5,7 @@ they are computed from intent parameters
 """
 from dataclasses import dataclass
 
-from intents import Intent, Entity, Sys
-from intents.model.fulfillment import FulfillmentContext, FulfillmentResult
+from intents import Intent, Entity, Sys, FulfillmentContext, FulfillmentResult
 
 class CalculatorOperator(Entity):
     """

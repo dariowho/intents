@@ -13,7 +13,7 @@ import inspect
 import logging
 import dataclasses
 from dataclasses import dataclass
-from typing import List, Dict, Any, _GenericAlias
+from typing import List, Dict, Union, Any, _GenericAlias
 
 # pylint: disable=unused-import # needed for docs
 import intents
@@ -80,6 +80,32 @@ class FulfillmentResult:
     trigger: "Intent" = None
     fulfillment_text: List[str] = None
     fulfillment_messages: List["intents.language.intent_language.IntentResponse"] = None
+    
+    @staticmethod
+    def ensure(fulfill_return_value: Union["FulfillmentResult", "Intent"]) -> "FulfillmentResult":
+        """
+        Convert the given object to a :class:`FulfillmentResult` instance, if it
+        is not already one.
+
+        Args:
+            fulfill_return_value: An object, as it is returned by :meth:`Intent.fulfill`
+
+        Raises:
+            ValueError: If input object is not a valid return value for :meth:`Intent.fulfill`
+
+        Returns:
+            FulfillmentResult: A `FulfillmentResult` object representing input
+        """
+        if fulfill_return_value is None:
+            return
+
+        if isinstance(fulfill_return_value, FulfillmentResult):
+            return fulfill_return_value
+
+        if isinstance(fulfill_return_value, Intent):
+            return FulfillmentResult(trigger=fulfill_return_value)
+
+        raise ValueError(f"Unsupported fulfillment return value: {fulfill_return_value}")
 
 class IntentType(type):
 
@@ -283,7 +309,7 @@ class Intent(metaclass=IntentType):
         implementation, that will be executed recursively.
 
         More details about fulfillments can be found in the
-        :mod:`~intents.model.fulfillment` module documentation.
+        :mod:`~intents.fulfillment` module documentation.
 
         Args:
             context: Context information about the fulfillment request
