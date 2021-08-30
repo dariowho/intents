@@ -14,8 +14,8 @@ service; once your Agent is defined you can use one of the built-in
     agent
     intent
     entity
-    types
     relations
     language
-    names
     fulfillment
+    types
+    names

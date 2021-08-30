@@ -1,11 +1,12 @@
+from dataclasses import dataclass
 from unittest.mock import patch
 
 import pytest
 from google.cloud.dialogflow_v2.types import DetectIntentResponse
 
 from intents.connectors.dialogflow_es.connector import DialogflowEsConnector
-from intents import language
-from intents.connectors.interface import Prediction
+from intents import language, Agent, Intent, Entity, LanguageCode, Sys
+from intents.connectors.interface import Prediction, FulfillmentRequest
 from intents.helpers import coffee_agent
 from example_agent import ExampleAgent, travels
 
@@ -132,3 +133,75 @@ def test_fulfillment_messages():
         assert prediction.fulfillment_messages() == mock_rich_messages
         assert prediction.fulfillment_messages(language.IntentResponseGroup.DEFAULT) == mock_default_messages
         assert prediction.fulfillment_messages(language.IntentResponseGroup.RICH) == mock_rich_messages
+
+#
+# Fulfillment
+#
+
+# "How much is three times five?"
+CALCULATOR_FULFILLMENT = {"responseId": "fake-response-id", "queryResult": {"queryText": "how much is two plus 2?", "parameters": {"first_operand": 2.0, "second_operand": 2.0, "operator": "+"}, "allRequiredParamsPresent": True, "fulfillmentText": "Sorry, there seems to be service error. Your request can't be completed", "fulfillmentMessages": [{"text": {"text": ["Sorry, there seems to be service error. Your request can't be completed"]}}], "outputContexts": [{"name": "projects/fake-project-id/agent/sessions/fake-session-id/contexts/__system_counters__", "parameters": {"no-input": 0.0, "no-match": 0.0, "first_operand": 2.0, "first_operand.original": "two", "second_operand": 2.0, "second_operand.original": "2", "operator": "+", "operator.original": "plus"}}], "intent": {"name": "projects/fake-project-id/agent/intents/8e7dd332-0500-11ec-8d58-71988d2ea5e7", "displayName": "calculator.SolveMathOperation"}, "intentDetectionConfidence": 1.0, "languageCode": "en"}, "originalDetectIntentRequest": {"source": "DIALOGFLOW_CONSOLE", "payload": {}}, "session": "projects/fake-project-id/agent/sessions/fake-session-id"}
+
+def _get_mock_example_agent():
+    class MockExampleAgent(Agent):
+        """
+        Real example agent may change
+        """
+        languages = ["en"]
+
+    return MockExampleAgent
+
+@patch("intents.connectors.dialogflow_es.connector.resolve_credentials")
+def test_calculator_is_fulfilled(self):
+    class MockCalculatorOperator(Entity):
+        name="CalculatorOperator"
+
+        __entity_language_data__ = {
+            LanguageCode.ENGLISH: [
+                language.EntityEntry("*", ["multiplied by", "times"]),
+                language.EntityEntry("-", ['minus']),
+            ]
+        }
+
+    @dataclass
+    class MockSolveMathOperation(Intent):
+        _test_call_count = 0
+        name = "calculator.SolveMathOperation"
+
+        first_operand: Sys.Integer
+        second_operand: Sys.Integer
+        operator: MockCalculatorOperator
+
+        def fulfill(self, context, *args, **kwargs):
+            MockSolveMathOperation._test_call_count += 1
+            assert self.first_operand == 2
+            assert self.second_operand == 2
+            assert self.operator == '+'
+            return MockSolveMathOperationResponse(4)
+
+    @dataclass
+    class MockSolveMathOperationResponse(Intent):
+        name = "calculator.SolveMathOperationResponse"
+
+        operation_result: Sys.Integer
+
+    MockExampleAgent = _get_mock_example_agent()
+
+    with patch('intents.language.intent_language_data'):
+        MockExampleAgent.register(MockSolveMathOperation)
+        MockExampleAgent.register(MockSolveMathOperationResponse)
+
+    df = DialogflowEsConnector('/fake/path/to/credentials.json', MockExampleAgent)
+    request = FulfillmentRequest(body=CALCULATOR_FULFILLMENT)
+    response = df.fulfill(request)
+    expected = {
+        "followupEventInput": {
+            "name": "E_CALCULATOR_SOLVEMATHOPERATIONRESPONSE",
+            "languageCode": "en",
+            "parameters": {
+                "operation_result": 4
+            }
+        }
+    }
+    assert response == expected
+
+    assert MockSolveMathOperation._test_call_count == 1

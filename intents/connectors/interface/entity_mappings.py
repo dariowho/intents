@@ -249,10 +249,7 @@ class ServiceEntityMappings(dict):
         `AMAZON.Person` in Alexa, and so on). A custom entity (e.g. `PizzaType`)
         will use its class name instead.
         """
-        mapping = self.lookup(entity_cls)
-        if mapping.entity_cls is Entity:
-            return entity_cls.name
-        return mapping.service_name
+        return self.lookup(entity_cls).service_name
 
     def is_mapped(self, entity_cls: EntityType, lang: LanguageCode) -> bool:
         """
@@ -317,7 +314,9 @@ def deserialize_intent_parameters(
     schema = intent_cls.parameter_schema
     for param_name, param_value in service_parameters.items():
         if param_name not in schema:
-            raise ValueError(f"Found parameter {param_name} in Service Prediction, but Intent class does not define it.")
+            raise ValueError(f"Found parameter {param_name} in Service Prediction, but Intent "
+                             "class does not define it. Make sure your cloud Agent is in sync "
+                             "with your local one. A new upload() may solve the issue")
         param_metadata = schema[param_name]
         entity_cls = param_metadata.entity_cls
         mapping = mappings.lookup(entity_cls)

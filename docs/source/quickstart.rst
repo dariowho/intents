@@ -15,7 +15,7 @@ Define An Agent
 ---------------
 
 The idea is to create your own Python package that will contain the whole Agent.
-Let's create an intent in `my_agent/smalltalk.py`. 
+Let's create an **intent** in `my_agent/smalltalk.py`. 
 
 .. code-block:: python
 
@@ -27,7 +27,7 @@ Let's create an intent in `my_agent/smalltalk.py`.
         """My name is Mary"""
         user_name: Sys.Person
 
-We'll define language resources separately in
+We'll define **language** resources separately in
 `my_agent/language/en/smalltalk.UserSaysName.yaml` (remember your `__init__.py`
 in each folder).
 
@@ -43,7 +43,7 @@ in each folder).
           - Hi $user_name, I'm Bot
           - Nice to meet you $user_name!
 
-Finally, let's create an Agent in `my_agent/agent.py`, and register the
+Finally, let's create an **Agent** in `my_agent/agent.py`, and register the
 `smalltalk` module we just defined.
 
 .. code-block:: python

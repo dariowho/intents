@@ -90,6 +90,7 @@ import logging
 import http.server
 
 import intents
+from intents.helpers.logging import jsondict
 from intents.connectors.interface import Connector, FulfillmentRequest
 
 logger = logging.getLogger(__name__)
@@ -139,19 +140,19 @@ def run_dev_server(connector: Connector, host: str='', port: str=8000):
             content_len = int(self.headers.get('Content-Length'))
             post_body = self.rfile.read(content_len)
             post_body = json.loads(post_body)
-            logger.info("POST BODY: %s", post_body)
+            logger.info("POST REQUEST BODY: %s", jsondict(post_body))
 
             fulfillment_request = FulfillmentRequest(
                 body=post_body
             )
             result = connector.fulfill(fulfillment_request)
+            logger.info("POST RESPONSE: %s", jsondict(result))
             result = json.dumps(result)
             
             self.send_response(http.server.HTTPStatus.OK)
             self.send_header('Content-type', 'application/json')
             self.end_headers()
 
-            logger.info("POST RESPONSE: %s", result)
             result = bytes(result, 'utf-8')
             self.wfile.write(result)
             self.wfile.flush()

@@ -203,7 +203,7 @@ class DialogflowEsConnector(Connector):
         intent = self._df_body_to_intent(webhook_body)
         context = self._df_body_to_fulfillment_context(webhook_body)
         fulfillment_result = FulfillmentResult.ensure(intent.fulfill(context))
-        print(fulfillment_result)
+        logger.debug("Returning fulfillment result: %s", fulfillment_result)
         if fulfillment_result:
             return webhook.fulfillment_result_to_response(fulfillment_result, context)
         return {}
@@ -233,14 +233,20 @@ class DialogflowEsConnector(Connector):
     ) -> Intent:
         """
         Convert a Dialogflow prediction response into an instance of
-        :class:`Intent`. If `build_related_cls` is passed, build the given
-        Intent instead (this is used for related intents); in this case contexts
-        and parameters will be checked for consistency.
+        :class:`Intent`.
+        
+        This method is recursive on intent relations. When an intent has a
+        :meth:`~intents.model.relations.follow` field, that field must be filled
+        with an instance of the followed intent; in this case
+        :meth:`_df_body_to_intent` will call itself passing the parent intent
+        class as `build_related_cls`, to force building that intent from the
+        same `df_body`; contexts and parameters will be checked for consistency.
 
-        :param df_body: A Dialogflow Response
-        :param build_related_cls: Force to build the related intent instead of
-        the predicted one
-        :param visited_intents: This is used internally to prevent recursion loops
+        Args:
+            df_body: A Dialogflow Response
+            build_related_cls: Force to build the related intent instead of
+                the predicted one
+            visited_intents: This is used internally to prevent recursion loops
         """
         if not visited_intents:
             visited_intents = set()

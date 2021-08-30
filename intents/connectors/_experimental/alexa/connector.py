@@ -8,7 +8,6 @@ This is a connector that can export an :class:`Agent` to the **Alexa** format.
 
     * `predict` and `trigger` are not implemented (you don't call Alexa, Alexa calls you)
     * Entities :class:`Sys.Email` and :class:`Sys.Url` are not available in Alexa (regex entites aren't supported either, which makes it difficult to work around this one)
-    * Responses are managed with fulfillment, which is not implemented
     * Intent relations are not considered
 
 Official Request/Response schemas:
@@ -37,9 +36,11 @@ class AlexaConnector(Connector):
         This connector is **experimental**. Features may not be complete and
         behavior may change in next releases.
 
-    At the moment, all you can do is to :meth:`export` an Agent in the Alexa format
-    (note that contexts are not considered, and responses are not included;
-    webhook fulfillment needs to be implemented for both).
+    At the moment, all you can do is to :meth:`export` an Agent in the Alexa
+    format, and start the fulfillment development server with
+    :func:`~intents.fulfillment.run_dev_server`. You will have to configure your
+    Alexa agent from the console to hit your URL instead of its default lambda
+    for fulfillment.
     """
     entity_mappings: ServiceEntityMappings = ENTITY_MAPPINGS
 
