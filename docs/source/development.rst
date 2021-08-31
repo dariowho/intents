@@ -54,7 +54,7 @@ When adding a new requirement, remember to update `readthedocs.txt`:
 
 .. code-block:: sh
 
-    poetry export -E snips --dev -f requirements.txt --output readthedocs.txt
+    poetry export -E snips --dev -f requirements.txt --output readthedocs.txt --without-hashes
 
 Test
 ----
