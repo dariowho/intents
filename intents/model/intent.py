@@ -110,6 +110,7 @@ class FulfillmentResult:
 class IntentType(type):
 
     name: str = None
+    lifespan: int = 5
 
     def __new__(cls, name, bases, dct):
         result_cls = super().__new__(cls, name, bases, dct)
@@ -130,8 +131,6 @@ class IntentType(type):
         names.check_name(result_cls.name)
 
         # TODO: check that custom parameters don't overlap Intent fields
-        # TODO: check language data
-        # language.intent_language_data(cls, result) # Checks that language data is existing and consistent
 
         return result_cls
 
@@ -141,7 +140,8 @@ class IntentType(type):
             return {}
 
         if not is_dataclass_strict(cls):
-            logger.warning(f"{cls} is not a dataclass. This may cause unexpected behavior: consider adding a @dataclass decorator to your Intent class.")
+            logger.warning("%s is not a dataclass. This may cause unexpected behavior: consider "
+                           "adding a @dataclass decorator to your Intent class.", cls)
             cls = dataclass(cls)
 
         result = {}

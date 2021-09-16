@@ -79,7 +79,7 @@ It's worth noting that the *follow* relation is **inherited** by subclasses:
   in the example above)
 """
 from enum import Enum
-from typing import List
+from typing import List, Union
 import dataclasses
 from dataclasses import dataclass, field
 
@@ -93,7 +93,13 @@ class RelationType(Enum):
     """
     FOLLOW = "follow"
 
-def follow() -> dataclasses.Field:
+@dataclass
+class FollowRelationParameters:
+    new_lifespan: int
+    # fallback: IntentType
+    # within: int
+
+def follow(*, new_lifespan: int=None) -> dataclasses.Field:
     """
     This can be used as a value for an Intent Relation field, e.g.
 
@@ -114,57 +120,109 @@ def follow() -> dataclasses.Field:
         The returned field currently sets `default=None` as a workaround to some
         known limitations of dataclasses with inheritance. This behavior may be
         adjusted again before 1.0
-    """
-    # TODO: solve inheritance after default fields and remove default
-    return field(default=None, metadata={"relation_type": RelationType.FOLLOW})
-
-@dataclass
-class RelatedIntent:
-    """
-    Represent one of the Intents that are related to the Relation subject. Along
-    with the related intent's class, this structure also stores its name as a
-    parameter and the relation type.
-
-    This structure is produced by :func:`related_intents`.
 
     Args:
-        field_name: Name of the field in the Relation subject
-        relation_type: One of the supported Relation types
-        intent_cls: Class of the intent that is related to the subject
+        new_lifespan: Reset the lifespan of the followed intent to the given value
     """
-    field_name: str
-    relation_type: RelationType
-    intent_cls: IntentType
+    # TODO: solve inheritance after default fields and remove default
+    return field(default=None, metadata={
+        "relation_type": RelationType.FOLLOW,
+        "relation_parameters": FollowRelationParameters(
+            new_lifespan=new_lifespan
+        )
+    })
 
 @dataclass
-class RelatedIntents:
+class IntentRelation:
+    """
+    Represent an Intent Relation definition from a "source" Intent (the one that
+    defines the relation) to a "target" Intent (the one that is referenced in
+    *source*).
+    
+    For instance, given
+
+    .. code-block:: python
+
+        @dataclass
+        class AddMilk(Intent):
+            \"\"\"With milk please\"\"\"
+            parent_ask_coffee: AskCoffee = follow()
+
+    Then the `follow` relation defined in `AddMilk` can be represented as
+
+    .. code-block:: python
+
+        IntentRelation(
+            relation_type=RelationType.FOLLOW
+            relation_parameters=None,
+            field_name="parent_ask_coffee",
+            source_cls=AddMilk,
+            target_cls=AskCoffee
+        )
+
+    :class:`IntentRelation` objects are typically produced by
+    :func:`intent_relations`, and enclosed in its returned
+    :class:`IntentRelationMap` result structure.
+    
+    Args:
+        relation_type: One of the relation types
+        relation_parameters: Relation parameters as they are specified by the
+            relation field
+        field_name: Name of the field in `source_cls` that defines the relation
+        source_cls: The Intent class where the relation is defined
+        target_cls: The other Intent class that is referenced by the relation
+    """
+    relation_type: RelationType
+    relation_parameters: type
+    field_name: str
+    source_cls: IntentType
+    target_cls: IntentType
+
+@dataclass
+class FollowIntentRelation(IntentRelation):
+    """
+    Args:
+        relation_parameters: Relation parameters as they are specified by the
+            relation field
+        field_name: Name of the field in `source_cls` that defines the relation
+        source_cls: The Intent class where the relation is defined
+        target_cls: The other Intent class that is referenced by the relation
+    """
+    relation_parameters: FollowRelationParameters
+    relation_type: RelationType = field(default=RelationType.FOLLOW, init=None)
+
+@dataclass
+class IntentRelationMap:
     """
     A map of an Intent's relations, as it is produced by
-    :func:`related_intents`.
+    :func:`intent_relations`.
 
     Args:
         follow: A list of intents that are followed by the Relation subject
     """
-    follow: List[RelatedIntent] = field(default_factory=list)
+    follow: List[FollowIntentRelation] = field(default_factory=list)
 
-def related_intents(intent: Intent) -> RelatedIntents:
+def intent_relations(intent: Union[Intent, IntentType]) -> IntentRelationMap:
     """
     Produce a map of all the intents that are related to the given relation
     subject.
 
     Args:
-        intent: The relation subject
+        intent: The relation subject. Could be an Intent class or an Intent instance
     """
-    result = RelatedIntents()
+    intent_cls = intent if isinstance(intent, type) else type(intent)
+    result = IntentRelationMap()
     for cls_field in intent.__dataclass_fields__.values():
         relation_type: RelationType = cls_field.metadata.get("relation_type")
         if relation_type:
             assert relation_type in [RelationType.FOLLOW]
             if relation_type == RelationType.FOLLOW:
-                result.follow.append(RelatedIntent(
+                relation_parameters: FollowRelationParameters = cls_field.metadata.get("relation_parameters")
+                result.follow.append(FollowIntentRelation(
+                    relation_parameters=relation_parameters,
                     field_name=cls_field.name,
-                    relation_type=relation_type,
-                    intent_cls=cls_field.type
+                    source_cls=intent_cls,
+                    target_cls=cls_field.type
                 ))
 
     return result

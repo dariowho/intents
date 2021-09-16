@@ -8,12 +8,12 @@ import logging
 import tempfile
 from uuid import uuid1
 from dataclasses import asdict
-from typing import List, Dict, Iterable
+from typing import List, Dict, Set, Iterable
 
 from intents import Intent, language
 from intents.types import IntentType, EntityType
 from intents.model.entity import SystemEntityMixin
-from intents.model.relations import related_intents
+from intents.model.relations import intent_relations, FollowIntentRelation
 import intents.connectors.dialogflow_es.agent_format as df
 import intents.connectors.dialogflow_es.names as df_names
 from intents.connectors.dialogflow_es.entities import MAPPINGS as ENTITY_MAPPINGS
@@ -112,9 +112,32 @@ def render_agent(connector: "intents.DialogflowEsConnector",  agent_name: str, l
 #
 
 def get_input_contexts(connector: "DialogflowEsConnector", intent_cls: IntentType) -> List[str]:
-    result = [df_names.context_name(r.intent_cls) for r in related_intents(intent_cls).follow]
+    result = [df_names.context_name(r.target_cls) for r in intent_relations(intent_cls).follow]
     
     return result
+
+class _AffectedContextsList(list):
+    """
+    A list that appends a context only if no other context with the same name
+    is already in the list.
+    """
+    added_names: Set[str]
+
+    def __init__(self):
+        super().__init__()
+        self.added_names = set()
+
+    def append(self, x: df.AffectedContext):
+        if x.name in self.added_names:
+            return
+        self.added_names.add(x.name)
+        super().append(x)
+
+    def extend(self, x_list: List[df.AffectedContext]):
+        x_list = [x for x in x_list if x not in self.added_names]
+        for x in x_list:
+            self.added_names.add(x)
+        super().extend(x_list)
 
 def get_output_contexts(
     connector: "DialogflowEsConnector",
@@ -136,17 +159,27 @@ def get_output_contexts(
     if intent_cls is Intent:
         return []
 
-    result = []
+    result = _AffectedContextsList()
+
+    # Spawn own context if needed (i.e. at least one other intent follows this one)
     if connector._intent_needs_context(intent_cls):
         name = df_names.context_name(intent_cls)
-        result.append(df.AffectedContext(name, 5)) # TODO: allow custom lifespan
+        result.append(df.AffectedContext(name, intent_cls.lifespan))
+    
+    # Re-spawn context of followed intents that need to re-define lifespan
+    rel: FollowIntentRelation
+    for rel in intent_relations(intent_cls).follow:
+        if new_lifespan := rel.relation_parameters.new_lifespan:
+            context_name = df_names.context_name(rel.target_cls) # TODO: superclasses as well!
+            result.append(df.AffectedContext(context_name, new_lifespan))
 
     visited.append(intent_cls)
     for super_cls in intent_cls.mro():
         if super_cls not in visited and issubclass(super_cls, Intent):
             result.extend(get_output_contexts(connector, super_cls, visited))
 
-    return result
+    # We cast to list because of compatibility with `asdict()`
+    return list(result)
 
 def render_intent(connector: "DialogflowEsConnector", intent_cls: IntentType, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
     response = df.Response(

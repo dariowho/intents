@@ -115,6 +115,8 @@ class OrderFish(Intent):
     Args:
         amount: The amount of fish to buy
     """
+    lifespan = 3
+
     amount: Sys.Integer = 1
 
 @dataclass
@@ -163,7 +165,7 @@ class ChangeAmount(Intent):
     """
     amount: Sys.Integer
 
-    parent_order_kipper: OrderKipper = follow()
+    parent_order_kipper: OrderKipper = follow(new_lifespan=3)
 
     def fulfill(self, context, *args):
         """

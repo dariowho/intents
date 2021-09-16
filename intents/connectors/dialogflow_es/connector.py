@@ -16,7 +16,7 @@ from google.cloud.dialogflow_v2 import types as pb
 
 from intents import Agent, Intent, LanguageCode, FulfillmentContext, FulfillmentResult
 from intents.types import AgentType, IntentType
-from intents.model.relations import related_intents
+from intents.model.relations import intent_relations
 from intents.connectors.interface import Connector, Prediction, FulfillmentRequest, WebhookConfiguration, deserialize_intent_parameters
 from intents.connectors.dialogflow_es.auth import resolve_credentials
 from intents.connectors.dialogflow_es.util import dict_to_protobuf
@@ -283,11 +283,12 @@ class DialogflowEsConnector(Connector):
         visited_intents.add(intent_cls)
         parameter_dict = deserialize_intent_parameters(df_parameters, intent_cls, self.entity_mappings)
         related_intents_dict = {}
-        for related in related_intents(intent_cls).follow:
-            if related.intent_cls in visited_intents:
-                raise ValueError(f"Loop detected: {related.intent_cls} was already visited. Make sure your Agent has no circular dependencies")
-            related_intent = self._df_body_to_intent(df_body, related.intent_cls, visited_intents)
-            related_intents_dict[related.field_name] = related_intent
+        for rel in intent_relations(intent_cls).follow:
+            if rel.target_cls in visited_intents:
+                raise ValueError(f"Loop detected: {rel.target_cls} was already visited. Make sure "
+                                 "your Agent has no circular dependencies")
+            related_intent = self._df_body_to_intent(df_body, rel.target_cls, visited_intents)
+            related_intents_dict[rel.field_name] = related_intent
 
         return intent_cls(**parameter_dict, **related_intents_dict)
 
@@ -303,9 +304,9 @@ def _build_need_context_set(agent_cls: type(Agent)) -> Set[Intent]:
     """
     result = set()
     for intent in agent_cls.intents:
-        related = related_intents(intent)
-        for parent in related.follow:
-            result.add(parent.intent_cls)
+        related = intent_relations(intent)
+        for rel in related.follow:
+            result.add(rel.target_cls)
     return result
 
 def _build_intents_by_context(agent_cls: AgentType) -> Dict[str, IntentType]:

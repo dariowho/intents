@@ -1,18 +1,18 @@
 from dataclasses import dataclass
 from intents import Intent
-from intents.model.relations import follow, related_intents, RelatedIntents, RelatedIntent, RelationType
+from intents.model.relations import follow, intent_relations, IntentRelationMap, IntentRelation, RelationType, FollowRelationParameters, FollowIntentRelation
 
-def test_related_intents_no_relations():
+def test_intent_relations__no_relations():
     
     @dataclass
     class NoRelationsIntent(Intent):
         pass
 
-    result = related_intents(NoRelationsIntent)
-    assert isinstance(result, RelatedIntents)
+    result = intent_relations(NoRelationsIntent)
+    assert isinstance(result, IntentRelationMap)
     assert result.follow == []
 
-def test_related_intents_follow():
+def test_intent_relations__follow():
     
     @dataclass
     class FollowedIntent(Intent):
@@ -22,15 +22,17 @@ def test_related_intents_follow():
     class FollowingIntent(Intent):
         parent_followed_intent: FollowedIntent = follow()
 
-    result = related_intents(FollowingIntent)
+    result = intent_relations(FollowingIntent)
     expected = [
-        RelatedIntent(
+        FollowIntentRelation(
+            relation_parameters=FollowRelationParameters(new_lifespan=None),
             field_name='parent_followed_intent',
-            relation_type=RelationType.FOLLOW,
-            intent_cls=FollowedIntent
+            source_cls=FollowingIntent,
+            target_cls=FollowedIntent
         )
     ]
     assert result.follow == expected
+    assert result.follow[0].relation_type == RelationType.FOLLOW
 
 def test_subclass_inherits_follow():
 
@@ -46,12 +48,14 @@ def test_subclass_inherits_follow():
     class FollowingIntentSubclass(FollowingIntent):
         pass
 
-    result = related_intents(FollowingIntentSubclass)
+    result = intent_relations(FollowingIntentSubclass)
     expected = [
-        RelatedIntent(
+        FollowIntentRelation(
+            relation_parameters=FollowRelationParameters(new_lifespan=None),
             field_name='parent_followed_intent',
-            relation_type=RelationType.FOLLOW,
-            intent_cls=FollowedIntent
+            source_cls=FollowingIntentSubclass,
+            target_cls=FollowedIntent
         )
     ]
     assert result.follow == expected
+    assert result.follow[0].relation_type == RelationType.FOLLOW

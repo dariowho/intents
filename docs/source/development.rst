@@ -45,7 +45,7 @@ Documentation will be created in the `docs/_build/` folder.
 Read the Docs
 -------------
 
-Documentatio is published on *Read the Docs* via their default integration. As
+Documentation is published on *Read the Docs* via their default integration. As
 Poetry is not available in *Read the Docs* build environment, a **requirements**
 file must be provided. The build script is configured to read `readthedocs.txt`
 for this purpose.

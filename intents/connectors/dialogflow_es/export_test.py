@@ -110,3 +110,9 @@ def test_get_output_contexts():
 
     result = export.get_output_contexts(mock_connector, FollowingSubclassIntent)
     assert result == []
+
+# TODO:
+#   - own output context
+#   - output context when re-defining lifespan of followed intent
+#   - contexts do not appear twice
+#   - superclasses are included in new_lifespan case

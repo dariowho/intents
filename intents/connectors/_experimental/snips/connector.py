@@ -143,7 +143,7 @@ class SnipsConnector(Connector):
         0.62
 
         Note that the Italian version of :class:`~example_agent.ExampleAgent`
-        won't be traines, as :class:`Sys.Date` is not available for the Italian
+        won't be trained, as :class:`Sys.Date` is not available for the Italian
         language in Snips.
 
         Args:

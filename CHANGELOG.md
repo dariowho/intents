@@ -12,12 +12,16 @@ Add:
   * (#17) Add dataclass model for Alexa Fulfillment requests and responses
   * (#17) Implement recursive local fulfillment for Snips and Alexa
 * (#17) Implement development fulfillment server
+* (#16) Add configurable intent lifespan
+* (#16) Add `new_lifespan` property to `follow` relation
 
 Change:
 
 * (#11) Breaking change: remove deprecated `Context` interface, `Intent.events`
   and `Intent.parameter_schema()` (`Intent.parameter_schema` is the way to
   access that information)
+* (#16) Breaking change: replace `relations.related_intents()` with
+  `relations.intent_relations()` (without deprecation)
 * (#19) Change ServiceConnector to accept `LanguageCode` values as language
   codes, in addition to ISO strings
 * (#17) Change (with deprecation) `Prediction.fulfillment_messages()` to be a
