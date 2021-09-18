@@ -165,7 +165,7 @@ class ChangeAmount(Intent):
     """
     amount: Sys.Integer
 
-    parent_order_kipper: OrderKipper = follow(new_lifespan=3)
+    parent_order_kipper: OrderKipper = follow(new_lifespan=2)
 
     def fulfill(self, context, *args):
         """

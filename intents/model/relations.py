@@ -38,7 +38,7 @@ the meaning of the other intent. When an intent is a subclass of another:
 Follow
 ======
 
-The **follow** relation is a context constraint: an intent that follows another
+The :func:`follow` relation is a context constraint: an intent that follows another
 one can only be predicted after the followed one.
 
 .. code-block:: python
@@ -66,9 +66,12 @@ Context parameters can be accessed with another OOP fundamental concept:
     "dark"
 
 This relation is implemented by looking at the **lifespan** of intents.
-`AskCoffee` starts with a lifespan of 5 (at the moment this is constant and
-can't be configured). This value is decremented at each conversation turn;
-intents that follow `AskCoffee` can only be predicted while its lifespan is > 0.
+`AskCoffee` starts with a lifespan of 5 (this can be configured by setting a
+`lifespan = N` property in the parent Intent class). This value is decremented
+at each conversation turn; intents that follow `AskCoffee` can only be predicted
+while its lifespan is > 0. :func:`follow` can also replice the current lifespan
+of an Intent with a new one (e.g. set it to 0 to kill the context), see its
+documentation for details.
 
 It's worth noting that the *follow* relation is **inherited** by subclasses:
 
@@ -77,14 +80,16 @@ It's worth noting that the *follow* relation is **inherited** by subclasses:
 * If intent `AskSkimmedMilk` is a subclass of `AskMilk`, and `AskMilk` follows
   `AskCoffee`, then `AskSkimmedMilk` also follows `AskCoffee` (and `AskEspresso`
   in the example above)
+
+API
+===
 """
 from enum import Enum
-from typing import List, Union
+from typing import List, Union, Type
 import dataclasses
 from dataclasses import dataclass, field
 
 from intents import Intent
-from intents.model.intent import IntentType
 
 class RelationType(Enum):
     """
@@ -96,7 +101,7 @@ class RelationType(Enum):
 @dataclass
 class FollowRelationParameters:
     new_lifespan: int
-    # fallback: IntentType
+    # fallback: Type[Intent]
     # within: int
 
 def follow(*, new_lifespan: int=None) -> dataclasses.Field:
@@ -112,8 +117,18 @@ def follow(*, new_lifespan: int=None) -> dataclasses.Field:
             \"\"\"With milk please\"\"\"
             parent_ask_coffee: AskCoffee = follow()
 
-    Internally, this is equivalent to calling :func:`dataclasses.field` with a
-    custom set of metadata.
+    This will make "AddMilk" predictable only if AskCoffe was predicted before,
+    meaning, it is present in context with lifespan > 0. Lifespan is a counter
+    that decreases from a given number (default is 5) at each conversation turn.
+    :func:`follow` can update this number, either to keep the context alive, or
+    to kill it when it's no more necessary:
+
+    .. code-block:: python
+
+        @dataclass
+        class CancelAskCoffee(Intent):
+            \"\"\"I don't want coffee anymore...\"\"\"
+            parent_ask_coffee: AskCoffee = follow(new_lifespan=0)
 
     .. warning::
 
@@ -175,8 +190,8 @@ class IntentRelation:
     relation_type: RelationType
     relation_parameters: type
     field_name: str
-    source_cls: IntentType
-    target_cls: IntentType
+    source_cls: Type[Intent]
+    target_cls: Type[Intent]
 
 @dataclass
 class FollowIntentRelation(IntentRelation):
@@ -202,10 +217,9 @@ class IntentRelationMap:
     """
     follow: List[FollowIntentRelation] = field(default_factory=list)
 
-def intent_relations(intent: Union[Intent, IntentType]) -> IntentRelationMap:
+def intent_relations(intent: Union[Intent, Type[Intent]]) -> IntentRelationMap:
     """
-    Produce a map of all the intents that are related to the given relation
-    subject.
+    Produce a map of all the relations that are defined by the given Intent.
 
     Args:
         intent: The relation subject. Could be an Intent class or an Intent instance
@@ -217,6 +231,8 @@ def intent_relations(intent: Union[Intent, IntentType]) -> IntentRelationMap:
         if relation_type:
             assert relation_type in [RelationType.FOLLOW]
             if relation_type == RelationType.FOLLOW:
+                # TODO: check that there aren't other equivalent "follow" relations
+                # (i.e. with same class or superclasses) in same intent
                 relation_parameters: FollowRelationParameters = cls_field.metadata.get("relation_parameters")
                 result.follow.append(FollowIntentRelation(
                     relation_parameters=relation_parameters,

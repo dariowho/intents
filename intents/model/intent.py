@@ -122,7 +122,7 @@ class IntentType(type):
 
         for base_cls in bases:
             if base_cls is not Intent:
-                if not is_dataclass_strict(base_cls):
+                if issubclass(base_cls, Intent) and not is_dataclass_strict(base_cls):
                     logger.warning("Intent '%s' is inheriting from non-dataclass '%s'. Did you forget the decorator?", result_cls, base_cls)
 
         if "name" not in result_cls.__dict__:
@@ -224,12 +224,16 @@ class Intent(metaclass=IntentType):
             user_name: Sys.Person
 
             name = "hello_custom_name"
+            lifespan = 10
 
-    This Intent has a custom name, so it will appear as "hello_custom_name" when
+    This Intent has a **custom name**, so it will appear as "hello_custom_name" when
     exported to prediction services such as Dialogflow, and its language file
     will just be `hello_custom_name.yaml`, without module prefix. See
     :func:`~intents.model.names.check_name` for more details on the rules that
     intent names must follow.
+
+    This intent has a **lifespan** member. This is used in
+    :mod:`intents.model.relations` to keep track of the context.
 
     Most importantly, this intent has a `user_name` **parameter** of type
     :class:`Sys.Person` (check out :class:`intents.model.entity.Sys` for
@@ -276,6 +280,25 @@ class Intent(metaclass=IntentType):
         result = {}
         for parameter_name in self.parameter_schema.keys():
             result[parameter_name] = getattr(self, parameter_name)
+        return result
+
+    @classmethod
+    def parent_intents(cls) -> List[IntentType]:
+        """
+        Return a list of the Intent parent classes. This wraps `cls.mro()`
+        filtering out non-Intent parents (e.g. :class:`object`), :class:`Intent`
+        and `cls` itself.
+
+        >>> AskEspresso.parent_intents()
+        [AskCoffee, AskDrink]
+
+        Returns:
+            A list of parent Intent classes
+        """
+        result = []
+        for c in cls.mro():
+            if issubclass(c, Intent) and c is not Intent and c is not cls:
+                result.append(c)
         return result
 
     def fulfill(self,

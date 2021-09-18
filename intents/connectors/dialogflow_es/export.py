@@ -8,11 +8,10 @@ import logging
 import tempfile
 from uuid import uuid1
 from dataclasses import asdict
-from typing import List, Dict, Set, Iterable
+from typing import List, Dict, Set, Iterable, Type
 
 from intents import Intent, language
-from intents.types import IntentType, EntityType
-from intents.model.entity import SystemEntityMixin
+from intents.types import EntityType
 from intents.model.relations import intent_relations, FollowIntentRelation
 import intents.connectors.dialogflow_es.agent_format as df
 import intents.connectors.dialogflow_es.names as df_names
@@ -111,7 +110,7 @@ def render_agent(connector: "intents.DialogflowEsConnector",  agent_name: str, l
 # Intent
 #
 
-def get_input_contexts(connector: "DialogflowEsConnector", intent_cls: IntentType) -> List[str]:
+def get_input_contexts(connector: "DialogflowEsConnector", intent_cls: Type[Intent]) -> List[str]:
     result = [df_names.context_name(r.target_cls) for r in intent_relations(intent_cls).follow]
     
     return result
@@ -134,15 +133,15 @@ class _AffectedContextsList(list):
         super().append(x)
 
     def extend(self, x_list: List[df.AffectedContext]):
-        x_list = [x for x in x_list if x not in self.added_names]
+        x_list = [x for x in x_list if x.name not in self.added_names]
         for x in x_list:
-            self.added_names.add(x)
+            self.added_names.add(x.name)
         super().extend(x_list)
 
 def get_output_contexts(
     connector: "DialogflowEsConnector",
-    intent_cls: IntentType,
-    visited: List[IntentType]=None
+    intent_cls: Type[Intent],
+    visited: List[Type[Intent]]=None
 ) -> List[df.AffectedContext]:
     """
     An Intent can output its own context (e.g. intent `OrderFish` can spawn
@@ -170,18 +169,19 @@ def get_output_contexts(
     rel: FollowIntentRelation
     for rel in intent_relations(intent_cls).follow:
         if new_lifespan := rel.relation_parameters.new_lifespan:
-            context_name = df_names.context_name(rel.target_cls) # TODO: superclasses as well!
-            result.append(df.AffectedContext(context_name, new_lifespan))
+            for related_cls in [rel.target_cls] + rel.target_cls.parent_intents():
+                context_name = df_names.context_name(related_cls)
+                result.append(df.AffectedContext(context_name, new_lifespan))
 
     visited.append(intent_cls)
-    for super_cls in intent_cls.mro():
+    for super_cls in intent_cls.parent_intents():
         if super_cls not in visited and issubclass(super_cls, Intent):
             result.extend(get_output_contexts(connector, super_cls, visited))
 
     # We cast to list because of compatibility with `asdict()`
     return list(result)
 
-def render_intent(connector: "DialogflowEsConnector", intent_cls: IntentType, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
+def render_intent(connector: "DialogflowEsConnector", intent_cls: Type[Intent], language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
     response = df.Response(
         affectedContexts=get_output_contexts(connector, intent_cls),
         parameters=render_parameters(intent_cls, language_data),
@@ -200,7 +200,7 @@ def render_intent(connector: "DialogflowEsConnector", intent_cls: IntentType, la
         events=[df.Event(df_names.event_name(intent_cls))]
     )
 
-def render_parameters(intent_cls: IntentType, language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
+def render_parameters(intent_cls: Type[Intent], language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
     result = []
     for param_name, param_metadata in intent_cls.parameter_schema.items():
         entity_cls = param_metadata.entity_cls
@@ -274,7 +274,7 @@ def render_response(response: language.IntentResponse, language_code: language.L
     else:
         raise ValueError(f"Unsupported response type: {response}")
 
-def render_responses(intent_cls: IntentType, language_data: Dict[language.LanguageCode, language.IntentLanguageData], rich_platforms: Iterable[str]):
+def render_responses(intent_cls: Type[Intent], language_data: Dict[language.LanguageCode, language.IntentLanguageData], rich_platforms: Iterable[str]):
     result = []
 
     for language_code, language_code_data in language_data.items():
@@ -312,7 +312,7 @@ def render_utterance_chunk(chunk: language.UtteranceChunk):
 
     raise ValueError(f"Unsupported Utterance Chunk Type: {chunk}")
 
-def render_intent_usersays(agent_cls: type, intent: IntentType, language_code: language.LanguageCode, examples: List[language.ExampleUtterance]):
+def render_intent_usersays(agent_cls: type, intent: Type[Intent], language_code: language.LanguageCode, examples: List[language.ExampleUtterance]):
     result = []
     for e in examples:
         result.append(df.IntentUsersays(

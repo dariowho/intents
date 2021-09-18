@@ -127,4 +127,41 @@ def test_warning_if_superclass_not_dataclass():
         class a_sub_sub_intent(a_sub_intent):
             babar: Sys.Integer = 43
 
+def test_parent_intents():
+    @dataclass
+    class BaseIntent(Intent):
+        pass
+
+    @dataclass
+    class SubIntent(BaseIntent):
+        pass
+
+    @dataclass
+    class SubSubIntent(SubIntent):
+        pass
+
+    assert BaseIntent.parent_intents() == []
+    assert SubIntent.parent_intents() == [BaseIntent]
+    assert SubSubIntent.parent_intents() == [SubIntent, BaseIntent]
+
+def test_parent_intents__multiple_inheritance():
+    @dataclass
+    class BaseIntent(Intent):
+        pass
+
+    @dataclass
+    class OtherBaseIntent(Intent):
+        pass
+
+    @dataclass
+    class SubIntent(BaseIntent, OtherBaseIntent, int):
+        pass
+
+    @dataclass
+    class SubSubIntent(SubIntent):
+        pass
+
+    assert SubIntent.parent_intents() == [BaseIntent, OtherBaseIntent]
+    assert SubSubIntent.parent_intents() == [SubIntent, BaseIntent, OtherBaseIntent]
+
 # def subclass_checks_base_class_parameters():
