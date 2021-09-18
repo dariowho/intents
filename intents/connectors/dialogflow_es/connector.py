@@ -6,7 +6,7 @@ import os
 import logging
 import tempfile
 from dataclasses import dataclass, field
-from typing import Set, Dict, Union, Iterable
+from typing import Set, Dict, Union, Iterable, Type
 
 import google.auth.credentials
 from google.cloud.dialogflow_v2.types import TextInput, QueryInput, EventInput
@@ -15,7 +15,6 @@ from google.cloud.dialogflow_v2.services.agents import AgentsClient
 from google.cloud.dialogflow_v2 import types as pb
 
 from intents import Agent, Intent, LanguageCode, FulfillmentContext, FulfillmentResult
-from intents.types import AgentType, IntentType
 from intents.model.relations import intent_relations
 from intents.connectors.interface import Connector, Prediction, FulfillmentRequest, WebhookConfiguration, deserialize_intent_parameters
 from intents.connectors.dialogflow_es.auth import resolve_credentials
@@ -228,8 +227,8 @@ class DialogflowEsConnector(Connector):
     def _df_body_to_intent(
         self,
         df_body: PredictionBody,
-        build_related_cls: IntentType=None,
-        visited_intents: Set[IntentType]=None
+        build_related_cls: Type[Intent]=None,
+        visited_intents: Set[Type[Intent]]=None
     ) -> Intent:
         """
         Convert a Dialogflow prediction response into an instance of
@@ -309,7 +308,7 @@ def _build_need_context_set(agent_cls: type(Agent)) -> Set[Intent]:
             result.add(rel.target_cls)
     return result
 
-def _build_intents_by_context(agent_cls: AgentType) -> Dict[str, IntentType]:
+def _build_intents_by_context(agent_cls: Type[Agent]) -> Dict[str, Type[Intent]]:
     result = {}
     for intent_cls in agent_cls.intents:
         context_name = df_names.context_name(intent_cls)

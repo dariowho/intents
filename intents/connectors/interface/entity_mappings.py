@@ -29,11 +29,10 @@ dict of *Intents* entities.
 
 import logging
 from abc import abstractmethod
-from typing import Any, List, Dict
 from dataclasses import dataclass
+from typing import Any, List, Dict, Type
 
-from intents import Entity, LanguageCode
-from intents.types import IntentType, EntityType
+from intents import Intent, Entity, LanguageCode
 from intents.model.entity import EntityMixin, SystemEntityMixin
 
 logger = logging.getLogger(__name__)
@@ -57,7 +56,7 @@ class EntityMapping():
     """
 
     @property
-    def entity_cls(self) -> EntityType:
+    def entity_cls(self) -> Type[EntityMixin]:
         """
         This is the internal entity type that is being mapped.
 
@@ -142,7 +141,7 @@ class StringEntityMapping(EntityMapping):
             Service
     """
 
-    entity_cls: EntityType = None
+    entity_cls: Type[EntityMixin] = None
     service_name: str = None
 
     def from_service(self, service_data: Any) -> SystemEntityMixin:
@@ -169,7 +168,7 @@ class PatchedEntityMapping(EntityMapping):
     are (de)serialized as simple strings. If a Connector have different
     required, it should define a custom subclass of `PatchedEntityMapping`.
     """
-    entity_cls: EntityType = None
+    entity_cls: Type[EntityMixin] = None
     builtin_entity: Entity = None
 
     @property
@@ -193,7 +192,7 @@ class ServiceEntityMappings(dict):
     * Flexible lookup with :meth:`ServiceEntityMapping.lookup`
     """
 
-    def lookup(self, entity_cls: EntityType) -> EntityMapping:
+    def lookup(self, entity_cls: Type[EntityMixin]) -> EntityMapping:
         """
         Return the mapping in the dictionary that is associated with the given
         `entity_cls`. In addition to a simple `mappings[entity_cls]`, this
@@ -217,7 +216,7 @@ class ServiceEntityMappings(dict):
             raise KeyError(f"Failed to lookup entity {entity_cls} in mappings. Mapped entities: {mapped_entities}")
         return self[entity_cls]
 
-    def custom_entity_mapping(self, entity_cls: EntityType) -> EntityMapping:
+    def custom_entity_mapping(self, entity_cls: Type[EntityMixin]) -> EntityMapping:
         """
         Generate an entity mapping on the fly for the given custom entity. This
         is needed because, while System entities are static, Custom ones need to
@@ -238,7 +237,7 @@ class ServiceEntityMappings(dict):
             service_name=entity_cls.name
         )
 
-    def service_name(self, entity_cls: EntityType):
+    def service_name(self, entity_cls: Type[EntityMixin]):
         """
         Return the name of the given entity in the specific service; this can be
         the class name itself, or an :class:`EntityMapping` lookup in the case
@@ -251,7 +250,7 @@ class ServiceEntityMappings(dict):
         """
         return self.lookup(entity_cls).service_name
 
-    def is_mapped(self, entity_cls: EntityType, lang: LanguageCode) -> bool:
+    def is_mapped(self, entity_cls: Type[EntityMixin], lang: LanguageCode) -> bool:
         """
         Return `False` if no mapping is defined for the given entity. Also
         return `False` if a mapping exists, but the mapping defines
@@ -294,7 +293,7 @@ class ServiceEntityMappings(dict):
 
 def deserialize_intent_parameters(
     service_parameters: Dict[str, Any],
-    intent_cls: IntentType,
+    intent_cls: Type[Intent],
     mappings: ServiceEntityMappings
 ) -> Dict[str, EntityMixin]:
     """

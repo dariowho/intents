@@ -1,12 +1,11 @@
 import logging
-from dataclasses import dataclass, replace, field
-from typing import Dict, List, Any, Tuple
+from dataclasses import dataclass, field
+from typing import Dict, List, Any, Type
 from collections import defaultdict
 
-from intents import Intent, LanguageCode, FulfillmentContext, FulfillmentResult
-from intents.types import IntentType, AgentType
+from intents import Intent, Agent, LanguageCode, FulfillmentContext, FulfillmentResult
 from intents.connectors.interface import deserialize_intent_parameters, Prediction, ServiceEntityMappings
-from intents.language import intent_language, IntentLanguageData, IntentResponse, IntentResponseGroup, IntentResponseDict
+from intents.language import intent_language
 from intents.connectors._experimental.snips import prediction_format as f
 
 logger = logging.getLogger(__name__)
@@ -21,10 +20,10 @@ class SnipsPredictionComponent:
     prediction and trigger calls.
     """
 
-    agent_cls: AgentType
+    agent_cls: Type[Agent]
     entity_mappings: ServiceEntityMappings
 
-    def __init__(self, agent_cls: AgentType, entity_mappings: ServiceEntityMappings):
+    def __init__(self, agent_cls: Type[Agent], entity_mappings: ServiceEntityMappings):
         self.agent_cls = agent_cls
         self.entity_mappings = entity_mappings
 
@@ -134,7 +133,7 @@ class SnipsPredictionComponent:
         return prediction
 
 def _slot_list_to_param_dict(
-    intent_cls: IntentType,
+    intent_cls: Type[Intent],
     result_slots: List[f.ParseResultSlot]
 ) -> Dict[str, Any]:
     """

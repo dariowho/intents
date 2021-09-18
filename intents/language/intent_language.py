@@ -55,14 +55,13 @@ import logging
 import warnings
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import List, Dict, Union, Tuple
+from typing import List, Dict, Union, Tuple, Type
 
 import yaml
 
 # pylint: disable=unused-import
 import intents # Needed to generate docs
-from intents.model.intent import Intent, IntentType
-from intents.model.entity import EntityType
+from intents import Intent, EntityMixin
 from intents.language import agent_language, LanguageCode
 
 logger = logging.getLogger(__name__)
@@ -89,7 +88,7 @@ class EntityUtteranceChunk(UtteranceChunk):
     """
     An Utterance Chunk that is a matched entity
     """
-    entity_cls: EntityType
+    entity_cls: Type[EntityMixin]
     parameter_name: str
     parameter_value: str
 
@@ -563,7 +562,7 @@ class IntentLanguageData:
 
 def intent_language_data(
     agent_cls: "intents.model.agent.AgentType",
-    intent_cls: IntentType,
+    intent_cls: Type[Intent],
     language_code: LanguageCode=None
 ) -> Dict[LanguageCode, IntentLanguageData]:
     """

@@ -1,10 +1,9 @@
 import logging
 from enum import Enum
-from typing import Union
+from typing import Union, Type
 from datetime import datetime, date
 
-from intents import Sys, Entity
-from intents.types import EntityType
+from intents import Sys, Entity, EntityMixin
 from intents.language import LanguageCode
 from intents.resources.builtin_entities import color, language, music_genre, first_name
 from intents.connectors.interface import EntityMapping, StringEntityMapping, PatchedEntityMapping, ServiceEntityMappings
@@ -102,7 +101,7 @@ class DateMapping(EntityMapping):
 
 class SnipsEntityMappings(ServiceEntityMappings):
 
-    def custom_entity_mapping(self, entity_cls: EntityType):
+    def custom_entity_mapping(self, entity_cls: Type[EntityMixin]):
         return SnipsStringEntityMapping(
             entity_cls=entity_cls,
             service_name=entity_cls.name

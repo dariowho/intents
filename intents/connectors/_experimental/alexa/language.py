@@ -3,12 +3,11 @@ Alexa has peculiar requirements about language. Here we convert language data in
 a format that Alexa can digest.
 """
 import re
-from typing import Dict, List
 from dataclasses import dataclass
 from collections import defaultdict
+from typing import Dict, List, Type
 
-from intents import LanguageCode
-from intents.types import AgentType, EntityType
+from intents import EntityMixin, Agent, LanguageCode
 from intents.language import entity_language, match_agent_language
 
 LOCALE_MAP = {
@@ -42,17 +41,17 @@ class AlexaEntityEntry(entity_language.EntityEntry):
 
 class AlexaLanguageComponent:
 
-    agent_cls: AgentType
+    agent_cls: Type[Agent]
 
     _entry_id_to_value: Dict[LanguageCode, Dict[str, str]]
 
-    def __init__(self, agent_cls: AgentType):
+    def __init__(self, agent_cls: Type[Agent]):
         self.agent_cls = agent_cls
         self._entry_id_to_value = {}
 
         self._build_indices(agent_cls)
 
-    def _build_indices(self, agent_cls: AgentType):
+    def _build_indices(self, agent_cls: Type[Agent]):
         # TODO: optimize (this loads all language data for entities)
         self._entry_id_to_value = defaultdict(dict)
         for entity_cls in agent_cls._entities_by_name.values():
@@ -121,13 +120,13 @@ class AlexaLanguageComponent:
         """
         return self._entry_id_to_value[lang][alexa_entry_id]
 
-    def entity_language_data(self, entity_cls: EntityType, lang: LanguageCode=None):
+    def entity_language_data(self, entity_cls: Type[EntityMixin], lang: LanguageCode=None):
         return self._entity_language_data(self.agent_cls, entity_cls, lang)
 
     @staticmethod
     def _entity_language_data(
-        agent_cls: AgentType,
-        entity_cls: EntityType,
+        agent_cls: Type[Agent],
+        entity_cls: Type[EntityMixin],
         lang: LanguageCode=None
     ) -> Dict[LanguageCode, List[AlexaEntityEntry]]:
         """
@@ -154,7 +153,7 @@ class AlexaLanguageComponent:
         return result
 
     @staticmethod
-    def entry_value_id(entity_cls: EntityType, entry: AlexaEntityEntry):
+    def entry_value_id(entity_cls: Type[EntityMixin], entry: AlexaEntityEntry):
         """
         Entity entries in Alexa have IDs. This is a centralized function to
         compute them.

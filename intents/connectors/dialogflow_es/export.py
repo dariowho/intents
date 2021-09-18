@@ -10,8 +10,7 @@ from uuid import uuid1
 from dataclasses import asdict
 from typing import List, Dict, Set, Iterable, Type
 
-from intents import Intent, language
-from intents.types import EntityType
+from intents import Intent, EntityMixin, language
 from intents.model.relations import intent_relations, FollowIntentRelation
 import intents.connectors.dialogflow_es.agent_format as df
 import intents.connectors.dialogflow_es.names as df_names
@@ -326,7 +325,7 @@ def render_intent_usersays(agent_cls: type, intent: Type[Intent], language_code:
 # Entity
 #
 
-def render_entity(entity_cls: EntityType) -> df.Entity:
+def render_entity(entity_cls: Type[EntityMixin]) -> df.Entity:
     metadata = entity_cls.metadata
     return df.Entity(
         id=str(uuid1()),
@@ -336,7 +335,7 @@ def render_entity(entity_cls: EntityType) -> df.Entity:
         allowFuzzyExtraction=metadata.fuzzy_matching
     )
 
-def render_entity_entries(entity_cls: EntityType, entries: List[language.EntityEntry]) -> List[df.EntityEntry]:
+def render_entity_entries(entity_cls: Type[EntityMixin], entries: List[language.EntityEntry]) -> List[df.EntityEntry]:
     result = []
     for e in entries:
         result.append(df.EntityEntry(

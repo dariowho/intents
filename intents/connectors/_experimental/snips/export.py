@@ -1,10 +1,10 @@
 import logging
 from dataclasses import asdict
-from typing import List, Dict
 from collections import ChainMap
+from typing import List, Dict, Type
 
+from intents import Intent, EntityMixin
 from intents.helpers.data_classes import custom_asdict_factory
-from intents.types import IntentType, EntityType
 from intents.language import intent_language, entity_language
 from intents.language import agent_supported_languages, LanguageCode
 from intents.connectors._experimental.snips import SnipsConnector
@@ -45,7 +45,7 @@ def render_all_intents(connector: SnipsConnector, lang: LanguageCode):
 
 def render_intent(
     connector: SnipsConnector,
-    intent_cls: IntentType,
+    intent_cls: Type[Intent],
     lang: LanguageCode
 ) -> af.DatasetIntent:
     language_data = intent_language.intent_language_data(connector.agent_cls, intent_cls, lang)
@@ -133,7 +133,7 @@ def render_all_entities(
 
 def render_entity(
     connector: SnipsConnector,
-    entity_cls: EntityType,
+    entity_cls: Type[EntityMixin],
     lang: LanguageCode
 ) -> Dict[str, af.DatasetEntity]:
     language_data = entity_language.entity_language_data(connector.agent_cls, entity_cls, lang)

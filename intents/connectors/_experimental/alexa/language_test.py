@@ -1,14 +1,14 @@
+from typing import Type
 from unittest.mock import patch
 from dataclasses import dataclass
 
 import pytest
 
 from intents import Intent, Entity, Agent, LanguageCode
-from intents.types import AgentType
 from intents.language import EntityEntry
 from intents.connectors._experimental.alexa import language
 
-def _get_toy_agent() -> AgentType:
+def _get_toy_agent() -> Type[Agent]:
     class ToyAgent(Agent):
         languages = ['en', 'it']
     return ToyAgent

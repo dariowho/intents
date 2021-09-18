@@ -1,13 +1,9 @@
 import logging
 import warnings
-from typing import Dict, Any
 from dataclasses import dataclass, field
 
 from intents import Intent
-from intents.types import IntentType
 from intents.language import IntentResponseDict
-from intents.model.entity import EntityMixin
-from intents.connectors.interface.entity_mappings import ServiceEntityMappings
 
 logger = logging.getLogger(__name__)
 

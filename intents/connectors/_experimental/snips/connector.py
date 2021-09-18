@@ -23,12 +23,11 @@ import os
 import json
 import shutil
 import logging
-from typing import Union
+from typing import Union, Type
 
 import snips_nlu
 
-from intents import Intent, LanguageCode
-from intents.types import AgentType
+from intents import Intent, Agent, LanguageCode
 from intents.language import agent_supported_languages, ensure_language_code
 from intents.connectors.interface import Connector, ServiceEntityMappings, FulfillmentRequest
 from intents.connectors._experimental.snips.prediction import SnipsPrediction, SnipsPredictionComponent
@@ -66,7 +65,7 @@ class SnipsConnector(Connector):
     prediction_component: SnipsPredictionComponent
 
     def __init__(self,
-        agent_cls: AgentType,
+        agent_cls: Type[Agent],
         default_session: str=None,
         default_language: Union[LanguageCode, str]=None
     ):

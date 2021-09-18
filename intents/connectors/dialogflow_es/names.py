@@ -1,9 +1,11 @@
-from intents.types import IntentType
+from typing import Type
 
-def context_name(intent_cls: IntentType) -> str:
+from intents import Intent
+
+def context_name(intent_cls: Type[Intent]) -> str:
     return "c_" + intent_cls.name.replace(".", "_") # TODO: refine
 
-def event_name(intent_cls: IntentType) -> str:
+def event_name(intent_cls: Type[Intent]) -> str:
     """
     Generate the default event name that we associate with every intent.
 

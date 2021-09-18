@@ -8,14 +8,14 @@ Once the Agent is defined, you will connect it to a cloud service with a
 """
 import re
 import logging
-import inspect
 from types import ModuleType
-from typing import List, Dict, Union, Set
 from dataclasses import dataclass
+from inspect import isclass, getmembers
+from typing import List, Dict, Union, Set, Type
 
 from intents import LanguageCode
-from intents.model.intent import Intent, IntentType, IntentParameterMetadata
-from intents.model.entity import EntityMixin, SystemEntityMixin, EntityType
+from intents.model.intent import Intent, IntentParameterMetadata
+from intents.model.entity import EntityMixin, SystemEntityMixin
 from intents import language
 
 logger = logging.getLogger(__name__)
@@ -36,7 +36,7 @@ class AgentType(type):
     intents: List[Intent] = None
     _intents_by_name: Dict[str, Intent] = None
     _intents_by_norm_name: Dict[str, Intent] = None # my_module.HelloWorld -> mymodulehelloworld
-    _entities_by_name: Dict[str, EntityType] = None
+    _entities_by_name: Dict[str, Type[EntityMixin]] = None
     _parameters_by_name: Dict[str, RegisteredParameter] = None
     _referenced_sys_entities: Set[SystemEntityMixin] = None # All
 
@@ -96,7 +96,7 @@ class Agent(metaclass=AgentType):
     """
 
     @classmethod
-    def register(cls, resource: Union[IntentType, ModuleType]):
+    def register(cls, resource: Union[Type[Intent], ModuleType]):
         """
         Register the given resource in Agent. The resource could be:
 
@@ -140,16 +140,16 @@ class Agent(metaclass=AgentType):
         :param resource: The resource to register (an Intent, or a module
                          containing Intents)
         """
-        if isinstance(resource, IntentType):
+        if isclass(resource) and issubclass(resource, Intent):
             cls._register_intent(resource)
 
         elif isinstance(resource, ModuleType):
-            for member_name, member in inspect.getmembers(resource, inspect.isclass):
+            for member_name, member in getmembers(resource, isclass):
                 if member.__module__ == resource.__name__ and issubclass(member, Intent):
                     cls._register_intent(member)
 
     @classmethod
-    def _register_intent(cls, intent_cls: IntentType):
+    def _register_intent(cls, intent_cls: Type[Intent]):
         """
         Register a single intent in the Agent class and check that language data is
         present for all supported languages (examples and responses).
@@ -201,7 +201,7 @@ class Agent(metaclass=AgentType):
         existing_param.used_in.append(intent_cls)
 
     @classmethod
-    def _register_entity(cls, entity_cls: EntityType, parameter_name: str, intent_name: str):
+    def _register_entity(cls, entity_cls: Type[EntityMixin], parameter_name: str, intent_name: str):
         if not issubclass(entity_cls, EntityMixin):
             raise ValueError(f"Invalid type '{entity_cls}' for parameter '{parameter_name}' in Intent '{intent_name}': must be an Entity. Try system entities such as 'intents.Sys.Integer', or define your own custom entity.")
 

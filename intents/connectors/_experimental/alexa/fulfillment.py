@@ -4,14 +4,12 @@ requests from Alexa, build Intent objects, solve relations and run fulfillment
 procedures.
 """
 import logging
-from dataclasses import dataclass, replace, field
-from typing import Dict, List, Any, Tuple
-from collections import defaultdict
+from dataclasses import dataclass, field
+from typing import Dict, List, Any, Type
 
-from intents import Intent, LanguageCode, FulfillmentContext, FulfillmentResult
-from intents.types import IntentType, AgentType
-from intents.connectors.interface import deserialize_intent_parameters, Prediction, ServiceEntityMappings
-from intents.language import intent_language, IntentLanguageData, IntentResponse, IntentResponseGroup, IntentResponseDict
+from intents import Intent, Agent, LanguageCode, FulfillmentContext, FulfillmentResult
+from intents.connectors.interface import deserialize_intent_parameters, Prediction
+from intents.language import intent_language
 from intents.connectors._experimental.alexa import fulfillment_schemas as fs
 from intents.connectors._experimental.alexa import names, slot_types, language
 
@@ -27,13 +25,13 @@ class AlexaFulfillmentComponent:
     fulfillment requests and... TODO: complete.
     """
 
-    agent_cls: AgentType
+    agent_cls: Type[Agent]
     names_component: names.AlexaNamesComponent
     language_component: language.AlexaLanguageComponent
 
     def __init__(
         self,
-        agent_cls: AgentType,
+        agent_cls: Type[Agent],
         names_component: names.AlexaNamesComponent,
         language_component: language.AlexaLanguageComponent
     ):
@@ -152,7 +150,7 @@ class AlexaFulfillmentComponent:
 
     def _slots_to_param_dict(
         self,
-        intent_cls: IntentType,
+        intent_cls: Type[Intent],
         request_slots: List[fs.IntentSlot],
         lang: LanguageCode
     ) -> Dict[str, Any]:

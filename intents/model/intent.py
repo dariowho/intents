@@ -13,7 +13,7 @@ import inspect
 import logging
 import dataclasses
 from dataclasses import dataclass
-from typing import List, Dict, Union, Any, _GenericAlias
+from typing import List, Dict, Union, Any, Type, _GenericAlias
 
 # pylint: disable=unused-import # needed for docs
 import intents
@@ -233,7 +233,8 @@ class Intent(metaclass=IntentType):
     intent names must follow.
 
     This intent has a **lifespan** member. This is used in
-    :mod:`intents.model.relations` to keep track of the context.
+    :mod:`intents.model.relations` to determine how long should the Intent stay
+    in the conversation context after it is predicted.
 
     Most importantly, this intent has a `user_name` **parameter** of type
     :class:`Sys.Person` (check out :class:`intents.model.entity.Sys` for
@@ -244,7 +245,7 @@ class Intent(metaclass=IntentType):
 
     >>> predicted = connector.predict("My name is John")
     >>> predicted.intent
-    user_says_hello(user_name="John")
+    UserSaysHello(user_name="John")
     >>> predicted.intent.user_name
     "John"
     >>> predicted.fulfillment_text
@@ -283,7 +284,7 @@ class Intent(metaclass=IntentType):
         return result
 
     @classmethod
-    def parent_intents(cls) -> List[IntentType]:
+    def parent_intents(cls) -> List[Type["Intent"]]:
         """
         Return a list of the Intent parent classes. This wraps `cls.mro()`
         filtering out non-Intent parents (e.g. :class:`object`), :class:`Intent`
@@ -343,7 +344,7 @@ class Intent(metaclass=IntentType):
         """
         return None
 
-def _intent_name_from_class(intent_cls: IntentType) -> str:
+def _intent_name_from_class(intent_cls: Type[Intent]) -> str:
     full_name = f"{intent_cls.__module__}.{intent_cls.__name__}"
     if intent_cls.__module__.startswith("_"):
         full_name = intent_cls.__name__

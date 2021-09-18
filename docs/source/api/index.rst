@@ -17,5 +17,4 @@ service; once your Agent is defined you can use one of the built-in
     relations
     language
     fulfillment
-    types
     names

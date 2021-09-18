@@ -15,10 +15,10 @@ ambiguous, punctuation is stripped from utterances, and so on..)
 """
 import re
 import logging
-from typing import List, Dict
+from typing import List, Dict, Type
 from dataclasses import asdict
 
-from intents.types import AgentType, IntentType, EntityType
+from intents import Intent, Agent, EntityMixin
 from intents.language import intent_language, intent_language_data, agent_supported_languages, LanguageCode
 from intents.connectors._experimental.alexa import agent_schemas as ask_schema
 from intents.connectors._experimental.alexa import names, language
@@ -52,13 +52,13 @@ DEFAULT_INTENTS = [
 ]
 
 class AlexaExportComponent:
-    agent_cls: AgentType
+    agent_cls: Type[Agent]
     names_component: names.AlexaNamesComponent
     language_component: language.AlexaLanguageComponent
     invocation_name: str
 
     def __init__(self,
-        agent_cls: AgentType,
+        agent_cls: Type[Agent],
         names_component: names.AlexaNamesComponent,
         language_component: language.AlexaLanguageComponent,
         invocation_name: str
@@ -101,7 +101,7 @@ class AlexaExportComponent:
     # Intent
     #
 
-    def render_intent(self, intent_cls: IntentType, lang: LanguageCode) -> ask_schema.LanguageModelIntent:
+    def render_intent(self, intent_cls: Type[Intent], lang: LanguageCode) -> ask_schema.LanguageModelIntent:
         """
         Return None if intent has no example utterances
         """
@@ -116,7 +116,7 @@ class AlexaExportComponent:
             # TODO: complete
         )
 
-    def render_intent_slots(self, intent_cls: IntentType) -> List[ask_schema.LanguageModelIntentSlot]:
+    def render_intent_slots(self, intent_cls: Type[Intent]) -> List[ask_schema.LanguageModelIntentSlot]:
         result = []
         for param_name, param_metadata in intent_cls.parameter_schema.items():
             entity_cls = param_metadata.entity_cls
@@ -132,7 +132,7 @@ class AlexaExportComponent:
         return result
 
 
-    def render_intent_samples(self, intent_cls: IntentType, lang: LanguageCode) -> List[str]:
+    def render_intent_samples(self, intent_cls: Type[Intent], lang: LanguageCode) -> List[str]:
         language_data = intent_language_data(self.agent_cls, intent_cls, lang)
         language_data = language_data[lang]
         result = []
@@ -156,7 +156,7 @@ class AlexaExportComponent:
     # Slot Type
     #
 
-    def render_slot_type(self, entity_cls: EntityType, lang: LanguageCode) -> ask_schema.LanguageModelType:
+    def render_slot_type(self, entity_cls: Type[EntityMixin], lang: LanguageCode) -> ask_schema.LanguageModelType:
         language_data = self.language_component.entity_language_data(entity_cls, lang)
         language_data = language_data[lang]
         slot_values = [self.render_slot_value(entity_cls, entry) for entry in language_data]
@@ -166,7 +166,7 @@ class AlexaExportComponent:
             values=slot_values
         )
 
-    def render_slot_value(self, entity_cls: EntityType, entity_entry: language.AlexaEntityEntry) -> ask_schema.LanguageModelTypeValue:
+    def render_slot_value(self, entity_cls: Type[EntityMixin], entity_entry: language.AlexaEntityEntry) -> ask_schema.LanguageModelTypeValue:
         return ask_schema.LanguageModelTypeValue(
             id=self.language_component.entry_value_id(entity_cls, entity_entry),
             name=ask_schema.LanguageModelTypeValueName(
