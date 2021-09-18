@@ -90,6 +90,7 @@ class QueryResultContext:
     lifespanCount: int = 0
     parameters: Dict[str, Any] = field(default_factory=dict)
 
+    @property
     def simple_name(self):
         """
         Dialogflow will store a full context path in QueryResultContext.name.
@@ -106,12 +107,12 @@ class QueryResultIntent:
 class QueryResult:
     queryText: str
     languageCode: str
-    parameters: Dict[str, Any]
-    allRequiredParamsPresent: bool # TODO: check behavior (when "false" field may be removed from dict)
-    fulfillmentText: str
-    fulfillmentMessages: List[QueryResultMessage]
-    intent: QueryResultIntent
-    intentDetectionConfidence: float
+    parameters: Dict[str, Any] = None
+    intent: QueryResultIntent = None
+    intentDetectionConfidence: float = None
+    fulfillmentText: str = ""
+    fulfillmentMessages: List[QueryResultMessage] = field(default_factory=list)
+    allRequiredParamsPresent: bool = False
     outputContexts: List[QueryResultContext] = field(default_factory=list)
     action: str = ""
     diagnosticInfo: dict = field(default_factory=dict)

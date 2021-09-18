@@ -34,9 +34,6 @@ df_response_espresso_milk_nofoam = DetectIntentResponse.deserialize(df_response_
 #
 
 @patch("intents.connectors.dialogflow_es.connector.resolve_credentials")
-@patch("intents.connectors.dialogflow_es.connector.EventInput")
-@patch("intents.connectors.dialogflow_es.connector.QueryInput")
-@patch("intents.connectors.dialogflow_es.connector.TextInput")
 @patch("intents.connectors.dialogflow_es.connector.SessionsClient")
 def test_predict(mock_df_client_class, *args):
     # TODO: this relies on the consistency between mock prediction and
@@ -72,9 +69,6 @@ def test_predict(mock_df_client_class, *args):
         assert predicted.fulfillment_message_dict == expected_responses
 
 @patch("intents.connectors.dialogflow_es.connector.resolve_credentials")
-@patch("intents.connectors.dialogflow_es.connector.EventInput")
-@patch("intents.connectors.dialogflow_es.connector.QueryInput")
-@patch("intents.connectors.dialogflow_es.connector.TextInput")
 @patch("intents.connectors.dialogflow_es.connector.SessionsClient")
 def test_predict_related_intents_follow(mock_df_client_class, *args):
     def mock_df_client():
@@ -94,6 +88,9 @@ def test_predict_related_intents_follow(mock_df_client_class, *args):
     assert isinstance(intent.parent_add_milk, coffee_agent.AddMilk)
     assert isinstance(intent.parent_add_milk.parent_ask_coffee, coffee_agent.AskCoffee) # TODO: or should be AskEspresso?
     assert intent.parent_add_milk.parent_ask_coffee.roast == "medium"
+    assert intent.lifespan == 0 # No followups -> does not spawn a context
+    assert intent.parent_add_milk.lifespan == 4
+    assert intent.parent_add_milk.parent_ask_coffee.lifespan == 3
 
 @patch("intents.connectors.dialogflow_es.connector.resolve_credentials")
 def test_intent_need_context(m_credentials):

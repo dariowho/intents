@@ -31,10 +31,13 @@ class PredictionBody:
     """
     
     queryResult: df.QueryResult # This field is common in webhook
-                                 # requests and detectintent responses
+                                # requests and detectintent responses
+
+    context_lifespans: Dict[str, int]
 
     def __init__(self, query_result: df.QueryResult):
         self.queryResult = query_result
+        self.context_lifespans = {c.simple_name: c.lifespanCount for c in query_result.outputContexts}
 
     @property
     def intent_name(self):
@@ -55,6 +58,8 @@ class PredictionBody:
         TODO: cover less frequent cases (Event/context parameter source,
         event/context/constant parameter default, ...)
 
+        TODO: cache
+
         :return: A dict of Contexts, A dict of global parameter values
         """
         result_contexts = {}
@@ -69,7 +74,7 @@ class PredictionBody:
                     parameters[p_name].value = p_value
 
             context = DfResponseContext(
-                name=c.simple_name(),
+                name=c.simple_name,
                 full_name=c.name,
                 lifespan=c.lifespanCount,
                 parameters=parameters
@@ -89,7 +94,7 @@ class DetectIntentBody(PredictionBody):
     detect_intent: df.DetectIntentResponse
 
     def __init__(self, detect_intent_protobuf: pb.DetectIntentResponse):
-        detect_intent_dict = MessageToDict(detect_intent_protobuf._pb)
+        detect_intent_dict = MessageToDict(detect_intent_protobuf._pb, including_default_value_fields=True)
         self.detect_intent = df.from_dict(
             data_class=df.DetectIntentResponse,
             data=detect_intent_dict,

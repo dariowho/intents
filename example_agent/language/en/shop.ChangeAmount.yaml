@@ -1,6 +1,8 @@
 examples:
   - I'd like to change the amount of that
   - Actually, I'd rather have more
+  - I want more
+  - I want less than that
   - Less than that actually
   - Make it $amount{two}
   - let's make it $amount{1} please

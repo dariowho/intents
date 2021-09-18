@@ -16,6 +16,7 @@ from google.cloud.dialogflow_v2 import types as pb
 
 from intents import Agent, Intent, LanguageCode, FulfillmentContext, FulfillmentResult
 from intents.model.relations import intent_relations
+from intents.language_codes import ensure_language_code
 from intents.connectors.interface import Connector, Prediction, FulfillmentRequest, WebhookConfiguration, deserialize_intent_parameters
 from intents.connectors.dialogflow_es.auth import resolve_credentials
 from intents.connectors.dialogflow_es.util import dict_to_protobuf
@@ -143,13 +144,14 @@ class DialogflowEsConnector(Connector):
             )
             agents_client.restore_agent(request=restore_request)
 
-    def predict(self, message: str, session: str = None, language: str = None) -> DialogflowPrediction:
+    def predict(self, message: str, session: str = None, language: Union[LanguageCode, str] = None) -> DialogflowPrediction:
         if not session:
             session = self.default_session
         if not language:
             language = self.default_language
 
-        text_input = TextInput(text=message, language_code=language)
+        language = ensure_language_code(language)
+        text_input = TextInput(text=message, language_code=language.value)
         query_input = QueryInput(text=text_input)
         session_path = self._session_client.session_path(
             self.gcp_project_id, session)
@@ -161,12 +163,13 @@ class DialogflowEsConnector(Connector):
 
         return self._df_body_to_prediction(df_response)
 
-    def trigger(self, intent: Intent, session: str=None, language: str=None) -> DialogflowPrediction:
+    def trigger(self, intent: Intent, session: str=None, language: Union[LanguageCode, str]=None) -> DialogflowPrediction:
         if not session:
             session = self.default_session
         if not language:
             language = self.default_language
 
+        language = ensure_language_code(language)
         intent_name = intent.name
         event_name = df_names.event_name(intent.__class__)
         event_parameters = {}
@@ -184,7 +187,7 @@ class DialogflowEsConnector(Connector):
         event_input = EventInput(
             name=event_name,
             parameters=dict_to_protobuf(event_parameters),
-            language_code=language
+            language_code=language.value
         )
         query_input = QueryInput(event=event_input)
         session_path = self._session_client.session_path(
@@ -251,9 +254,8 @@ class DialogflowEsConnector(Connector):
             visited_intents = set()
 
         contexts, context_parameters = df_body.contexts()
-        
+
         # Slot filling in progress
-        # TODO: use queryResult.allRequiredParamsPresent instead
         # TODO: also check queryResult.cancelsSlotFilling
         # if "__system_counters__" in contexts:
         if not df_body.queryResult.allRequiredParamsPresent:
@@ -287,9 +289,13 @@ class DialogflowEsConnector(Connector):
                 raise ValueError(f"Loop detected: {rel.target_cls} was already visited. Make sure "
                                  "your Agent has no circular dependencies")
             related_intent = self._df_body_to_intent(df_body, rel.target_cls, visited_intents)
+            related_intent.lifespan = df_body.context_lifespans.get(df_names.context_name(rel.target_cls), 0)
+            
             related_intents_dict[rel.field_name] = related_intent
 
-        return intent_cls(**parameter_dict, **related_intents_dict)
+        result = intent_cls(**parameter_dict, **related_intents_dict)
+        result.lifespan = df_body.context_lifespans.get(df_names.context_name(intent_cls), 0)
+        return result
 
     def _intent_needs_context(self, intent: Intent) -> bool:
         return intent in self._need_context_set

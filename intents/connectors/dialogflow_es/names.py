@@ -3,7 +3,7 @@ from typing import Type
 from intents import Intent
 
 def context_name(intent_cls: Type[Intent]) -> str:
-    return "c_" + intent_cls.name.replace(".", "_") # TODO: refine
+    return "c_" + intent_cls.name.replace(".", "_").lower() # TODO: refine
 
 def event_name(intent_cls: Type[Intent]) -> str:
     """
