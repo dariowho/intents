@@ -147,6 +147,6 @@ What now?
 
 Now that you know the basics, you can either:
 
+* Dive deep into the :ref:`Core API` to learn the details of how *Intents* work.
 * Explore the included :ref:`Example Agent`, that describes all the available
   features of the framework
-* Dive deep into the :ref:`Core API` to learn the finest details.

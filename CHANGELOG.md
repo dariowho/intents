@@ -44,6 +44,7 @@ Fix:
 * (#17) Fix Entity export in Dialogflow (canonical value needed to be in
   synonyms as well)
 * (#17) Patch entity entries with invalid characters in Alexa
+* Fix Webhook status and Image Response in Dialogflow `DetectIntent` payload parsing
 
 # v0.2.0
 

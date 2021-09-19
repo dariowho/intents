@@ -8,7 +8,7 @@ from google.protobuf.json_format import MessageToDict
 from google.cloud.dialogflow_v2 import types as pb
 
 from intents.connectors.dialogflow_es import prediction_format as df
-from intents.language import IntentResponseGroup, IntentResponseDict, IntentResponse, TextIntentResponse, QuickRepliesIntentResponse, CardIntentResponse
+from intents.language import IntentResponseGroup, IntentResponseDict, IntentResponse, TextIntentResponse, QuickRepliesIntentResponse, ImageIntentResponse, CardIntentResponse
 
 logger = logging.getLogger(__name__)
 
@@ -189,6 +189,23 @@ class DialogflowQuickRepliesResponse(QuickRepliesIntentResponse, DialogflowInten
             replies=df_message.quickReplies.quickReplies
         )
 
+class DialogflowImageResponse(ImageIntentResponse, DialogflowIntentResponse):
+
+    @classmethod
+    def from_df_message(cls, df_message: df.QueryResultMessage) -> TextIntentResponse:
+        """
+        .. code-block: json
+            
+            {
+                "imageUri": "https://www.example.com/image.png",
+                "accessibilityText": "An example image"
+            }
+        """
+        return ImageIntentResponse(
+            url=df_message.image.imageUri,
+            title=df_message.image.accessibilityText
+        )
+
 class DialogflowCardResponse(CardIntentResponse, DialogflowIntentResponse):
 
     @classmethod
@@ -213,6 +230,8 @@ def build_response_message(df_message: df.QueryResultMessage):
         return DialogflowQuickRepliesResponse.from_df_message(df_message)
     if df_message.card:
         return DialogflowCardResponse.from_df_message(df_message)
+    if df_message.image:
+        return DialogflowImageResponse.from_df_message(df_message)
     # TODO: custom payload
 
     raise ValueError(f"Unsupported Fulfillment Message: {df_message}")

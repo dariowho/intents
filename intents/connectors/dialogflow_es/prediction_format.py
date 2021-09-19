@@ -32,7 +32,7 @@ class QueryResultMessageText:
 @dataclass
 class QueryResultMessageImage:
     imageUri: str
-    accessibilityTest: str = ""
+    accessibilityText: str = ""
 
 @dataclass
 class QueryResultMessageQuickReplies:
@@ -121,6 +121,7 @@ class QueryResult:
     cancelsSlotFilling: bool = False
     speechRecognitionConfidence: float = None
 
+@dataclass
 class DetectIntentResponseWebhookStatus:
     code: int
     message: str

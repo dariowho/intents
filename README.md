@@ -63,13 +63,10 @@ df.upload()  # You will find it in your Dialogflow Console
 *Intents* will act transparently as a **prediction** client:
 
 ```python
->>> predicted = df.predict("Hi there, my name is Mario")
->>> predicted.intent
-HelloIntent(user_name="Mario")
->>> predicted.intent.user_name
-"Mario"
->>> predicted.fulfillment_text
-"Hello Mario, this is Bot!"
+predicted = df.predict("Hi there, my name is Mario")
+predicted.intent            # HelloIntent(user_name="Mario")
+predicted.intent.user_name  # "Mario"
+predicted.fulfillment_text  # "Hello Mario, this is Bot!"
 ```
 
 For a complete working example, check out the included [Example Agent](example_agent/). Also, *Intents* **documentation** is published at https://intents.readthedocs.io/ 📚
