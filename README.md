@@ -2,12 +2,12 @@
 
 [![Documentation Status](https://readthedocs.org/projects/intents/badge/?version=latest)](https://intents.readthedocs.io/en/latest/?badge=latest)
 [![codecov](https://codecov.io/gh/dariowho/intents/branch/master/graph/badge.svg?token=XAVLW70J8S)](https://codecov.io/gh/dariowho/intents)
-[![HEAD version](https://img.shields.io/badge/head-v0.3a1-blue.svg)](https://img.shields.io/badge/head-v0.3a1-blue.svg)
+[![HEAD version](https://img.shields.io/badge/head-v0.3.0-blue.svg)](https://img.shields.io/badge/head-v0.3.0-blue.svg)
 [![PyPI version](https://badge.fury.io/py/intents.svg)](https://badge.fury.io/py/intents)
 
 **Intents** is a Python framework to define and operate
 Conversational Agents with a simple, code-first approach. *Intents* comes with
-built-in support for Dialogflow ES. Its main benefits are:
+built-in support for Dialogflow ES and experimental Alexa and Snips connectors. Its main benefits are:
 
 * **Agents are Python projects**. You will develop with autocomplete, static type checking
   and everything you are already used to.
