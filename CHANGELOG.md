@@ -1,4 +1,4 @@
-# v0.3.0 (in development)
+# v0.3.0
 
 Add:
 
@@ -34,7 +34,9 @@ Change:
     * `DialogflowIntentResponse` classes moved from `prediction_format` to
       `prediction` 
     * Replace protobuf parameters with dataclass equivalents
-* (#21) (internal) Rename metaclasses and move to `intents.types`
+* Change Dialogflow context/event names generation to use CamelCase ->
+  snake_case conversion (e.g. context for `AskCoffee` will be `c_ask_coffee`
+  instead of `c_askcoffee`). This requires re-uploading old agents.
 
 Fix:
 

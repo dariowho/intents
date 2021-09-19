@@ -31,8 +31,10 @@ fulfillment calls:
 
 Connectors are responsible for receiving fulfillment requests from Services,
 build the appropriate :class:`~intents.model.intent.Intent` instance, call
-:meth:`~intents.model.intent.Intent.fulfill` on it, and return its response in the
-correct Service format.
+:meth:`~intents.model.intent.Intent.fulfill` on it, and return its response in
+the correct Service format. A **development server** is included, to
+conveniently receive REST webhook calls and route them to a Connector; see
+:func:`run_dev_server` for details.
 
 We notice that :meth:`~intents.model.intent.Intent.fulfill` returns
 :class:`~intents.model.intent.Intent` instances. These are used to trigger a new
@@ -104,12 +106,18 @@ def run_dev_server(connector: Connector, host: str='', port: str=8000):
     .. code-block:: python
 
         from intents.fulfillment import run_dev_server
-        from intents.connectors import DialogflowEsConnector
+        from intents.connectors import DialogflowEsConnector, WebhookConfiguration
         from example_agent import ExampleAgent
 
-        df = DialogflowEsConnector(ExampleAgent, ...)
+        webhook = WebhookConfiguration('https://<MY-ADDRESS>.ngrok.io', {"X-Foo": "bar"})
+        df = DialogflowEsConnector(..., ExampleAgent, webhook_configuration=webhook)
+        df.upload()  # Will set webhook address in Dialogflow
         run_dev_server(df)
 
+    After running the example above, prediction calls (either from
+    :meth:`df.predict` or from the Dialogflow UI) will result in Dialogflow
+    calling the webhook endpoint for fulfillment. You can try it with the
+    intents defined in :mod:`example_agent.calculator`.
 
     Note that the server will only release its port after its Python process
     dies. This makes it inconvenient to run within a Python CLI, because it
