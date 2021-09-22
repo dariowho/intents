@@ -14,7 +14,8 @@ from inspect import isclass, getmembers
 from typing import List, Dict, Union, Set, Type
 
 from intents import LanguageCode
-from intents.model.intent import Intent, IntentParameterMetadata
+from intents.model.intent import Intent
+from intents.model.parameter import IntentParameter, NluIntentParameter, SessionIntentParameter
 from intents.model.entity import EntityMixin, SystemEntityMixin
 from intents import language
 
@@ -26,7 +27,7 @@ class RegisteredParameter:
     Agents register intent parameters. If two intents declare the same parameter
     name, they must also declare the same type for it. 
     """
-    metadata: IntentParameterMetadata
+    metadata: IntentParameter
     used_in: List[type(Intent)]
 
 class AgentType(type):
@@ -179,7 +180,7 @@ class Agent(metaclass=AgentType):
         cls._intents_by_norm_name[norm_name] = intent_cls
 
     @classmethod
-    def _register_parameter(cls, param_meta: IntentParameterMetadata, intent_cls: type(Intent)):
+    def _register_parameter(cls, param_meta: IntentParameter, intent_cls: type(Intent)):
         existing_param: RegisteredParameter = cls._parameters_by_name.get(param_meta.name)
         if not existing_param:
             cls._parameters_by_name[param_meta.name] = RegisteredParameter(
@@ -188,15 +189,34 @@ class Agent(metaclass=AgentType):
             )
             return
 
-        if param_meta.entity_cls != existing_param.metadata.entity_cls:
-            raise ValueError(f"Parameters with the same name must have the same type. Parameter '{param_meta.name}' " +
-                f"is declared in Intent '{intent_cls.name}' with type '{param_meta.entity_cls}'; however, it was " +
-                f"also declared in Intents '{existing_param.used_in}' with type '{existing_param.metadata.entity_cls}'")
-                
-        if param_meta.is_list and not existing_param.metadata.is_list:
-            raise ValueError(f"Parameters with the same name must have the same type. Parameter '{param_meta.name}' " +
-                f"is declared in Intent '{intent_cls.name}' as a List; however, it was also declared in Intents " +
-                f"'{existing_param.used_in}' as not a List")
+        if isinstance(param_meta, NluIntentParameter):
+            if not isinstance(existing_param.metadata, NluIntentParameter):
+                raise ValueError(f"Parameters with the same name must have the same type. Parameter '{param_meta.name}' "
+                    f"is declared in Intent '{intent_cls.name}' as a NLU Parameter with type '{param_meta.entity_cls}'; "
+                    f"however, it was also declared in Intents '{existing_param.used_in}' as a Session Parameter: "
+                    f"{existing_param.metadata}")
+
+            if param_meta.entity_cls != existing_param.metadata.entity_cls:
+                raise ValueError(f"Parameters with the same name must have the same type. Parameter '{param_meta.name}' " +
+                    f"is declared in Intent '{intent_cls.name}' with type '{param_meta.entity_cls}'; however, it was " +
+                    f"also declared in Intents '{existing_param.used_in}' with type '{existing_param.metadata.entity_cls}'")
+                    
+            if param_meta.is_list and not existing_param.metadata.is_list:
+                raise ValueError(f"Parameters with the same name must have the same type. Parameter '{param_meta.name}' " +
+                    f"is declared in Intent '{intent_cls.name}' as a List; however, it was also declared in Intents " +
+                    f"'{existing_param.used_in}' as not a List")
+
+        if isinstance(param_meta, SessionIntentParameter):
+            if not isinstance(existing_param.metadata, SessionIntentParameter):
+                raise ValueError(f"Parameters with the same name must have the same type. Parameter '{param_meta.name}' "
+                    f"is declared in Intent '{intent_cls.name}' as a Session Parameter with type '{param_meta.data_type}'; "
+                    f"however, it was also declared in Intents '{existing_param.used_in}' as a Nlu Parameter: "
+                    f"{existing_param.metadata}")
+
+            if param_meta.data_type != existing_param.metadata.data_type:
+                raise ValueError(f"Parameters with the same name must have the same type. Parameter '{param_meta.name}' " +
+                    f"is declared in Intent '{intent_cls.name}' with type '{param_meta.data_type}'; however, it was " +
+                    f"also declared in Intents '{existing_param.used_in}' with type '{existing_param.metadata.data_type}'")
 
         existing_param.used_in.append(intent_cls)
 

@@ -1,11 +1,15 @@
-from typing import List
 from unittest.mock import patch
+from typing import Dict, Any, List
 from dataclasses import dataclass, field
 
 import pytest
 
 from intents import Intent, Sys, Entity, follow
-from intents.model.intent import IntentParameterMetadata
+from intents.model.intent import ParameterSchema, SessionIntentParameter, NluIntentParameter
+
+#
+# Parameter Schema
+#
 
 def test_param_schema_no_params():
 
@@ -14,39 +18,39 @@ def test_param_schema_no_params():
 
     assert no_param_intent.parameter_schema == {}
 
-def test_param_scheme_with_params():
+def test_param_scheme_with_nlu_params():
 
     @dataclass
-    class intent_with_params(Intent):
-        """Intent with parameters"""
+    class IntentWithNluParams(Intent):
+        """Intent with NLU parameters"""
         required_param: Sys.Person
         required_list_param: List[Sys.Person]
         optional_param: Sys.Person = "John"
         optional_list_param: List[Sys.Person] = field(default_factory=lambda: ["Al", "John"])
 
-    assert intent_with_params.parameter_schema == {
-        "required_param": IntentParameterMetadata(
+    assert IntentWithNluParams.parameter_schema == {
+        "required_param": NluIntentParameter(
             name="required_param",
             entity_cls=Sys.Person,
             is_list=False,
             required=True,
             default=None
         ),
-        "required_list_param": IntentParameterMetadata(
+        "required_list_param": NluIntentParameter(
             name="required_list_param",
             entity_cls=Sys.Person,
             is_list=True,
             required=True,
             default=None
         ),
-        "optional_param": IntentParameterMetadata(
+        "optional_param": NluIntentParameter(
             name="optional_param",
             entity_cls=Sys.Person,
             is_list=False,
             required=False,
             default="John"
         ),
-        "optional_list_param": IntentParameterMetadata(
+        "optional_list_param": NluIntentParameter(
             name="optional_list_param",
             entity_cls=Sys.Person,
             is_list=True,
@@ -55,7 +59,98 @@ def test_param_scheme_with_params():
         ),
     }
 
-def test_param_scheme_invalid_list_default():
+def test_param_schema_with_session_params():
+    @dataclass
+    class IntentWithSessionParams(Intent):
+        """Intent with Session parameters"""
+        required_int: int
+        required_dict: dict
+        optional_dict_proxy: Dict[str, List[Any]] = field(default_factory=dict)
+
+    assert IntentWithSessionParams.parameter_schema == {
+        "required_int": SessionIntentParameter(
+            name="required_int",
+            data_type=int,
+            required=True,
+            default=None
+        ),
+        "required_dict": SessionIntentParameter(
+            name="required_dict",
+            data_type=dict,
+            required=True,
+            default=None
+        ),
+        "optional_dict_proxy": SessionIntentParameter(
+            name="optional_dict_proxy",
+            data_type=dict,
+            required=False,
+            default={}
+        )
+    }
+
+def test_param_schema_with_mixed_params():
+    @dataclass
+    class IntentWithMixedParams(Intent):
+        """Intent with NLU and Session parameters"""
+        required_nlu_param: Sys.Person
+        required_nlu_list_param: List[Sys.Person]
+        required_session_int: int
+        required_session_dict: dict
+        
+        optional_nlu_param: Sys.Person = "John"
+        optional_nlu_list_param: List[Sys.Person] = field(default_factory=lambda: ["Al", "John"])
+        optional_session_dict_proxy: Dict[str, List[Any]] = field(default_factory=dict)
+
+    assert IntentWithMixedParams.parameter_schema == {
+        "required_nlu_param": NluIntentParameter(
+            name="required_nlu_param",
+            entity_cls=Sys.Person,
+            is_list=False,
+            required=True,
+            default=None
+        ),
+        "required_nlu_list_param": NluIntentParameter(
+            name="required_nlu_list_param",
+            entity_cls=Sys.Person,
+            is_list=True,
+            required=True,
+            default=None
+        ),
+        "optional_nlu_param": NluIntentParameter(
+            name="optional_nlu_param",
+            entity_cls=Sys.Person,
+            is_list=False,
+            required=False,
+            default="John"
+        ),
+        "optional_nlu_list_param": NluIntentParameter(
+            name="optional_nlu_list_param",
+            entity_cls=Sys.Person,
+            is_list=True,
+            required=False,
+            default=["Al", "John"]
+        ),
+        "required_session_int": SessionIntentParameter(
+            name="required_session_int",
+            data_type=int,
+            required=True,
+            default=None
+        ),
+        "required_session_dict": SessionIntentParameter(
+            name="required_session_dict",
+            data_type=dict,
+            required=True,
+            default=None
+        ),
+        "optional_session_dict_proxy": SessionIntentParameter(
+            name="optional_session_dict_proxy",
+            data_type=dict,
+            required=False,
+            default={}
+        )
+    }
+        
+def test_param_schema_invalid_list_default():
     
     with pytest.raises(ValueError):
 
@@ -94,11 +189,15 @@ def test_parameter_schema_skips_related_intents():
         parent_ask_pay: ask_pay = follow()
 
     expected = {
-        'customer_name': IntentParameterMetadata(name='customer_name', entity_cls=Sys.Person, is_list=False, required=True, default=None),
-        'contact_numbers': IntentParameterMetadata(name='contact_numbers', entity_cls=Sys.PhoneNumber, is_list=True, required=True, default=None),
-        'payment_method': IntentParameterMetadata(name='payment_method', entity_cls=PaymentMethod, is_list=False, required=True, default=None)
+        'customer_name': NluIntentParameter(name='customer_name', entity_cls=Sys.Person, is_list=False, required=True, default=None),
+        'contact_numbers': NluIntentParameter(name='contact_numbers', entity_cls=Sys.PhoneNumber, is_list=True, required=True, default=None),
+        'payment_method': NluIntentParameter(name='payment_method', entity_cls=PaymentMethod, is_list=False, required=True, default=None)
     }
     assert confirm_payment.parameter_schema == expected
+
+#
+# Misc
+#
 
 def test_dataclass_not_applied_twice():
     """https://github.com/dariowho/intents/issues/10"""

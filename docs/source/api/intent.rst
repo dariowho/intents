@@ -9,7 +9,7 @@ Intent
 .. autoclass:: intents.model.intent.Intent
    :members:
 
-.. autoclass:: intents.model.intent.IntentParameterMetadata
+.. autoclass:: intents.model.intent.NluIntentParameter
    :members:
 
 

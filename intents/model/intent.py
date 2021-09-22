@@ -19,41 +19,14 @@ from typing import List, Dict, Union, Any, Type, _GenericAlias
 import intents
 from intents import LanguageCode
 from intents.model import entity, names
-from intents.helpers.data_classes import is_dataclass_strict
+from intents.model.parameter import SessionIntentParameter, NluIntentParameter, ParameterSchema
+from intents.helpers.data_classes import is_dataclass_strict, to_dict
 
 logger = logging.getLogger(__name__)
 
 #
-# Intent
+# Intent Fulfillment Structures
 #
-
-@dataclass
-class IntentParameterMetadata:
-    """
-    Model metadata of a single Intent parameter. `IntentParameterMetadata`
-    objects are built internally by :attr:`Intent.parameter_schema` based on the
-    Intent dataclass fields.
-
-    >>> OrderPizzaIntent.parameter_schema
-    {
-        'pizza_type': IntentParameterMetadata(name='pizza_type', entity_cls=<...PizzaType'>, is_list=False, required=True, default=None),
-        'amount': IntentParameterMetadata(name='amount', entity_cls=<...Sys.Integer'>, is_list=False, required=False, default=1)
-    }
-
-    Args:
-        name: Parameter name
-        entity_cls: Parameter type
-        is_list: Parameter will match multiple values in the User utterance
-        required: If True, user will be prompted for parameter value when that
-            can't be tagged in his utterance
-        default: If set, this value will be used when parameter value can't be
-            tagged in the User's utterance
-    """
-    name: str
-    entity_cls: entity.EntityType
-    is_list: bool
-    required: bool
-    default: Any
 
 @dataclass
 class FulfillmentContext:
@@ -107,6 +80,10 @@ class FulfillmentResult:
 
         raise ValueError(f"Unsupported fulfillment return value: {fulfill_return_value}")
 
+#
+# Intent
+#
+
 class IntentType(type):
 
     name: str = None
@@ -135,7 +112,7 @@ class IntentType(type):
         return result_cls
 
     @property
-    def parameter_schema(cls) -> Dict[str, IntentParameterMetadata]:
+    def parameter_schema(cls) -> Dict[str, NluIntentParameter]:
         if cls is Intent:
             return {}
 
@@ -146,49 +123,29 @@ class IntentType(type):
 
         result = {}
         for param_field in cls.__dataclass_fields__.values():
-        # for param_field in cls.__dict__['__dataclass_fields__'].values():
-            # List[...]
             if inspect.isclass(param_field.type) and issubclass(param_field.type, Intent):
                 continue
 
-            if isinstance(param_field.type, _GenericAlias):
-                if param_field.type.__dict__.get('_name') != 'List':
-                    raise ValueError(f"Invalid typing '{param_field.type}' for parameter '{param_field.name}'. Only 'List' is supported.")
+            exc_nlu = None
+            exc_session = None
+            try:
+                result[param_field.name] = NluIntentParameter.from_dataclass_field(param_field)
+                continue
+            except ValueError as exc:
+                exc_nlu = exc
 
-                if len(param_field.type.__dict__.get('__args__')) != 1:
-                    raise ValueError(f"Invalid List modifier '{param_field.type}' for parameter '{param_field.name}'. Must define exactly one inner type (e.g. 'List[Sys.Integer]')")
-                
-                # From here on, check the inner type (e.g. List[Sys.Integer] -> Sys.Integer)
-                entity_cls = param_field.type.__dict__.get('__args__')[0]
-                is_list = True
-            else:
-                entity_cls = param_field.type
-                is_list = False
+            try:
+                result[param_field.name] = SessionIntentParameter.from_dataclass_field(param_field)
+                continue
+            except ValueError as exc:
+                exc_session = exc
 
-            if not issubclass(entity_cls, entity.EntityMixin):
-                raise ValueError(f"Parameter '{param_field.name}' of intent '{cls.name}' is of type '{entity_cls}', which is not an Entity.")
+            if exc_nlu and exc_session:
+                raise ValueError(f"Parameter {param_field.name} of intent {cls} cannot be "
+                                 f"processed neither as a NLU Parameter ({exc_nlu}) or as a "
+                                 f"Session Parameter ({exc_session})")
 
-            required = True
-            default = None
-            if not isinstance(param_field.default, dataclasses._MISSING_TYPE):
-                required = False
-                default = param_field.default
-            if not isinstance(param_field.default_factory, dataclasses._MISSING_TYPE):
-                required = False
-                default = param_field.default_factory()
-
-            if not required and is_list and not isinstance(default, list):
-                raise ValueError(f"List parameter has non-list default value in intent {cls}: {param_field}")
-
-            result[param_field.name] = IntentParameterMetadata(
-                name=param_field.name,
-                entity_cls=entity_cls,
-                is_list=is_list,
-                required=required,
-                default=default
-            )
-
-        return result
+        return ParameterSchema(result)
 
 class Intent(metaclass=IntentType):
     """
@@ -268,10 +225,10 @@ class Intent(metaclass=IntentType):
     name: str = None
 
     @property
-    def parameter_schema(self) -> Dict[str, IntentParameterMetadata]:
+    def parameter_schema(self) -> Dict[str, NluIntentParameter]:
         """
         Return a dict representing the Intent parameter definition. A key is a
-        parameter name, a value is a :class:`IntentParameterMetadata` object.
+        parameter name, a value is a :class:`NluIntentParameter` object.
 
         TODO: this doesn't show up in docs
         """

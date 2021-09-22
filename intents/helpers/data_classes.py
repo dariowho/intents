@@ -10,6 +10,9 @@ class CustomFields(Enum):
     OMIT_NONE = "OMIT_NONE"
 
 def OmitNone():
+    """
+    TODO: OmitNone values may appear when instantiating the dataclass 
+    """
     return field(default=CustomFields.OMIT_NONE)
 
 def custom_asdict_factory():
@@ -23,9 +26,9 @@ def custom_asdict_factory():
     This is mainly used to serialize schemas in Connectors.
 
     source: https://stackoverflow.com/questions/61338539/how-to-use-enum-value-in-asdict-function-from-dataclasses-module
-
-    TODO: add optional "exclude_none" to exclude None fields from output
     """
+
+    # TODO: also handle date and datetime types with de-serialization
 
     def result_f(data):
 
@@ -61,5 +64,15 @@ def is_dataclass_strict(obj):
     cls = obj if isinstance(obj, type) else type(obj)
     return dataclasses._FIELDS in cls.__dict__
 
-def to_dict(dataclass_obj):
+def to_dict(dataclass_obj: type) -> dict:
+    """
+    A wrapper around default :func:`asdict` that handles Enums via
+    :func:`custom_asdict_factory`.
+
+    Args:
+        dataclass_obj: A dataclass
+
+    Returns:
+        A `dict` representation of `dataclass_obj`
+    """
     return asdict(dataclass_obj, dict_factory=custom_asdict_factory())
