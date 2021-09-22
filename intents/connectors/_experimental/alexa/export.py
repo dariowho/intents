@@ -118,7 +118,7 @@ class AlexaExportComponent:
 
     def render_intent_slots(self, intent_cls: Type[Intent]) -> List[ask_schema.LanguageModelIntentSlot]:
         result = []
-        for param_name, param_metadata in intent_cls.parameter_schema.items():
+        for param_name, param_metadata in intent_cls.parameter_schema.nlu_parameters.items():
             entity_cls = param_metadata.entity_cls
             slot_type = self.names_component.entity_service_name(entity_cls)
 

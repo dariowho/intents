@@ -15,9 +15,10 @@ from google.cloud.dialogflow_v2.services.agents import AgentsClient
 from google.cloud.dialogflow_v2 import types as pb
 
 from intents import Agent, Intent, LanguageCode, FulfillmentContext, FulfillmentResult
+from intents.model.parameter import SessionIntentParameter
 from intents.model.relations import intent_relations
 from intents.language_codes import ensure_language_code
-from intents.connectors.interface import Connector, Prediction, FulfillmentRequest, WebhookConfiguration, deserialize_intent_parameters
+from intents.connectors.interface import Connector, Prediction, FulfillmentRequest, WebhookConfiguration, serialize_intent_parameters, deserialize_intent_parameters
 from intents.connectors.dialogflow_es.auth import resolve_credentials
 from intents.connectors.dialogflow_es.util import dict_to_protobuf
 from intents.connectors.dialogflow_es import webhook
@@ -170,19 +171,11 @@ class DialogflowEsConnector(Connector):
             language = self.default_language
 
         language = ensure_language_code(language)
-        intent_name = intent.name
         event_name = df_names.event_name(intent.__class__)
-        event_parameters = {}
-        for param_name, param_metadata in intent.parameter_schema.items():
-            param_mapping = df_entities.MAPPINGS[param_metadata.entity_cls]
-            if param_name in intent.__dict__:
-                param_value = intent.__dict__[param_name]
-                event_parameters[param_name] = param_mapping.to_service(param_value)
+        event_parameters = serialize_intent_parameters(intent, df_entities.MAPPINGS)
 
         logger.info("Triggering event '%s' in session '%s' with parameters: %s",
                     event_name, session, event_parameters)
-        if not event_parameters:
-            event_parameters = {}
 
         event_input = EventInput(
             name=event_name,

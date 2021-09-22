@@ -200,8 +200,11 @@ def render_intent(connector: "DialogflowEsConnector", intent_cls: Type[Intent], 
     )
 
 def render_parameters(intent_cls: Type[Intent], language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
+    param_schema = intent_cls.parameter_schema
     result = []
-    for param_name, param_metadata in intent_cls.parameter_schema.items():
+
+    # NLU Parameters
+    for param_name, param_metadata in param_schema.nlu_parameters.items():
         entity_cls = param_metadata.entity_cls
         data_type = ENTITY_MAPPINGS.service_name(entity_cls)
 
@@ -220,6 +223,20 @@ def render_parameters(intent_cls: Type[Intent], language_data: Dict[language.Lan
             isList=param_metadata.is_list,
             prompts=prompts
         ))
+
+    # Session Parameters
+    for param_name, param_metadata in param_schema.session_parameters.items():
+        result.append(df.Parameter(
+            id=str(uuid1()),
+            name=param_name,
+            required=param_metadata.required,
+            dataType='@sys.any',
+            value=f"${param_name}", # TODO: maybe #EVENT.param_name?
+            defaultValue=param_metadata.default if not param_metadata.required else '',
+            isList=False,
+            prompts=[]
+        ))
+
     return result
 
 def render_response(response: language.IntentResponse, language_code: language.LanguageCode, platform: str):
@@ -309,7 +326,18 @@ def render_utterance_chunk(chunk: language.UtteranceChunk):
             userDefined=True
         )
 
-    raise ValueError(f"Unsupported Utterance Chunk Type: {chunk}")
+    if isinstance(chunk, language.SessionUtteranceChunk):
+        chunk: language.SessionUtteranceChunk
+        
+        return df.UsersaysEntityChunk(
+            text=chunk.parameter_value,
+            alias=chunk.parameter_name,
+            meta='@sys.any',
+            userDefined=True
+        )
+
+    raise ValueError(f"Unsupported Utterance Chunk Type: {chunk}. This is an Intents bug, "
+                     "please file an issue on the Intents repository")
 
 def render_intent_usersays(agent_cls: type, intent: Type[Intent], language_code: language.LanguageCode, examples: List[language.ExampleUtterance]):
     result = []

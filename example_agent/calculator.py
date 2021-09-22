@@ -38,10 +38,14 @@ class SolveMathOperation(Intent):
 @dataclass
 class SolveMathOperationResponse(Intent):
     """
-    This is triggered by :class:`SolveMathOperation` to show the result to user
+    This is triggered by :class:`SolveMathOperation` to show the result to user.
+    Note that this intent has a Session Parameter `operation_result` of type
+    :class:`float`. Session parameters are injected by software components; they
+    are less constrained than NLU Parameters, but cannot be tagged in user
+    utterances, therefore the only way to fire this intent is with a trigger (in
+    our case, the result of :meth:`SolveMathOperation.fulfill`). 
     """
-    # result: int = from_code()
-    operation_result: Sys.Integer
+    operation_result: float
 
 @dataclass
 class SolveMathOperationError(Intent):

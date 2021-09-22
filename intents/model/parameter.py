@@ -16,7 +16,7 @@ import json
 import logging
 import dataclasses
 from dataclasses import dataclass
-from typing import Tuple, Any, Type, T, _GenericAlias
+from typing import Dict, Tuple, Any, Type, T, _GenericAlias
 
 from dacite import from_dict
 
@@ -230,11 +230,23 @@ class SessionIntentParameter(IntentParameter):
 class ParameterSchema(dict):
 
     @property
-    def nlu_parameters(self):
+    def nlu_parameters(self) -> Dict[str, NluIntentParameter]:
+        """
+        Return the `ParameterSchema` subset that only contains NLU Parameters
+
+        Returns:
+            A map of NLU Parameters
+        """
         return {k: v for k, v in self.items() if isinstance(v, NluIntentParameter)}
     
     @property
-    def session_parameters(self):
+    def session_parameters(self) -> Dict[str, SessionIntentParameter]:
+        """
+        Return the `ParameterSchema` subset that only contains Session Parameters
+
+        Returns:
+            A map of Session Parameters
+        """
         return {k: v for k, v in self.items() if isinstance(v, SessionIntentParameter)}
 
 def _is_required(dataclass_field: dataclasses.Field) -> Tuple[bool, Any]:

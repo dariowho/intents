@@ -33,6 +33,7 @@ from dataclasses import dataclass
 from typing import Any, List, Dict, Type
 
 from intents import Intent, Entity, LanguageCode
+from intents.model.parameter import NluIntentParameter, SessionIntentParameter
 from intents.model.entity import EntityMixin, SystemEntityMixin
 
 logger = logging.getLogger(__name__)
@@ -291,6 +292,50 @@ class ServiceEntityMappings(dict):
             result[mapping.entity_cls] = mapping
         return result
 
+def serialize_intent_parameters(
+    intent: Intent,
+    mappings: ServiceEntityMappings,
+    skip_session_parameters: bool=False
+) -> Dict[str, Any]:
+    """
+    Serialize the Intent parameters in a Service format according to the given
+    mappings. *NLU Parameters* are serialized by mappings, *Session Parameters*
+    are serialized by
+    :meth:`~intents.model.parameters.SessionIntentParameter.serialize_value`.
+    When `skip_session_parameters` is True, Session parameters will not be
+    included in the result.
+
+    Typically this is called by a Connector when an Intent is triggered, or a
+    fulfillment result intent is turned into a response payload.
+
+    Args:
+        intent: The Intent which parameters will be serialized
+        mappings: The mappings to use to serialize NLU Parameters
+
+    Returns:
+        A dictionary of serialized parameters
+    """
+    result = {}
+    param_dict = intent.parameter_dict()
+    param_schema = intent.parameter_schema
+
+    for param_name, param_metadata in param_schema.nlu_parameters.items():
+        param_mapping = mappings[param_metadata.entity_cls]
+        if param_name in param_dict:
+            param_value = param_dict[param_name]
+            result[param_name] = param_mapping.to_service(param_value)
+
+    if skip_session_parameters:
+        return result
+
+    param_metadata: SessionIntentParameter
+    for param_name, param_metadata in param_schema.session_parameters.items():
+        if param_name in param_dict:
+            param_value = param_dict[param_name]
+            result[param_name] = param_metadata.serialize_value(param_value)
+
+    return result
+
 def deserialize_intent_parameters(
     service_parameters: Dict[str, Any],
     intent_cls: Type[Intent],
@@ -298,8 +343,12 @@ def deserialize_intent_parameters(
 ) -> Dict[str, EntityMixin]:
     """
     Cast parameters from Service format to Intents format according to the given
-    schema. Typically this happens when a Connector has to turn prediction
-    parameters into *Intents* entities.
+    Intent's schema and mappings. *NLU Parameters* are deserialized by mappings,
+    *Session Parameters* are deserialized by
+    :meth:`~intents.model.parameters.SessionIntentParameter.deserialize_value`.
+    
+    Typically this function is calld by Connectors when prediction parameters
+    are turned into *Intents* entities.
 
     Args:
         service_parameters: The parameters dict, as it is returned by a Prediction Service
@@ -317,16 +366,28 @@ def deserialize_intent_parameters(
                              "class does not define it. Make sure your cloud Agent is in sync "
                              "with your local one. A new upload() may solve the issue")
         param_metadata = schema[param_name]
-        entity_cls = param_metadata.entity_cls
-        mapping = mappings.lookup(entity_cls)
-        try:
-            if param_metadata.is_list:
-                if not isinstance(param_value, list):
-                    raise ValueError(f"Parameter {param_name} is defined as List, but returned value is not of 'list' type: {param_value}")
-                result[param_name] = [mapping.from_service(x) for x in param_value]
-            else:
-                result[param_name] = mapping.from_service(param_value)
-        except Exception as exc:
-            raise RuntimeError(f"Failed to match parameter '{param_name}' with value '{param_value}' against schema {schema}. See source exception above for details.") from exc
+        
+        if isinstance(param_metadata, NluIntentParameter):
+            entity_cls = param_metadata.entity_cls
+            mapping = mappings.lookup(entity_cls)
+            try:
+                if param_metadata.is_list:
+                    if not isinstance(param_value, list):
+                        raise ValueError(f"Parameter {param_name} is defined as List, but "
+                                         f"returned value is not of 'list' type: {param_value}")
+                    result[param_name] = [mapping.from_service(x) for x in param_value]
+                else:
+                    result[param_name] = mapping.from_service(param_value)
+            except Exception as exc:
+                raise RuntimeError(f"Failed to match parameter '{param_name}' with value "
+                                   f"'{param_value}' against schema {schema}. See source "
+                                   "exception above for details.") from exc
+        
+        elif isinstance(param_metadata, SessionIntentParameter):
+            result[param_name] = param_metadata.deserialize_value(param_value)
 
+        else:
+            raise NotImplementedError(f"Unrecognized parameter class: {param_metadata}. This "
+                                      "is an Intents bug, please file an issue on the Intents "
+                                      "repository.")
     return result

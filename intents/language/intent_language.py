@@ -55,13 +55,14 @@ import logging
 import warnings
 from enum import Enum
 from dataclasses import dataclass, field
-from typing import List, Dict, Union, Tuple, Type
+from typing import List, Dict, Union, Tuple, Type, Any
 
 import yaml
 
 # pylint: disable=unused-import
 import intents # Needed to generate docs
 from intents import Intent, EntityMixin
+from intents.model.parameter import NluIntentParameter, SessionIntentParameter
 from intents.language import agent_language, LanguageCode
 
 logger = logging.getLogger(__name__)
@@ -86,9 +87,17 @@ class TextUtteranceChunk(UtteranceChunk):
 @dataclass
 class EntityUtteranceChunk(UtteranceChunk):
     """
-    An Utterance Chunk that is a matched entity
+    An Utterance Chunk that is a matched entity (i.e. references a NLU Parameter)
     """
     entity_cls: Type[EntityMixin]
+    parameter_name: str
+    parameter_value: str
+
+@dataclass
+class SessionUtteranceChunk(UtteranceChunk):
+    """
+    An Utterance Chunk that references a Session Parameter
+    """
     parameter_name: str
     parameter_value: str
 
@@ -138,12 +147,23 @@ class ExampleUtterance(str):
             if (parameter_name := m_groups['parameter_name']) not in parameter_schema:
                 raise ValueError(f"Example '{self}' references parameter ${parameter_name}, but intent {self._intent.name} does not define such parameter.")
  
-            entity_cls = parameter_schema[parameter_name].entity_cls
-            result.append(EntityUtteranceChunk(
-                entity_cls=entity_cls,
-                parameter_name=m_groups['parameter_name'],
-                parameter_value=m_groups['parameter_value']
-            ))
+            param_metadata = parameter_schema[parameter_name]
+            if isinstance(param_metadata, NluIntentParameter):
+                entity_cls = param_metadata.entity_cls
+                result.append(EntityUtteranceChunk(
+                    entity_cls=entity_cls,
+                    parameter_name=m_groups['parameter_name'],
+                    parameter_value=m_groups['parameter_value']
+                ))
+            elif isinstance(param_metadata, SessionIntentParameter):
+                result.append(SessionUtteranceChunk(
+                    parameter_name=m_groups['parameter_name'],
+                    parameter_value=m_groups['parameter_value']
+                ))
+            else:
+                raise NotImplementedError(f"Unrecognized parameter class: {param_metadata}. This "
+                                          "is an Intents bug, please file an issue on the Intents "
+                                          "repository.")
 
             last_end = m_end
 
@@ -208,7 +228,7 @@ class IntentResponse:
             intent: The Intent instance that will be used to read parameter values
         """
         # TODO: handle list/dict values differently
-        parameter_dict = {k: intent.__dict__[k] for k in intent.parameter_schema}
+        parameter_dict = intent.parameter_dict()
         result_args = {}
         try:
             dataclass_fields = getattr(self, "__dataclass_fields__")
@@ -226,7 +246,7 @@ class IntentResponse:
                 result_args[field_name] = self.__dict__[field_name]
         return self.__class__(**result_args)
 
-def _render_response(data: Union[str, list], parameter_dict: Dict[str, str]):
+def _render_response(data: Union[str, list], parameter_dict: Dict[str, Any]):
     """
     Render some response data by replacing parameter references with the one contained in `parameter_dict`. This
     function is called by :meth:`IntentResponse.render` on each of the Response members.

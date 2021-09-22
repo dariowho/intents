@@ -173,7 +173,8 @@ class Agent(metaclass=AgentType):
 
         for param_name, param_metadata in intent_cls.parameter_schema.items():
             cls._register_parameter(param_metadata, intent_cls)
-            cls._register_entity(param_metadata.entity_cls, param_name, intent_cls.name)
+            if isinstance(param_metadata, NluIntentParameter):
+                cls._register_entity(param_metadata.entity_cls, param_name, intent_cls.name)
 
         cls.intents.append(intent_cls)
         cls._intents_by_name[intent_cls.name] = intent_cls

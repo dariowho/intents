@@ -195,7 +195,7 @@ def test_calculator_is_fulfilled(self):
             "name": "E_CALCULATOR_SOLVE_MATH_OPERATION_RESPONSE",
             "languageCode": "en",
             "parameters": {
-                "operation_result": 4
+                "operation_result": "4"
             }
         }
     }

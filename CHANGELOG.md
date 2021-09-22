@@ -1,6 +1,18 @@
+# v0.4.0 (in development)
+
+**Add**
+
+* (#32) Introduce Session Parameters, next to existing NLP Parameters
+  * In Dialogflow, Session Parameters are @sys.any intent parameters that cannot
+    be tagged in user utterances
+
+**Fix**
+
+* (#32) Properly serialize Intent parameters when producing fulfillment results
+
 # v0.3.0
 
-Add:
+**Add**
 
 * (#19) Add basic SnipsNLU Connector
 * (#19) Add builtin entities module and `service_connector.PatchEntityMapping`
@@ -15,7 +27,7 @@ Add:
 * (#16) Add configurable intent lifespan
 * (#16) Add `new_lifespan` property to `follow` relation
 
-Change:
+**Change**
 
 * (#11) Breaking change: remove deprecated `Context` interface, `Intent.events`
   and `Intent.parameter_schema()` (`Intent.parameter_schema` is the way to
@@ -38,7 +50,7 @@ Change:
   snake_case conversion (e.g. context for `AskCoffee` will be `c_ask_coffee`
   instead of `c_askcoffee`). This requires re-uploading old agents.
 
-Fix:
+**Fix**
 
 * (#19) Enforce name constraints on Entities
 * (#17) Fix Entity export in Dialogflow (canonical value needed to be in

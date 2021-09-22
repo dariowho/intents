@@ -112,7 +112,7 @@ class IntentType(type):
         return result_cls
 
     @property
-    def parameter_schema(cls) -> Dict[str, NluIntentParameter]:
+    def parameter_schema(cls) -> ParameterSchema:
         if cls is Intent:
             return {}
 
@@ -225,7 +225,7 @@ class Intent(metaclass=IntentType):
     name: str = None
 
     @property
-    def parameter_schema(self) -> Dict[str, NluIntentParameter]:
+    def parameter_schema(self) -> ParameterSchema:
         """
         Return a dict representing the Intent parameter definition. A key is a
         parameter name, a value is a :class:`NluIntentParameter` object.

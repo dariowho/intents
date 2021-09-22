@@ -154,7 +154,7 @@ class AlexaFulfillmentComponent:
         request_slots: List[fs.IntentSlot],
         lang: LanguageCode
     ) -> Dict[str, Any]:
-        parameter_schema = intent_cls.parameter_schema
+        nlu_params = intent_cls.parameter_schema.nlu_parameters
 
         # TODO: map custom slot values with language.alexa_entry_id_to_value
 
@@ -170,16 +170,16 @@ class AlexaFulfillmentComponent:
             if slot.name.startswith("__"):
                 continue
 
-            if slot.name not in parameter_schema:
+            if slot.name not in nlu_params:
                 raise ValueError(f"Alexa returned slot name '{slot.name}', but this is not defined in "
-                                 f"Intent '{intent_cls}' with parameter schema: {parameter_schema}. "
+                                 f"Intent '{intent_cls}' with NLU Parameters: {nlu_params}. "
                                  "Make sure that your cloud agent is up to date with your code, and "
                                  "if the problem persist please file an issue on the Intents repository/")
 
             if slot.slotValue.type == fs.SlotType.SIMPLE:
                 value = self._get_simple_slot_value(slot.slotValue, lang)
                 
-                if parameter_schema[slot.name].is_list:
+                if nlu_params[slot.name].is_list:
                     logger.warning("Parameter '%s.%s' is defined as list, but Alexa returned a single "
                                    "value ('%s'). Will be converted to list", intent_cls.name, slot.name,
                                    value)
@@ -193,7 +193,7 @@ class AlexaFulfillmentComponent:
                         continue
                     value.append(self._get_simple_slot_value(v, lang))
 
-                if not parameter_schema[slot.name].is_list:
+                if not nlu_params[slot.name].is_list:
                     logger.warning("Alexa returned a list value for parameter '%s.%s' ('%s'), but "
                                    "parameter is not defined as list. Only the first element will be "
                                    "returned", intent_cls.name, slot.name, value)
@@ -232,9 +232,9 @@ class AlexaFulfillmentComponent:
 
     def _slots_from_intent(self, intent: Intent) -> Dict[str, fs.IntentSlot]:
         result = {}
-        parameter_schema = intent.parameter_schema
+        nlu_params = intent.parameter_schema.nlu_parameters
         for param_name, param_value in intent.parameter_dict().items():
-            entity_cls = parameter_schema[param_name].entity_cls
+            entity_cls = nlu_params[param_name].entity_cls
             mapping = slot_types.ENTITY_MAPPINGS.lookup(entity_cls)
             result[param_name] = fs.IntentSlot(
                 confirmationStatus=fs.IntentConfirmationStatus.NONE,

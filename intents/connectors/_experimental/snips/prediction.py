@@ -152,14 +152,14 @@ def _slot_list_to_param_dict(
         result_lists[slot.slotName].append(slot.value)
 
     result = {}
-    schema = intent_cls.parameter_schema
+    nlu_params = intent_cls.parameter_schema.nlu_parameters
     for slot_name, slot_values in result_lists.items():
-        if slot_name not in schema:
-            raise KeyError(f"Slot {slot_name} not found in intent {intent_cls} with schema: "
-                        f"{schema}. Make sure your trained model is up to date with the "
+        if slot_name not in nlu_params:
+            raise KeyError(f"Slot {slot_name} not found in intent {intent_cls} with NLU Parameters: "
+                        f"{nlu_params}. Make sure your trained model is up to date with the "
                         "latest Agent definition. If it is, please file a bug in the Intents "
                         "repository")
-        if schema[slot_name].is_list:
+        if nlu_params[slot_name].is_list:
             result[slot_name] = slot_values
         else:
             if len(slot_values) > 1:
