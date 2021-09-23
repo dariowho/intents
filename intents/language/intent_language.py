@@ -93,14 +93,6 @@ class EntityUtteranceChunk(UtteranceChunk):
     parameter_name: str
     parameter_value: str
 
-@dataclass
-class SessionUtteranceChunk(UtteranceChunk):
-    """
-    An Utterance Chunk that references a Session Parameter
-    """
-    parameter_name: str
-    parameter_value: str
-
 # TODO: check that parameter_value is one of the entries in custom entities
 RE_EXAMPLE_PARAMETERS = re.compile(r"\$(?P<parameter_name>[\w]+)\{(?P<parameter_value>[^\}]+)\}")
 
@@ -110,14 +102,14 @@ class ExampleUtterance(str):
     """
     
     # TODO: check for escape characters - intent is possibly intent_cls
-    def __init__(self, example: str, intent: Intent):
-        self._intent = intent
+    def __init__(self, example: str, intent_cls: Type[Intent]):
+        self._intent_cls = intent_cls
         self.chunks() # Will check parameters
     
-    def __new__(cls, example: str, intent: Intent):
+    def __new__(cls, example: str, intent_cls: Type[Intent]):
         return super().__new__(cls, example)
 
-    def chunks(self):
+    def chunks(self) -> List[UtteranceChunk]:
         """
         Return the Utterance as a sequence of :class:`UtteranceChunk`. Each
         chunk is either a plain text string, or a mapped Entity.
@@ -135,7 +127,7 @@ class ExampleUtterance(str):
             This method doesn't handle escaping yet.
         """
         # TODO: handle escaping
-        parameter_schema = self._intent.parameter_schema
+        parameter_schema = self._intent_cls.parameter_schema
         result = []
         last_end = 0
         for m in RE_EXAMPLE_PARAMETERS.finditer(self):
@@ -145,7 +137,7 @@ class ExampleUtterance(str):
                 result.append(TextUtteranceChunk(text=self[last_end:m_start]))
             
             if (parameter_name := m_groups['parameter_name']) not in parameter_schema:
-                raise ValueError(f"Example '{self}' references parameter ${parameter_name}, but intent {self._intent.name} does not define such parameter.")
+                raise ValueError(f"Example '{self}' references parameter ${parameter_name}, but intent {self._intent_cls.name} does not define such parameter.")
  
             param_metadata = parameter_schema[parameter_name]
             if isinstance(param_metadata, NluIntentParameter):
@@ -156,10 +148,10 @@ class ExampleUtterance(str):
                     parameter_value=m_groups['parameter_value']
                 ))
             elif isinstance(param_metadata, SessionIntentParameter):
-                result.append(SessionUtteranceChunk(
-                    parameter_name=m_groups['parameter_name'],
-                    parameter_value=m_groups['parameter_value']
-                ))
+                raise ValueError(f"Example utterance '{str(self)}' of intent {self._intent_cls.name} "
+                                 f"references param {parameter_name}, which is a Session Parameter. "
+                                 "Only NLU Parameters can be tagged in user utterance; that is, "
+                                 "parameter which type is either an Entity, or List[Entity]")
             else:
                 raise NotImplementedError(f"Unrecognized parameter class: {param_metadata}. This "
                                           "is an Intents bug, please file an issue on the Intents "
@@ -599,6 +591,8 @@ def intent_language_data(
         if language_code and language_code not in result:
             raise KeyError(f"Intent '{intent_cls}' in Agent '{agent_cls}' doesn't seem to define "
                            f"language data for language '{language_code}")
+        for language_data in result.values():
+            _check_language_data(language_data, intent_cls)
         return result
         
     try:
@@ -629,16 +623,29 @@ def intent_language_data(
 
         examples = [ExampleUtterance(s, intent_cls) for s in examples_data]
         responses = _build_responses(responses_data)
-        
+
         language_data = IntentLanguageData(
             example_utterances=examples,
             slot_filling_prompts=language_data.get('slot_filling_prompts', {}),
             responses=responses
         )
+        _check_language_data(language_data, intent_cls)
 
         return {language_code: language_data}
+    except ValueError as e:
+        raise e
     except Exception as e:
         raise RuntimeError(f"Failed to load language data for intent {intent_cls.name} (see stacktrace above for root cause).") from e
+
+def _check_language_data(language_data: IntentLanguageData, intent_cls: Type[Intent]):
+    session_params = intent_cls.parameter_schema.session_parameters.values()
+    required_session_params = [p for p in session_params if p.required]
+    if language_data.example_utterances and required_session_params:
+        raise ValueError(f"Intent {intent_cls.name} defines example utterances. However, "
+                         f"it has also required Session Parameters: {required_session_params}. "
+                         "This is not supported, because Session Parameters cannot be tagged "
+                         "in User utterances. To define NLU Parameters, make sure their type "
+                         "is Entity or List[Entity].")
 
 def render_responses(intent: Intent, language_data: IntentLanguageData) -> Tuple[IntentResponseDict, str]:
     """

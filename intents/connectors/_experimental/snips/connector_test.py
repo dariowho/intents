@@ -1,10 +1,13 @@
 import os
 import tempfile
+from typing import Dict
+from dataclasses import dataclass
 from unittest.mock import MagicMock
 
 import pytest
 
 from example_agent import ExampleAgent
+from intents import Intent, Sys
 from intents.language import LanguageCode, IntentResponseGroup, TextIntentResponse
 from intents.helpers import coffee_agent as ca 
 from intents.connectors._experimental.snips.connector import SnipsConnector
@@ -40,3 +43,17 @@ def test_predict_default_language():
     assert result.fulfillment_messages == expected_messages
     with pytest.warns(DeprecationWarning):
         assert result.fulfillment_message_dict == expected_messages
+
+def test_trigger_keeps_session_parameters():
+    @dataclass
+    class MockIntent(Intent):
+        nlu_param: Sys.Person
+        session_param: Dict[str, float]
+    MockIntent.__intent_language_data__ = ca.mock_language_data(MockIntent, [], "fake response", LanguageCode.ENGLISH)
+
+    c = SnipsConnector(ca.CoffeeAgent)
+    result = c.trigger(MockIntent("John", {"foo": 4.2}))
+    assert result.intent.parameter_dict() == {
+        "nlu_param": "John",
+        "session_param": {"foo": 4.2}
+    }

@@ -1,13 +1,74 @@
+import os
+import tempfile
+from typing import List
+from unittest.mock import patch
 from dataclasses import dataclass
 
 import pytest
 
-from intents import Intent, Sys
+from intents import Intent, Sys, Agent, LanguageCode
+from intents.helpers.coffee_agent import mock_language_data
+from intents.language.intent_language import intent_language_data, IntentLanguageData
+from intents.language.intent_language import ExampleUtterance, TextUtteranceChunk, EntityUtteranceChunk
 from intents.language.intent_language import IntentResponseDict, IntentResponseGroup, TextIntentResponse, QuickRepliesIntentResponse, ImageIntentResponse, CardIntentResponse, CustomPayloadIntentResponse
 
 @dataclass
 class FakeIntent(Intent):
-    foo: Sys.Person
+    name = "FakeIntent"
+
+    foo: Sys.Person             # A NLU Parameter
+    foo_session: List[float]    # A Session Parameter
+
+#
+# Example Utterances
+#
+
+def test_utterance_chunks__no_parameters():
+    utterance = ExampleUtterance("This is an utterance with no parameters", FakeIntent)
+    assert utterance.chunks() == [TextUtteranceChunk("This is an utterance with no parameters")]
+
+    utterance = ExampleUtterance("This is an utterance with no parameters and the $ char: $10", FakeIntent)
+    assert utterance.chunks() == [TextUtteranceChunk("This is an utterance with no parameters and the $ char: $10")]
+    
+def test_utterance_chunks__entity_parameters():
+    utterance = ExampleUtterance("$foo{Homer}", FakeIntent)
+    assert utterance.chunks() == [
+        EntityUtteranceChunk(Sys.Person, "foo", "Homer")
+    ]
+
+    utterance = ExampleUtterance("The name is $foo{Homer}", FakeIntent)
+    assert utterance.chunks() == [
+        TextUtteranceChunk("The name is "),
+        EntityUtteranceChunk(Sys.Person, "foo", "Homer")
+    ]
+
+    utterance = ExampleUtterance("$foo{Homer} is the name.", FakeIntent)
+    assert utterance.chunks() == [
+        EntityUtteranceChunk(Sys.Person, "foo", "Homer"),
+        TextUtteranceChunk(" is the name."),
+    ]
+
+    utterance = ExampleUtterance("The name is $foo{Homer}, I think.", FakeIntent)
+    assert utterance.chunks() == [
+        TextUtteranceChunk("The name is "),
+        EntityUtteranceChunk(Sys.Person, "foo", "Homer"),
+        TextUtteranceChunk(", I think."),
+    ]
+
+    utterance = ExampleUtterance("The name is \"$foo{Homer}\", I think.", FakeIntent)
+    assert utterance.chunks() == [
+        TextUtteranceChunk("The name is \""),
+        EntityUtteranceChunk(Sys.Person, "foo", "Homer"),
+        TextUtteranceChunk("\", I think."),
+    ]
+
+def test_utterance_chunks__session_parameters_raise_error():
+    with pytest.raises(ValueError):
+        ExampleUtterance("The value cannot be \"$foo_session{42}\"...", FakeIntent)
+
+#
+# Responses
+#
 
 def test_text_intent_response_string():
     text_response_instance = TextIntentResponse(["ciao"])
@@ -47,7 +108,7 @@ def test_text_response_render():
         "$foo"
     ])
 
-    fake_intent = FakeIntent(foo="Trotskyism")
+    fake_intent = FakeIntent(foo="Trotskyism", foo_session=[])
 
     expected = TextIntentResponse([
         "Trotskyism is when you look at me",
@@ -60,6 +121,21 @@ def test_text_response_render():
 
     assert text_response_instance.render(fake_intent) == expected
 
+def test_text_response_render_session_parameter():
+    text_response_instance = TextIntentResponse([
+        "$foo is a NLU Parameter",
+        "$foo_session is a Session Parameter",
+    ])
+
+    fake_intent = FakeIntent(foo="Homer", foo_session=[42, 43])
+
+    expected = TextIntentResponse([
+        "Homer is a NLU Parameter",
+        "[42, 43] is a Session Parameter",
+    ])
+
+    assert text_response_instance.render(fake_intent) == expected
+
 def test_quick_replies_response_string():
     quick_replies_instance = QuickRepliesIntentResponse(["ciao"])
     quick_replies_from_yaml = QuickRepliesIntentResponse.from_yaml("ciao")
@@ -68,7 +144,7 @@ def test_quick_replies_response_string():
 
 def test_quick_replies_render():
     quick_replies_response_instance = QuickRepliesIntentResponse(["$foo", "pippo", "franco $foo"])
-    fake_intent = FakeIntent(foo="bar")
+    fake_intent = FakeIntent(foo="bar", foo_session=[])
     expected = QuickRepliesIntentResponse(["bar", "pippo", "franco bar"])
 
 def test_quick_replies_response_list():
@@ -137,3 +213,92 @@ def test_intent_response_dict_for_group():
     assert d.for_group() == mock_rich_messages
     assert d.for_group(IntentResponseGroup.DEFAULT) == mock_default_messages
     assert d.for_group(IntentResponseGroup.RICH) == mock_rich_messages
+
+#
+# intent_language_data()
+#
+
+TOY_LANGUAGE_FILE = """
+examples:
+  - Hi
+  - Hello
+
+responses:
+  default:
+    - text:
+      - Greetings, human :)
+      - Hi human!
+"""
+
+@dataclass
+class MockIntentClass(Intent):
+    name: Sys.Person = 'test_intent'
+
+class MockAgentClass(Agent):
+    languages = ['en']
+
+def _toy_language_folder(dir_name, intent_name, languages=('en',)):
+    for lang in languages:
+        lang_dir = os.path.join(dir_name, lang)
+        os.makedirs(lang_dir, exist_ok=True)
+        with open(os.path.join(lang_dir, intent_name + ".yaml"), 'w') as f:
+            print(TOY_LANGUAGE_FILE, file=f)
+
+def test_intent_data_all_languages():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        _toy_language_folder(tmp_dir, 'test_intent', ['en'])
+        class mock_agent_language_module:
+            @staticmethod
+            def agent_language_folder(agent_cls):
+                return tmp_dir
+
+        with patch('intents.language.intent_language.agent_language', mock_agent_language_module):
+            result = intent_language_data(MockAgentClass, MockIntentClass)
+
+    assert LanguageCode.ENGLISH in result
+    assert isinstance(result[LanguageCode.ENGLISH], IntentLanguageData)
+
+    assert result[LanguageCode.ENGLISH].example_utterances == [
+        ExampleUtterance("Hi", MockIntentClass),
+        ExampleUtterance("Hello", MockIntentClass)
+    ]
+    assert result[LanguageCode.ENGLISH].slot_filling_prompts == {}
+    assert result[LanguageCode.ENGLISH].responses == {
+        IntentResponseGroup.DEFAULT: [
+            TextIntentResponse(["Greetings, human :)", "Hi human!"])
+        ]
+    }
+
+def test_intent_data_raise_exception_on_session_parameters():
+    with tempfile.TemporaryDirectory() as tmp_dir:
+        _toy_language_folder(tmp_dir, 'FakeIntent', ['en'])
+        class mock_agent_language_module:
+            @staticmethod
+            def agent_language_folder(agent_cls):
+                return tmp_dir
+
+        with patch('intents.language.intent_language.agent_language', mock_agent_language_module):
+            with pytest.raises(ValueError):
+                intent_language_data(MockAgentClass, FakeIntent)
+
+# def test_intent_data_skips_private_folders():
+#     ...
+
+# def test_intent_data_rich_response_group():
+#     ...
+
+def test_session_parameters_with_custom_utterances_raise_exception():
+    @dataclass
+    class FakeIntentWithLanguage(FakeIntent):
+        """It will inherit a required Session Parameter"""
+    FakeIntentWithLanguage.__intent_language_data__ = mock_language_data(
+        FakeIntentWithLanguage,
+        ["Any example should raise an error"],
+        ["Fake response"],
+        LanguageCode.ENGLISH
+    )
+
+    print(FakeIntentWithLanguage.parameter_schema.session_parameters)
+
+    with pytest.raises(ValueError):
+        intent_language_data(None, FakeIntentWithLanguage, LanguageCode.ENGLISH)

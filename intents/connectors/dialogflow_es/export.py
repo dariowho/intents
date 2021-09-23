@@ -326,17 +326,8 @@ def render_utterance_chunk(chunk: language.UtteranceChunk):
             userDefined=True
         )
 
-    if isinstance(chunk, language.SessionUtteranceChunk):
-        chunk: language.SessionUtteranceChunk
-        
-        return df.UsersaysEntityChunk(
-            text=chunk.parameter_value,
-            alias=chunk.parameter_name,
-            meta='@sys.any',
-            userDefined=True
-        )
-
-    raise ValueError(f"Unsupported Utterance Chunk Type: {chunk}. This is an Intents bug, "
+    raise ValueError(f"Unsupported Utterance Chunk Type: {chunk}. Unless you implemented "
+                     "custom language resources, this could be an Intents bug. In this case "
                      "please file an issue on the Intents repository")
 
 def render_intent_usersays(agent_cls: type, intent: Type[Intent], language_code: language.LanguageCode, examples: List[language.ExampleUtterance]):

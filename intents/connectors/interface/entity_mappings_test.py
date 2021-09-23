@@ -71,3 +71,9 @@ def test_mappings__custom_entity():
         service_name="MyCustomEntity"
     )
     assert MOCK_MAPPINGS.service_name(MyCustomEntity) == "MyCustomEntity"
+
+#
+# (de)serialize_intent_parameters()
+#
+
+# TODO!
