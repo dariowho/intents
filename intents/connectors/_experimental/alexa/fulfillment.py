@@ -87,7 +87,7 @@ class AlexaFulfillmentComponent:
                 return self.fulfill_local(fulfillment_result.trigger, lang, _stack=_stack)
             else:
                 logger.warning("Intent returned a fulfillment result without trigger. Trigger "
-                               "is the only supported response in SnipsConnector. Other elements "
+                               "is the only supported response in AlexaConnector. Other elements "
                                "will be ignored.")
 
         return rendered_plaintext
@@ -114,8 +114,8 @@ class AlexaFulfillmentComponent:
 
         # No fulfillment -> return intent responses
         if not fulfillment_result:
-            print("no result: Returning messages")
-            result = fs.FulfillmentResponseBody(
+            logger.info("No fulfillment result: returning intent responses")
+            return fs.FulfillmentResponseBody(
                 response=fs.FulfillmentResponse(
                     outputSpeech=fs.FulfillmentResponseOutputSpeech(
                         type=fs.OutputSpeechType.PlainText,
@@ -123,8 +123,6 @@ class AlexaFulfillmentComponent:
                     )
                 )
             )
-            print(result)
-            return result
 
         # TODO: doesn't work
         # Fulfillment result -> trigger
@@ -209,11 +207,11 @@ class AlexaFulfillmentComponent:
         lang: LanguageCode
     ) -> Any:
         """
-            # Amazon: meh...
-            value = slot.value
-            
-            # Amazon: perfect
-            value = slot.slotValue.resolutions.resolutionsPerAuthority[0].values[0].value.name
+        # Amazon: meh...
+        value = slot.value
+        
+        # Amazon: perfect
+        value = slot.slotValue.resolutions.resolutionsPerAuthority[0].values[0].value.name
         """
         # Some entities have resolutions, and canonical value is hidden there
         if slot_value.resolutions:

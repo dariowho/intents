@@ -263,4 +263,29 @@ def test_parent_intents__multiple_inheritance():
     assert SubIntent.parent_intents() == [BaseIntent, OtherBaseIntent]
     assert SubSubIntent.parent_intents() == [SubIntent, BaseIntent, OtherBaseIntent]
 
+def test_replace_lifespan():
+    @dataclass
+    class MockIntent(Intent):
+        lifespan = 42
+
+    i_before = MockIntent()
+    i_after = i_before.replace(lifespan=24)
+
+    assert i_before.lifespan == 42
+    assert i_after.lifespan == 24
+
+def test_replace_lifespan_and_parameters():
+    @dataclass
+    class MockIntent(Intent):
+        lifespan = 42
+        foo: str
+
+    i_before = MockIntent("a string")
+    i_after = i_before.replace(foo="another string", lifespan=24)
+
+    assert i_before.lifespan == 42
+    assert i_before.foo == "a string"
+    assert i_after.lifespan == 24
+    assert i_after.foo == "another string"
+
 # def subclass_checks_base_class_parameters():

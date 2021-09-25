@@ -119,7 +119,7 @@ class AlexaConnector(Connector):
         raise NotImplementedError()
 
     def fulfill(self, fulfillment_request: FulfillmentRequest) -> dict:
-        logger.warning("Authentication for Alexa fulfillment requests is NOT supported. Do not use AexaConnector in production.")
+        logger.warning("Authentication for Alexa fulfillment requests is NOT supported. Do not use AlexaConnector in production.")
         body_dict = fulfillment_request.body
         request_body = fulfillment_schemas.from_dict(body_dict)
         response_body = self.fulfillment_component.handle_fulfillment(request_body)

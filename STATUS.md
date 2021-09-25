@@ -18,6 +18,7 @@ colors: 🟢 complete, 🟡 partial, 🔴 missing, ⚪ not planned
 | Parameters with Custom Entities  | 🟢            | 🟢     | 🟢     |
 | List Parameters                  | 🟢            | 🟢     | 🟢     |
 | Required Parameters with prompts | 🟢            | 🔴     | 🔴     |
+| Session Parameters               | 🟢            | 🟢     | 🟢     |
 | Default Text Responses           | 🟢            | 🟢     | 🟢     |
 | Platform Text/Rich Responses     | 🟢            | 🔴     | 🟢     |
 | Custom Payload Responses         | 🟢            | ⚪     | 🟢     |

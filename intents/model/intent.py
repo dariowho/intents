@@ -9,17 +9,19 @@ defining :class:`Intent` sub-classes and their language resources (see
 :mod:`intents.language`), and registering them to an :class:`intents.Agent`
 class with :meth:`intents.Agent.register`.
 """
+from __future__ import annotations
+
 import inspect
 import logging
 import dataclasses
-from dataclasses import dataclass
-from typing import List, Dict, Union, Any, Type, _GenericAlias
+from dataclasses import dataclass, replace
+from typing import List, Dict, Union, Any, Type, T, _GenericAlias
 
 # pylint: disable=unused-import # needed for docs
 import intents
 from intents import LanguageCode
 from intents.model import entity, names
-from intents.model.parameter import SessionIntentParameter, NluIntentParameter, ParameterSchema
+from intents.model.parameter import IntentParameter, SessionIntentParameter, NluIntentParameter, ParameterSchema
 from intents.helpers.data_classes import is_dataclass_strict, to_dict
 
 logger = logging.getLogger(__name__)
@@ -36,7 +38,7 @@ class FulfillmentContext:
     """
     confidence: float
     fulfillment_text: str
-    fulfillment_messages: "intents.language.intent_language.IntentResponseDict"
+    fulfillment_messages: intents.language.intent_language.IntentResponseDict
     language: LanguageCode
 
 @dataclass
@@ -50,12 +52,12 @@ class FulfillmentResult:
         At the moment this class is only used internally. It is safe to return
         simple :class:`Intent` instances in :meth:`Intent.fulfill`
     """
-    trigger: "Intent" = None
+    trigger: Intent = None
     fulfillment_text: List[str] = None
     fulfillment_messages: List["intents.language.intent_language.IntentResponse"] = None
     
     @staticmethod
-    def ensure(fulfill_return_value: Union["FulfillmentResult", "Intent"]) -> "FulfillmentResult":
+    def ensure(fulfill_return_value: Union[FulfillmentResult, Intent]) -> FulfillmentResult:
         """
         Convert the given object to a :class:`FulfillmentResult` instance, if it
         is not already one.
@@ -87,7 +89,6 @@ class FulfillmentResult:
 class IntentType(type):
 
     name: str = None
-    lifespan: int = 5
 
     def __new__(cls, name, bases, dct):
         result_cls = super().__new__(cls, name, bases, dct)
@@ -223,25 +224,32 @@ class Intent(metaclass=IntentType):
     # TODO: check parameter names: no underscore, no reserved names, max length
 
     name: str = None
+    lifespan: int = 5
 
     @property
     def parameter_schema(self) -> ParameterSchema:
         """
-        Return a dict representing the Intent parameter definition. A key is a
-        parameter name, a value is a :class:`NluIntentParameter` object.
+        Return a :class:`ParameterSchema` object that represens the Intent
+        parameter definition.
 
         TODO: this doesn't show up in docs
         """
         return self.__class__.parameter_schema
 
-    def parameter_dict(self) -> Dict[str, Any]:
+    def parameter_dict(self) -> Dict[str, IntentParameter]:
+        """
+        Return the Intent parameters and their values as a dict.
+
+        Returns:
+            A dict of parameters
+        """
         result = {}
         for parameter_name in self.parameter_schema.keys():
             result[parameter_name] = getattr(self, parameter_name)
         return result
 
     @classmethod
-    def parent_intents(cls) -> List[Type["Intent"]]:
+    def parent_intents(cls) -> List[Type[Intent]]:
         """
         Return a list of the Intent parent classes. This wraps `cls.mro()`
         filtering out non-Intent parents (e.g. :class:`object`), :class:`Intent`
@@ -259,10 +267,36 @@ class Intent(metaclass=IntentType):
                 result.append(c)
         return result
 
+    def replace(self, *, lifespan: int=None, **kwargs) -> T:
+        """
+        Return a copy of the given intent object replacing the given field values
+
+        >>> OrderPizza(pizza_type="margherita").replace(lifespan=3, pizza_type="marinara")
+        OrderPizza(pizza_type="marinara")
+
+        This method is meant for **internal use**. Changing lifespans and
+        parameters will most likely have an impact on session and contexts that
+        have to be dealt with separately.
+
+        Args:
+            lifespan (int, optional): Intent lifespan. Defaults to None.
+        Return:
+            An Intent of the same type, with updated fields
+        """
+        if not is_dataclass_strict(self):
+            logger.warning("%s is not a dataclass instance. This may cause unexpected behavior: consider "
+                           "adding a @dataclass decorator to your Intent class.", self)
+            self = dataclass(self)
+
+        result = replace(self, **kwargs)
+        result.lifespan = lifespan if lifespan else self.lifespan
+
+        return result
+
     def fulfill(self,
         context: FulfillmentContext,
         **kwargs
-    ) -> "Intent":
+    ) -> Intent:
         """
         Override this method to define a custom procedure that will be invoked
         when the Intent is predicted, possibly triggering another intent as a
