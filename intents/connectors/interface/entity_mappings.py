@@ -320,7 +320,7 @@ def serialize_intent_parameters(
     param_schema = intent.parameter_schema
 
     for param_name, param_metadata in param_schema.nlu_parameters.items():
-        param_mapping = mappings[param_metadata.entity_cls]
+        param_mapping = mappings.lookup(param_metadata.entity_cls)
         if param_name in param_dict:
             param_value = param_dict[param_name]
             result[param_name] = param_mapping.to_service(param_value)

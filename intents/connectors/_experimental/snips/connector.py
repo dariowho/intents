@@ -156,7 +156,7 @@ class SnipsConnector(Connector):
         parse_result_dict = self.nlu_engines[language].parse(message)
         parse_result = prediction_format.from_dict(parse_result_dict)
         prediction = self.prediction_component.prediction_from_parse_result(parse_result, language)
-        return self.prediction_component.fulfill_local(prediction, language)
+        return self.prediction_component.fulfill_local(prediction, session, language)
 
     def trigger(self, intent: Intent, session: str=None, language: Union[LanguageCode, str]=None) -> SnipsPrediction:
         """
@@ -185,7 +185,7 @@ class SnipsConnector(Connector):
             language = self.default_language
         language = ensure_language_code(language)
         prediction = self.prediction_component.prediction_from_intent(intent, language)
-        return self.prediction_component.fulfill_local(prediction, language)
+        return self.prediction_component.fulfill_local(prediction, session, language)
 
     def fulfill(self, fulfillment_request: FulfillmentRequest) -> dict:
         """

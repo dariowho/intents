@@ -15,6 +15,7 @@ from google.cloud.dialogflow_v2.services.agents import AgentsClient
 from google.cloud.dialogflow_v2 import types as pb
 
 from intents import Agent, Intent, LanguageCode, FulfillmentContext, FulfillmentResult
+from intents.model.intent import FulfillmentSession
 from intents.model.parameter import SessionIntentParameter
 from intents.model.relations import intent_relations
 from intents.language_codes import ensure_language_code
@@ -197,14 +198,18 @@ class DialogflowEsConnector(Connector):
         webhook_body = WebhookRequestBody(fulfillment_request.body)
         intent = self._df_body_to_intent(webhook_body)
         context = self._df_body_to_fulfillment_context(webhook_body)
+        if not intent:
+            logger.warning("Received slot filling fulfillment call (intent=None). This is not supported yet")
+            return {} # TODO: remove when partial predictions are implemented
         fulfillment_result = FulfillmentResult.ensure(intent.fulfill(context))
         logger.debug("Returning fulfillment result: %s", fulfillment_result)
         if fulfillment_result:
             return webhook.fulfillment_result_to_response(fulfillment_result, context)
         return {}
 
-    def _df_body_to_fulfillment_context(self, df_body: DetectIntentBody) -> DialogflowPrediction:
+    def _df_body_to_fulfillment_context(self, df_body: WebhookRequestBody) -> FulfillmentContext:
         return FulfillmentContext(
+            session=FulfillmentSession(df_body.session_id),
             confidence=df_body.queryResult.intentDetectionConfidence,
             fulfillment_messages=intent_responses(df_body),
             fulfillment_text=df_body.queryResult.fulfillmentText,

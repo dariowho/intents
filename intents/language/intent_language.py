@@ -616,7 +616,7 @@ def intent_language_data(
             language_data = yaml.load(f.read(), Loader=yaml.FullLoader)
 
         if not language_data:
-            return IntentLanguageData([], {}, [])
+            return {language_code: IntentLanguageData([], {}, [])}
 
         examples_data = language_data.get('examples', [])
         responses_data = language_data.get('responses', [])

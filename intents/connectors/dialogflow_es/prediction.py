@@ -29,6 +29,8 @@ class PredictionBody:
     This is a superclass for :class:`DetectIntentBody` and
     :class:`WebhookRequestBody`, which both send a `query_result` field
     """
+    # TODO: model this as QueryResult, and create separate types for prediction
+    # and webhook
     
     queryResult: df.QueryResult # This field is common in webhook
                                 # requests and detectintent responses
@@ -118,6 +120,10 @@ class WebhookRequestBody(PredictionBody):
             data=webhook_request_dict,
         )
         super().__init__(self.webhook_request.queryResult)
+
+    @property
+    def session_id(self) -> str:
+        return self.webhook_request.session.split('/')[-1]
 
 def _build_global_context_parameters(
     contexts: Dict[str, DfResponseContext]

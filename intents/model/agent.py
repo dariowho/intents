@@ -242,7 +242,7 @@ class Agent(metaclass=AgentType):
             raise ValueError(f"Two different Entity classes exist with the same name: '{existing_cls_path}' and '{entity_cls_path}'")
 
     def _pylint_hack(self):
-        raise NotImplementedError()
+        return None
 
     @staticmethod
     def _norm_name(intent_name: str) -> str:

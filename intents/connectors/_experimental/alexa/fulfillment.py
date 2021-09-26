@@ -8,6 +8,7 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Any, Type
 
 from intents import Intent, Agent, LanguageCode, FulfillmentContext, FulfillmentResult
+from intents.model.intent import FulfillmentSession
 from intents.connectors.interface import deserialize_intent_parameters, Prediction
 from intents.language import intent_language
 from intents.connectors._experimental.alexa import fulfillment_schemas as fs
@@ -49,12 +50,13 @@ class AlexaFulfillmentComponent:
         locale = request_body.request.locale
         lang = self.language_component.alexa_locale_to_agent_language(locale)
         intent = self.intent_from_fulfillment(request_body, lang)
-        result_text = self.fulfill_local(intent, lang)
+        result_text = self.fulfill_local(intent, request_body.session.sessionId, lang)
         return _make_speech_response(result_text)
 
     def fulfill_local(
         self,
         intent: Intent,
+        session_id: str,
         lang: LanguageCode,
         _stack: List[str]=None
     ) -> str:
@@ -75,6 +77,7 @@ class AlexaFulfillmentComponent:
         language_data = intent_language.intent_language_data(self.agent_cls, intent.__class__, lang)[lang]
         rendered_messages, rendered_plaintext = intent_language.render_responses(intent, language_data)
         context = FulfillmentContext(
+            session=FulfillmentSession(session_id),
             confidence=1.0,
             fulfillment_text=rendered_plaintext,
             fulfillment_messages=rendered_messages,
@@ -84,7 +87,7 @@ class AlexaFulfillmentComponent:
 
         if fulfillment_result:
             if fulfillment_result.trigger:
-                return self.fulfill_local(fulfillment_result.trigger, lang, _stack=_stack)
+                return self.fulfill_local(fulfillment_result.trigger, session_id, lang, _stack=_stack)
             else:
                 logger.warning("Intent returned a fulfillment result without trigger. Trigger "
                                "is the only supported response in AlexaConnector. Other elements "

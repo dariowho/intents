@@ -31,11 +31,20 @@ logger = logging.getLogger(__name__)
 #
 
 @dataclass
+class FulfillmentSession:
+    """
+    This models information about the current session that is returned in
+    :class:`FulfillmentContext` objects.
+    """
+    id: str
+
+@dataclass
 class FulfillmentContext:
     """
     `FulfillmentContext` objects are produced by Connectors and are input
     arguments to :meth:`Intent.fulfill`.
     """
+    session: FulfillmentSession
     confidence: float
     fulfillment_text: str
     fulfillment_messages: intents.language.intent_language.IntentResponseDict

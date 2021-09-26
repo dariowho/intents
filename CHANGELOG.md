@@ -5,10 +5,13 @@
 * (#32) Introduce Session Parameters, next to existing NLP Parameters
   * In Dialogflow, Session Parameters are @sys.any intent parameters that cannot
     be tagged in user utterances
+  * In Alexa and Snips Session Parameters are not exported.
+* Add session information (id) to `FulfillmentContext`
 
 **Fix**
 
 * (#32) Properly serialize Intent parameters when producing fulfillment results
+* Fix mapping lookup when serializing intent parameters
 
 # v0.3.0
 

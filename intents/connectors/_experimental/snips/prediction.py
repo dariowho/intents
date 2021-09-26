@@ -4,6 +4,7 @@ from typing import Dict, List, Any, Type
 from collections import defaultdict
 
 from intents import Intent, Agent, LanguageCode, FulfillmentContext, FulfillmentResult
+from intents.model.intent import FulfillmentSession
 from intents.connectors.interface import deserialize_intent_parameters, Prediction, ServiceEntityMappings
 from intents.language import intent_language
 from intents.connectors._experimental.snips import prediction_format as f
@@ -78,7 +79,13 @@ class SnipsPredictionComponent:
             parse_result=None
         )
 
-    def fulfill_local(self, prediction: SnipsPrediction, lang: LanguageCode, _stack: List[str]=None) -> SnipsPrediction:
+    def fulfill_local(
+        self,
+        prediction: SnipsPrediction,
+        session_id: str,
+        lang: LanguageCode,
+        _stack: List[str]=None
+    ) -> SnipsPrediction:
         """
         Simulate the fulfillment flow in a local procedure. This method is called
         internally by :meth:`~SnipsConnector.predict` and
@@ -116,6 +123,7 @@ class SnipsPredictionComponent:
         _stack.append(prediction.intent.name)
 
         context = FulfillmentContext(
+            session=FulfillmentSession(session_id),
             confidence=prediction.confidence,
             fulfillment_text=prediction.fulfillment_text,
             fulfillment_messages=prediction.fulfillment_messages,
@@ -125,7 +133,7 @@ class SnipsPredictionComponent:
         if fulfillment_result:
             if fulfillment_result.trigger:
                 triggered = self.prediction_from_intent(fulfillment_result.trigger, lang)
-                return self.fulfill_local(triggered, lang, _stack=_stack)
+                return self.fulfill_local(triggered, session_id, lang, _stack=_stack)
             else:
                 logger.warning("Intent returned a fulfillment result without trigger. Trigger "
                                "is the only supported response in SnipsConnector. Other elements "
