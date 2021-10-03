@@ -303,7 +303,7 @@ def serialize_intent_parameters(
     are serialized by
     :meth:`~intents.model.parameters.SessionIntentParameter.serialize_value`.
     When `skip_session_parameters` is True, Session parameters will not be
-    included in the result.
+    included in the result. Parameters which value is `None` will not be sent.
 
     Typically this is called by a Connector when an Intent is triggered, or a
     fulfillment result intent is turned into a response payload.
@@ -321,7 +321,7 @@ def serialize_intent_parameters(
 
     for param_name, param_metadata in param_schema.nlu_parameters.items():
         param_mapping = mappings.lookup(param_metadata.entity_cls)
-        if param_name in param_dict:
+        if param_name in param_dict and param_dict[param_name] is not None:
             param_value = param_dict[param_name]
             result[param_name] = param_mapping.to_service(param_value)
 
@@ -330,7 +330,7 @@ def serialize_intent_parameters(
 
     param_metadata: SessionIntentParameter
     for param_name, param_metadata in param_schema.session_parameters.items():
-        if param_name in param_dict:
+        if param_name in param_dict and param_dict[param_name] is not None:
             param_value = param_dict[param_name]
             result[param_name] = param_metadata.serialize_value(param_value)
 

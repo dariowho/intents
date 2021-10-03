@@ -176,7 +176,7 @@ class TextResponseMessage(ResponseMessage):
 @dataclass
 class QuickRepliesResponseMessage(ResponseMessage):
     replies: List[str] = field(default_factory=list)
-    title: str = "Quick Replies"
+    title: str = None
     type: str = "2"   # TODO: use Enum with helpers.data_classes.custom_asdict_factory()
 
 @dataclass

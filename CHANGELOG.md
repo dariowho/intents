@@ -12,6 +12,7 @@
 
 * (#32) Properly serialize Intent parameters when producing fulfillment results
 * Fix mapping lookup when serializing intent parameters
+* Remove `None` members from trigger parameters
 
 # v0.3.0
 
