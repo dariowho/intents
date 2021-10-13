@@ -33,7 +33,7 @@ class FollowingSubclassIntent(Intent):
     parent_followed_intent_subclass: FollowedIntentSubclass = follow()
 
 class MockAgent(Agent):
-    pass
+    languages = ['en']
 
 with patch('intents.language.intent_language_data'):
     MockAgent.register(FollowedIntent)

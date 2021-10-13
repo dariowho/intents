@@ -8,6 +8,11 @@
   * In Alexa and Snips Session Parameters are not exported.
 * Add session information (id) to `FulfillmentContext`
 
+**Change**
+
+* Breaking change: read Agent language data from Agent root (e.g.
+  `/project/agent/`) instead of package root (e.g. `/project/`)
+
 **Fix**
 
 * (#32) Properly serialize Intent parameters when producing fulfillment results

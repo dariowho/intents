@@ -198,4 +198,4 @@ def test_fulfillment_recursion_is_blocked():
     prediction_component = prediction.SnipsPredictionComponent(MyAgent, entities.ENTITY_MAPPINGS)
     pred = prediction_component.prediction_from_intent(RecursiveFulfillmentIntent(), LanguageCode.ENGLISH)
     with pytest.raises(RecursionError):
-        prediction_component.fulfill_local(pred, LanguageCode.ENGLISH)
+        prediction_component.fulfill_local(pred, 'fake-session', LanguageCode.ENGLISH)

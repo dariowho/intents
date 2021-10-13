@@ -63,7 +63,7 @@ def test_register_intent_non_unique_name(mock_language):
         name = f"agent_test.An.Intent"
 
     class MyAgent(Agent):
-        pass
+        languages = ['en']
 
     MyAgent.register(AnIntent)
 
@@ -97,7 +97,7 @@ def test_register_intent_non_unique_parameter(mock_language):
         foo: List[Sys.Person]
 
     class MyAgent(Agent):
-        pass
+        languages = ['en']
 
     MyAgent.register(an_intent)
     MyAgent.register(a_consistent_intent)
