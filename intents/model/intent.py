@@ -14,7 +14,7 @@ from __future__ import annotations
 import inspect
 import logging
 import dataclasses
-from dataclasses import dataclass, replace
+from dataclasses import dataclass, replace, fields
 from typing import List, Dict, Union, Any, Type, T, _GenericAlias
 
 # pylint: disable=unused-import # needed for docs
@@ -132,7 +132,7 @@ class IntentType(type):
             cls = dataclass(cls)
 
         result = {}
-        for param_field in cls.__dataclass_fields__.values():
+        for param_field in fields(cls):
             if inspect.isclass(param_field.type) and issubclass(param_field.type, Intent):
                 continue
 

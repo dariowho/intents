@@ -11,13 +11,16 @@
 **Change**
 
 * Breaking change: read Agent language data from Agent root (e.g.
-  `/project/agent/`) instead of package root (e.g. `/project/`)
+  `/project/.../agent/`) instead of package root (e.g. `/project/`)
 
 **Fix**
 
 * (#32) Properly serialize Intent parameters when producing fulfillment results
 * Fix mapping lookup when serializing intent parameters
 * Remove `None` members from trigger parameters
+* Replace direct `cls.__dataclass_fields__` access with `fields(cls)` to comply
+  with standard dataclass behavior
+* Fix default session handling in `SnipsConnector.predict()`
 
 # v0.3.0
 

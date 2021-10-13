@@ -54,7 +54,7 @@ import random
 import logging
 import warnings
 from enum import Enum
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 from typing import List, Dict, Union, Tuple, Type, Any
 
 import yaml
@@ -223,12 +223,13 @@ class IntentResponse:
         parameter_dict = intent.parameter_dict()
         result_args = {}
         try:
-            dataclass_fields = getattr(self, "__dataclass_fields__")
-        except AttributeError as exc:
+            dataclass_fields = fields(self)
+        except TypeError as exc:
             raise ValueError(f"Response '{self}' doesn't seem to be a dataclass. If this is a "
                              "custom IntentResponse class, make sure to add a @dataclass decorator; "
                              "otherwise, please file an issue on the Intents repository.") from exc
-        for field_name in dataclass_fields:
+        for field_obj in dataclass_fields:
+            field_name = field_obj.name
             if isinstance(field_name, (str, list)):
                 result_args[field_name] = _render_response(
                     self.__dict__[field_name],

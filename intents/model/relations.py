@@ -87,7 +87,7 @@ API
 from enum import Enum
 from typing import List, Union, Type
 import dataclasses
-from dataclasses import dataclass, field
+from dataclasses import dataclass, field, fields
 
 from intents import Intent
 
@@ -226,7 +226,7 @@ def intent_relations(intent: Union[Intent, Type[Intent]]) -> IntentRelationMap:
     """
     intent_cls = intent if isinstance(intent, type) else type(intent)
     result = IntentRelationMap()
-    for cls_field in intent.__dataclass_fields__.values():
+    for cls_field in fields(intent):
         relation_type: RelationType = cls_field.metadata.get("relation_type")
         if relation_type:
             assert relation_type in [RelationType.FOLLOW]

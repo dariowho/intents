@@ -152,6 +152,8 @@ class SnipsConnector(Connector):
         """
         if not language:
             language = self.default_language
+        if not session:
+            session = self.default_session
         language = ensure_language_code(language)
         parse_result_dict = self.nlu_engines[language].parse(message)
         parse_result = prediction_format.from_dict(parse_result_dict)
@@ -183,6 +185,8 @@ class SnipsConnector(Connector):
         """
         if not language:
             language = self.default_language
+        if not session:
+            session = self.default_session
         language = ensure_language_code(language)
         prediction = self.prediction_component.prediction_from_intent(intent, language)
         return self.prediction_component.fulfill_local(prediction, session, language)
