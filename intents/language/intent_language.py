@@ -48,6 +48,8 @@ Let's look at the sections of this file.
     :class:`CardIntentResponse` and :class:`CustomPayloadIntentResponse`
 
 """
+from __future__ import annotations
+
 import os
 import re
 import random
@@ -312,6 +314,17 @@ class TextIntentResponse(IntentResponse):
             "dark roast, good choice!"
         """
         return random.choice(self.choices)
+
+    # def render(self, intent: Intent) -> TextIntentResponse:
+    #     if not self.choices:
+    #         return self
+
+    #     choices_by_difference = {}
+    #     available_params = set([k for k, v in intent.parameter_dict() if v])
+    #     for choice in self.choices:
+    #         placeholders = set(re.findall(r'\$\w+', choice))
+    #         difference = len(placeholders.difference(available_params))
+    #         choices_by_difference = ...
 
 @dataclass(frozen=True)
 class QuickRepliesIntentResponse(IntentResponse):

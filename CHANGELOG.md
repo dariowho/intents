@@ -7,11 +7,13 @@
     be tagged in user utterances
   * In Alexa and Snips Session Parameters are not exported.
 * Add session information (id) to `FulfillmentContext`
+* Use deterministic UUIDs for Intent and Entities in Dialogflow Export
 
 **Change**
 
 * Breaking change: read Agent language data from Agent root (e.g.
   `/project/.../agent/`) instead of package root (e.g. `/project/`)
+* Replace `ensure_language_code` with `LanguageCode.ensure()` (with deprecation)
 
 **Fix**
 
@@ -21,6 +23,7 @@
 * Replace direct `cls.__dataclass_fields__` access with `fields(cls)` to comply
   with standard dataclass behavior
 * Fix default session handling in `SnipsConnector.predict()`
+* Ignore unmatched parameters when deserializing Dialogflow predictions
 
 # v0.3.0
 

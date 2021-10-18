@@ -148,7 +148,7 @@ def run_dev_server(connector: Connector, host: str='', port: str=8000):
             content_len = int(self.headers.get('Content-Length'))
             post_body = self.rfile.read(content_len)
             post_body = json.loads(post_body)
-            logger.info("POST Request reveived")
+            logger.info("POST Request received")
             logger.debug("POST REQUEST BODY: %s", jsondict(post_body))
 
             fulfillment_request = FulfillmentRequest(

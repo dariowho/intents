@@ -1,4 +1,7 @@
+from __future__ import annotations
+
 from enum import Enum
+from warnings import warn
 from typing import Union
 
 class LanguageCode(Enum):
@@ -16,6 +19,24 @@ class LanguageCode(Enum):
     CHINESE = 'zh'
     CHINESE_PRC = 'zh_CN'
     CHINESE_HONG_KONG = 'zh_HK'
+
+    @staticmethod
+    def ensure(lang: Union[LanguageCode, str]) -> LanguageCode:
+        """
+        Make sure `lang` is a :class:`LanguageCode` value. If not, return
+        `LanguageCode(lang)` (assuming it's a string).
+
+        This is useful for user-facing methods, where input may be a language code
+        or a string.
+
+        Args:
+            lang: An input language code
+        Returns:
+            A LanguageCode object representing `lang` 
+        """
+        if isinstance(lang, LanguageCode):
+            return lang
+        return LanguageCode(lang)
 
 LANGUAGE_CODES = [x.value for x in LanguageCode]
 
@@ -58,17 +79,7 @@ FALLBACK_LANGUAGE = {
 
 def ensure_language_code(lang: Union[LanguageCode, str]) -> LanguageCode:
     """
-    Make sure `lang` is a :class:`LanguageCode` value. If not, return
-    `LanguageCode(lang)` (assuming it's a string).
-
-    This is useful for user-facing methods, where input may be a language code
-    or a string.
-
-    Args:
-        lang: An input language code
-    Returns:
-        A LanguageCode object representing `lang` 
+    Deprecated. Use :meth:`LanguageCode.ensure`
     """
-    if isinstance(lang, LanguageCode):
-        return lang
-    return LanguageCode(lang)
+    warn("ensure_language_code() is deprecated. Use LanguageCode.ensure() instead", DeprecationWarning)
+    return LanguageCode.ensure(lang)

@@ -28,7 +28,7 @@ from typing import Union, Type
 import snips_nlu
 
 from intents import Intent, Agent, LanguageCode
-from intents.language import agent_supported_languages, ensure_language_code
+from intents.language import agent_supported_languages
 from intents.connectors.interface import Connector, ServiceEntityMappings, FulfillmentRequest
 from intents.connectors._experimental.snips.prediction import SnipsPrediction, SnipsPredictionComponent
 from intents.connectors._experimental.snips import entities, prediction_format
@@ -154,7 +154,7 @@ class SnipsConnector(Connector):
             language = self.default_language
         if not session:
             session = self.default_session
-        language = ensure_language_code(language)
+        language = LanguageCode.ensure(language)
         parse_result_dict = self.nlu_engines[language].parse(message)
         parse_result = prediction_format.from_dict(parse_result_dict)
         prediction = self.prediction_component.prediction_from_parse_result(parse_result, language)
@@ -187,7 +187,7 @@ class SnipsConnector(Connector):
             language = self.default_language
         if not session:
             session = self.default_session
-        language = ensure_language_code(language)
+        language = LanguageCode.ensure(language)
         prediction = self.prediction_component.prediction_from_intent(intent, language)
         return self.prediction_component.fulfill_local(prediction, session, language)
 

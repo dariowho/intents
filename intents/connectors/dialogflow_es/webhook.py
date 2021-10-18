@@ -3,8 +3,7 @@ Here we manage Dialogflow webhook results
 """
 import logging
 
-from intents import FulfillmentResult, FulfillmentContext
-from intents.language_codes import ensure_language_code
+from intents import FulfillmentResult, FulfillmentContext, LanguageCode
 from intents.helpers.data_classes import to_dict
 from intents.connectors.dialogflow_es.names import event_name
 from intents.connectors.dialogflow_es.entities import MAPPINGS
@@ -18,7 +17,7 @@ def fulfillment_result_to_response(fulfillment_result: FulfillmentResult, contex
         intent = fulfillment_result.trigger
         followup_event = wf.WebhookResponseFollowupEvent(
             name=event_name(intent),
-            languageCode=ensure_language_code(context.language).value,
+            languageCode=LanguageCode.ensure(context.language).value,
             parameters=serialize_intent_parameters(intent, MAPPINGS)
         )
         return to_dict(wf.WebhookResponse(

@@ -9,7 +9,7 @@ from abc import ABC, abstractmethod
 from typing import Union
 
 from intents import Intent, Agent, LanguageCode
-from intents.language import ensure_language_code, agent_supported_languages
+from intents.language import agent_supported_languages
 from intents.connectors.interface.prediction import Prediction
 from intents.connectors.interface.fulfillment import FulfillmentRequest
 
@@ -38,7 +38,7 @@ class Connector(ABC):
     ):
         if not default_language:
             default_language = agent_supported_languages(agent_cls)[0]
-        default_language = ensure_language_code(default_language)
+        default_language = LanguageCode.ensure(default_language)
         
         if not default_session:
             default_session = f"py-{str(uuid1())}"

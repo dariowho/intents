@@ -16,9 +16,7 @@ from google.cloud.dialogflow_v2 import types as pb
 
 from intents import Agent, Intent, LanguageCode, FulfillmentContext, FulfillmentResult
 from intents.model.intent import FulfillmentSession
-from intents.model.parameter import SessionIntentParameter
 from intents.model.relations import intent_relations
-from intents.language_codes import ensure_language_code
 from intents.connectors.interface import Connector, Prediction, FulfillmentRequest, WebhookConfiguration, serialize_intent_parameters, deserialize_intent_parameters
 from intents.connectors.dialogflow_es.auth import resolve_credentials
 from intents.connectors.dialogflow_es.util import dict_to_protobuf
@@ -152,7 +150,7 @@ class DialogflowEsConnector(Connector):
         if not language:
             language = self.default_language
 
-        language = ensure_language_code(language)
+        language = LanguageCode.ensure(language)
         text_input = TextInput(text=message, language_code=language.value)
         query_input = QueryInput(text=text_input)
         session_path = self._session_client.session_path(
@@ -171,7 +169,7 @@ class DialogflowEsConnector(Connector):
         if not language:
             language = self.default_language
 
-        language = ensure_language_code(language)
+        language = LanguageCode.ensure(language)
         event_name = df_names.event_name(intent.__class__)
         event_parameters = serialize_intent_parameters(intent, df_entities.MAPPINGS)
 

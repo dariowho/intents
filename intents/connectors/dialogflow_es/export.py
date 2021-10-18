@@ -6,7 +6,7 @@ import json
 import shutil
 import logging
 import tempfile
-from uuid import uuid1
+import uuid
 from dataclasses import asdict
 from typing import List, Dict, Set, Iterable, Type
 
@@ -186,9 +186,8 @@ def render_intent(connector: "DialogflowEsConnector", intent_cls: Type[Intent], 
         parameters=render_parameters(intent_cls, language_data),
         messages=render_responses(intent_cls, language_data, connector.rich_platforms),
     )
-
     return df.Intent(
-        id=str(uuid1()),
+        id=str(uuid.uuid3(uuid.NAMESPACE_URL, intent_cls.name)),
         name=intent_cls.name,
         contexts=get_input_contexts(connector, intent_cls),
         responses=[response],
@@ -214,7 +213,7 @@ def render_parameters(intent_cls: Type[Intent], language_data: Dict[language.Lan
                 prompts.append(df.Prompt(value=prompt, lang=language_code.value))
 
         result.append(df.Parameter(
-            id=str(uuid1()),
+            id=str(uuid.uuid1()),
             name=param_name,
             required=param_metadata.required,
             dataType=f'@{data_type}',
@@ -227,7 +226,7 @@ def render_parameters(intent_cls: Type[Intent], language_data: Dict[language.Lan
     # Session Parameters
     for param_name, param_metadata in param_schema.session_parameters.items():
         result.append(df.Parameter(
-            id=str(uuid1()),
+            id=str(uuid.uuid1()),
             name=param_name,
             required=param_metadata.required,
             dataType='@sys.any',
@@ -334,7 +333,7 @@ def render_intent_usersays(agent_cls: type, intent: Type[Intent], language_code:
     result = []
     for e in examples:
         result.append(df.IntentUsersays(
-            id=str(uuid1()),
+            id=str(uuid.uuid1()),
             lang=language_code.value,
             data=[render_utterance_chunk(c) for c in e.chunks()]
         ))
@@ -347,7 +346,7 @@ def render_intent_usersays(agent_cls: type, intent: Type[Intent], language_code:
 def render_entity(entity_cls: Type[EntityMixin]) -> df.Entity:
     metadata = entity_cls.metadata
     return df.Entity(
-        id=str(uuid1()),
+        id=str(uuid.uuid3(uuid.NAMESPACE_URL, entity_cls.name)),
         name=entity_cls.name,
         isRegexp=metadata.regex_entity,
         automatedExpansion=metadata.automated_expansion,
