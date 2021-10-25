@@ -103,7 +103,7 @@ class NluIntentParameter(IntentParameter):
 
         required, default = _is_required(param_field)
 
-        if not required and is_list and not isinstance(default, list):
+        if not required and is_list and default is not None and not isinstance(default, list):
             raise ValueError(f"List NLU Parameter {param_field.name} has non-list default value: {param_field}")
 
         return NluIntentParameter(
@@ -206,7 +206,7 @@ class SessionIntentParameter(IntentParameter):
     def from_dataclass_field(param_field: dataclasses.Field) -> "SessionIntentParameter":
         if isinstance(param_field.type, _GenericAlias):
             if param_field.type.__dict__.get('_name') == 'List':
-                data_type = list
+                data_type = list # TODO: list of dataclass!
             elif param_field.type.__dict__.get('_name') == 'Dict':
                 data_type = dict
             else:
@@ -216,7 +216,7 @@ class SessionIntentParameter(IntentParameter):
 
         required, default = _is_required(param_field)
 
-        if not required and issubclass(data_type, list) and not isinstance(default, list):
+        if not required and issubclass(data_type, list) and default is not None and not isinstance(default, list):
             raise ValueError(f"List Session Parameter {param_field.name} has non-list default value: {param_field}")
             
         # Will raise ValueError if type is not compatible

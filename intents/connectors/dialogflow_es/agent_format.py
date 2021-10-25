@@ -31,6 +31,8 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import List, Union, Dict
 
+WELCOME_EVENT_NAME = "WELCOME"
+
 #
 # agent.json
 #

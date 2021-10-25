@@ -33,6 +33,8 @@ class RegisteredParameter:
 class AgentType(type):
 
     languages: List[LanguageCode] = None
+    fallback_intent: Type[Intent] = None
+    welcome_intent: Type[Intent] = None
 
     intents: List[Intent] = None
     _intents_by_name: Dict[str, Intent] = None
@@ -60,6 +62,14 @@ class AgentType(type):
             else:
                 raise ValueError(f"Unsupported language '{lan}' for Agent '{result_cls}'. Must be a value of 'intents.LanguageCode'")
         result_cls.languages = languages
+
+        result_cls: Agent
+        if result_cls.fallback_intent:
+            result_cls.register(result_cls.fallback_intent)
+            # TODO: warn if required parameters are in fallback intent
+        if result_cls.welcome_intent:
+            result_cls.register(result_cls.welcome_intent)
+            # TODO: warn if required parameters are in welcome intent
 
         return result_cls
 

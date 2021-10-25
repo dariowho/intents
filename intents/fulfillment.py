@@ -97,7 +97,7 @@ from intents.connectors.interface import Connector, FulfillmentRequest
 
 logger = logging.getLogger(__name__)
 
-def run_dev_server(connector: Connector, host: str='', port: str=8000):
+def run_dev_server(connector: Connector, token: str=None, host: str='', port: str=8000):
     """
     Spawn a simple HTTP server to receive fulfillment requests from the outside.
     This is typically used in combination with some local tunneling solution
@@ -146,7 +146,15 @@ def run_dev_server(connector: Connector, host: str='', port: str=8000):
 
         def do_POST(self):
             content_len = int(self.headers.get('Content-Length'))
+
             post_body = self.rfile.read(content_len)
+            if token:
+                token_header = str(self.headers.get('X-Intents-Token'))
+                if token_header != token:
+                    logger.warning("Unauthorized request: %s", post_body)
+                    self.send_response(http.server.HTTPStatus.UNAUTHORIZED)
+                    return
+                    
             post_body = json.loads(post_body)
             logger.info("POST Request received")
             logger.debug("POST REQUEST BODY: %s", jsondict(post_body))

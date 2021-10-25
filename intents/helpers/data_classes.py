@@ -6,6 +6,9 @@ from enum import Enum
 from datetime import datetime
 from dataclasses import asdict, field
 
+# may be imported elsewhere for convenience
+from dacite import from_dict
+
 class CustomFields(Enum):
     OMIT_NONE = "OMIT_NONE"
 

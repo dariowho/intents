@@ -181,6 +181,9 @@ def get_output_contexts(
     return list(result)
 
 def render_intent(connector: "DialogflowEsConnector", intent_cls: Type[Intent], language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
+    events = [df.Event(df_names.event_name(intent_cls))]
+    if intent_cls is connector.agent_cls.welcome_intent:
+        events.append(df.Event(df.WELCOME_EVENT_NAME))
     response = df.Response(
         affectedContexts=get_output_contexts(connector, intent_cls),
         parameters=render_parameters(intent_cls, language_data),
@@ -191,11 +194,12 @@ def render_intent(connector: "DialogflowEsConnector", intent_cls: Type[Intent], 
         name=intent_cls.name,
         contexts=get_input_contexts(connector, intent_cls),
         responses=[response],
+        fallbackIntent=bool(intent_cls is connector.agent_cls.fallback_intent),
 
         # TODO: re-enable
         # webhookUsed=intent_cls.metadata.intent_webhook_enabled,
         # webhookForSlotFilling=intent_cls.metadata.slot_filling_webhook_enabled,
-        events=[df.Event(df_names.event_name(intent_cls))]
+        events=events
     )
 
 def render_parameters(intent_cls: Type[Intent], language_data: Dict[language.LanguageCode, language.IntentLanguageData]):
