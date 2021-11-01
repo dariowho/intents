@@ -6,6 +6,8 @@
   * In Dialogflow, Session Parameters are @sys.any intent parameters that cannot
     be tagged in user utterances
   * In Alexa and Snips Session Parameters are not exported.
+* (#24) Add `Agent.fallback_intent` property
+* (#24) Add `Agent.welcome_intent` property
 * Add session information (id) to `FulfillmentContext`
 * Use deterministic UUIDs for Intent and Entities in Dialogflow Export
 
@@ -14,6 +16,7 @@
 * Breaking change: read Agent language data from Agent root (e.g.
   `/project/.../agent/`) instead of package root (e.g. `/project/`)
 * Replace `ensure_language_code` with `LanguageCode.ensure()` (with deprecation)
+* Enable fuzzy matching by default on exported Dialogflow entities
 
 **Fix**
 
@@ -24,6 +27,7 @@
   with standard dataclass behavior
 * Fix default session handling in `SnipsConnector.predict()`
 * Ignore unmatched parameters when deserializing Dialogflow predictions
+* Properly deserialize `None` values in `SessionIntentParameter` 
 
 # v0.3.0
 
