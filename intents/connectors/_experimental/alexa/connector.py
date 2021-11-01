@@ -17,6 +17,7 @@ import os
 import json
 import shutil
 import logging
+from typing import Type
 
 from intents import Agent, Intent
 from intents.helpers.data_classes import to_dict
@@ -52,7 +53,7 @@ class AlexaConnector(Connector):
 
     def __init__(
         self,
-        agent_cls: type(Agent),
+        agent_cls: Type[Agent],
         invocation_name: str,
         default_session: str=None,
         default_language: str="en"

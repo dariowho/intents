@@ -28,13 +28,9 @@ class RegisteredParameter:
     name, they must also declare the same type for it. 
     """
     metadata: IntentParameter
-    used_in: List[type(Intent)]
+    used_in: List[Type[Intent]]
 
 class AgentType(type):
-
-    languages: List[LanguageCode] = None
-    fallback_intent: Type[Intent] = None
-    welcome_intent: Type[Intent] = None
 
     intents: List[Intent] = None
     _intents_by_name: Dict[str, Intent] = None
@@ -66,11 +62,16 @@ class AgentType(type):
         result_cls: Agent
         if result_cls.fallback_intent:
             result_cls.register(result_cls.fallback_intent)
-            # TODO: warn if required parameters are in fallback intent
+            param: IntentParameter
+            for param in result_cls.fallback_intent.parameter_schema.values():
+                if param.required:
+                    raise ValueError(f"Fallback intent {result_cls.fallback_intent.name} defines required parameter {param}. Fallback intent cannot define required parameters")
         if result_cls.welcome_intent:
             result_cls.register(result_cls.welcome_intent)
-            # TODO: warn if required parameters are in welcome intent
-
+            param: IntentParameter
+            for param in result_cls.welcome_intent.parameter_schema.values():
+                if param.required:
+                    raise ValueError(f"Welcome intent {result_cls.welcome_intent.name} defines required parameter {param}. Welcome intent cannot define required parameters")
         return result_cls
 
 class Agent(metaclass=AgentType):
@@ -105,6 +106,10 @@ class Agent(metaclass=AgentType):
     intents and resources with :meth:`Agent.register`, or passing it to a
     :class:`Connector` to make predictions.
     """
+
+    languages: List[LanguageCode] = None
+    fallback_intent: Type[Intent] = None
+    welcome_intent: Type[Intent] = None
 
     @classmethod
     def register(cls, resource: Union[Type[Intent], ModuleType]):
@@ -191,7 +196,7 @@ class Agent(metaclass=AgentType):
         cls._intents_by_norm_name[norm_name] = intent_cls
 
     @classmethod
-    def _register_parameter(cls, param_meta: IntentParameter, intent_cls: type(Intent)):
+    def _register_parameter(cls, param_meta: IntentParameter, intent_cls: Type[Intent]):
         existing_param: RegisteredParameter = cls._parameters_by_name.get(param_meta.name)
         if not existing_param:
             cls._parameters_by_name[param_meta.name] = RegisteredParameter(

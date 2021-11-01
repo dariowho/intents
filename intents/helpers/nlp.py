@@ -21,20 +21,30 @@ def render_list(string_list: List[str], language: Union[LanguageCode, str]="en")
     and_word = _AND.get(language.value, ", ")
     return ", ".join(string_list[:-1]) + and_word + string_list[-1]
 
-def render_with(something: str, something_else: str, language: Union[LanguageCode, str]) -> str:
+def render_with(something: str, something_else: Union[str, List[str]], language: Union[LanguageCode, str]) -> str:
     """
     >>> render_with("royale", "cheese", "en")
     "royale with cheese"
+    >>> render_with("royale", ["cheese", "pickle"], "en")
+    "royale with cheese and pickle"
     """
+    if not something_else:
+        return something
+    if isinstance(something_else, list):
+        something_else = render_list(something_else, language)
     language = LanguageCode.ensure(language)
     with_word = _WITH.get(language.value, ", ")
     return f"{something}{with_word}{something_else}"
 
-def render_without(something: str, something_else: str, language: Union[LanguageCode, str]) -> str:
+def render_without(something: str, something_else: Union[str, List[str]], language: Union[LanguageCode, str]) -> str:
     """
     >>> render_without("royale", "cheese", "en")
     "royale without cheese"
     """
+    if not something_else:
+        return something
+    if isinstance(something_else, list):
+        something_else = render_list(something_else, language)
     language = LanguageCode.ensure(language)
     without_word = _WITHOUT.get(language.value, ", ")
     return f"{something}{without_word}{something_else}"

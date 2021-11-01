@@ -601,6 +601,29 @@ def test_list_slot_list_value():
     assert intent == MockGreetFriends(friend_names=["Al St. John", "Jack"])
     #                                                ^ that's what Alexa matched ..
 
+def test_fallback_intent():
+    # TODO: this is handcrafted, use real fallback request instead
+    FALLBACK_INTENT_REQUEST = json.loads("""{
+        "type": "IntentRequest",
+        "requestId": "amzn1.echo-api.request.8703689c-d01c-4362-8100-81e14e95087e",
+        "locale": "en-US",
+        "timestamp": "2021-08-11T21:44:34Z",
+        "intent": {
+            "name": "AMAZON.FallbackIntent",
+            "confirmationStatus": "NONE",
+            "slots": {
+            }
+        }
+    }"""
+    )
+    fulfillment_component = _get_fulfillment_component()
+
+    fulfillment_body_dict = _build_fulfillment_body_dict(FALLBACK_INTENT_REQUEST)
+    body = fulfillment_schemas.from_dict(fulfillment_body_dict)
+    with patch.object(fulfillment_component.agent_cls, "fallback_intent", ToyIntent):
+        intent = fulfillment_component.intent_from_fulfillment(body, lang=LanguageCode.ENGLISH)
+
+    assert intent == ToyIntent()
 
 #
 # TODO

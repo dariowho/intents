@@ -98,13 +98,13 @@ class DialogflowEsConnector(Connector):
 
     _credentials: google.auth.credentials.Credentials
     _session_client: SessionsClient
-    _need_context_set: Set[type(Intent)]
-    _intents_by_context: Dict[str, type(Intent)]
+    _need_context_set: Set[Type[Intent]]
+    _intents_by_context: Dict[str, Type[Intent]]
 
     def __init__(
         self,
         google_credentials: Union[str, google.auth.credentials.Credentials],
-        agent_cls: type(Agent),
+        agent_cls: Type[Agent],
         default_session: str=None,
         default_language: Union[LanguageCode, str]=None,
         rich_platforms: Iterable[str]=("telegram",),
@@ -296,7 +296,7 @@ class DialogflowEsConnector(Connector):
     def _intent_needs_context(self, intent: Intent) -> bool:
         return intent in self._need_context_set
 
-def _build_need_context_set(agent_cls: type(Agent)) -> Set[Intent]:
+def _build_need_context_set(agent_cls: Type[Agent]) -> Set[Intent]:
     """
     Return a list of intents that need to spawn a context, based on their
     relations:

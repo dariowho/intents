@@ -1,11 +1,11 @@
 from dataclasses import dataclass
-from typing import List
+from typing import List, Optional
 import dacite
 
 @dataclass
 class ParseResultIntent:
-    intentName: str
-    probability: float
+    intentName: Optional[str] = None # None when no intent is predicted
+    probability: Optional[float] = None
 
 @dataclass
 class ParseResultSlotRange:

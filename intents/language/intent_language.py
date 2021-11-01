@@ -636,7 +636,7 @@ def intent_language_data(
         responses_data = language_data.get('responses', [])
 
         examples = [ExampleUtterance(s, intent_cls) for s in examples_data]
-        responses = _build_responses(responses_data)
+        responses = build_responses(responses_data)
 
         language_data = IntentLanguageData(
             example_utterances=examples,
@@ -679,7 +679,7 @@ def render_responses(intent: Intent, language_data: IntentLanguageData) -> Tuple
     result_plaintext = " ".join(rendered_plaintext)
     return result_messages, result_plaintext
 
-def _build_responses(responses_data: dict):
+def build_responses(responses_data: dict):
     result = {}
 
     response_group: str

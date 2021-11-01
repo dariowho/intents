@@ -1,4 +1,4 @@
-from unittest.mock import MagicMock
+from unittest.mock import MagicMock, patch
 from dataclasses import dataclass
 from typing import List
 
@@ -32,6 +32,27 @@ def test_prediction_from_parse_renders_language():
         messages = result.fulfillment_messages(IntentResponseGroup.DEFAULT)
         assert messages
         assert messages[0].choices == ["dark roast espresso, good choice!", "Alright, dark roasted espresso for you"]
+
+def test_intent_from_parse__no_predict_no_fallback():
+    parse_result = {
+        'input': 'fake message',
+        'intent': {'intentName': None, 'probability': 0.4853371396727583},
+        'slots': []
+    }
+    prediction_component = _get_prediction_component()
+    result = prediction_component.intent_from_parse_result(pf.from_dict(parse_result))
+    assert result == None
+
+def test_intent_from_parse__fallback():
+    parse_result = {
+        'input': 'fake message',
+        'intent': {'intentName': None, 'probability': 0.4853371396727583},
+        'slots': []
+    }
+    prediction_component = _get_prediction_component()
+    with patch.object(prediction_component.agent_cls, "fallback_intent", ca.AskCoffee):
+        result = prediction_component.intent_from_parse_result(pf.from_dict(parse_result))
+        assert result == ca.AskCoffee()
 
 def test_intent_from_parse__default_parameter():
     parse_result = {

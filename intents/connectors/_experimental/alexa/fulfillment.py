@@ -41,15 +41,20 @@ class AlexaFulfillmentComponent:
         self.language_component = language_component
 
     def handle_fulfillment(self, request_body: fs.FulfillmentBody) -> fs.FulfillmentResponseBody:
+        intent = None
+        
         if request_body.request.type == fs.RequestType.LAUNCH:
-            return _make_speech_response("Skill launched!")
+            if self.agent_cls.welcome_intent:
+                intent = self.agent_cls.welcome_intent
+            return _make_speech_response("Skill launched!") # TODO: use welcome intent
 
         if request_body.request.type == fs.RequestType.SESSION_ENDED:
             return fs.FulfillmentResponseBody()
 
         locale = request_body.request.locale
         lang = self.language_component.alexa_locale_to_agent_language(locale)
-        intent = self.intent_from_fulfillment(request_body, lang)
+        if not intent:
+            intent = self.intent_from_fulfillment(request_body, lang)
         result_text = self.fulfill_local(intent, request_body.session.sessionId, lang)
         return _make_speech_response(result_text)
 
@@ -97,12 +102,16 @@ class AlexaFulfillmentComponent:
 
     def intent_from_fulfillment(self, request_body: fs.FulfillmentBody, lang: LanguageCode) -> Intent:
         alexa_intent_name = request_body.request.intent.name
-        intent_name = self.names_component.alexa_to_intent_name(alexa_intent_name)
-        intent_cls = self.agent_cls._intents_by_name.get(intent_name)
-        if not intent_cls:
-            raise ValueError(f"Alexa returned intent with name '{alexa_intent_name}', but this was not found in the Agent "
-                             f"definition. Make sure that the cloud agent is up to date with model,"
-                             f"and if the problem persists please open an issue on the Intents repository.")
+        # TODO: test
+        if alexa_intent_name == "AMAZON.FallbackIntent" and self.agent_cls.fallback_intent:
+            intent_cls = self.agent_cls.fallback_intent
+        else:
+            intent_name = self.names_component.alexa_to_intent_name(alexa_intent_name)
+            intent_cls = self.agent_cls._intents_by_name.get(intent_name)
+            if not intent_cls:
+                raise ValueError(f"Alexa returned intent with name '{alexa_intent_name}', but this was not found in the Agent "
+                                f"definition. Make sure that the cloud agent is up to date with model,"
+                                f"and if the problem persists please open an issue on the Intents repository.")
         
         request_slots = list(request_body.request.intent.slots.values())
         alexa_parameters = self._slots_to_param_dict(intent_cls, request_slots, lang)

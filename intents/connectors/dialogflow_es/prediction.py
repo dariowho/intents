@@ -47,7 +47,7 @@ class PredictionBody:
 
     @property
     def intent_parameters(self):
-        return {k: v for k, v in self.queryResult.parameters.items() if v is not None and v is not ""}
+        return {k: v for k, v in self.queryResult.parameters.items() if v is not None and v != ""}
 
     def contexts(self) -> Tuple[Dict[str, DfResponseContext], Dict[str, DfResponseContextParameter]]:
         """

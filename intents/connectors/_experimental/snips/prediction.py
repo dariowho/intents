@@ -3,6 +3,8 @@ from dataclasses import dataclass, field
 from typing import Dict, List, Any, Type
 from collections import defaultdict
 
+from google.protobuf.json_format import ParseError
+
 from intents import Intent, Agent, LanguageCode, FulfillmentContext, FulfillmentResult
 from intents.model.intent import FulfillmentSession
 from intents.connectors.interface import deserialize_intent_parameters, Prediction, ServiceEntityMappings
@@ -33,6 +35,13 @@ class SnipsPredictionComponent:
         Turn SnipsNLU output into an Intent class
         """
         intent_name = parse_result.intent.intentName
+        if not intent_name:
+            if self.agent_cls.fallback_intent:
+                return self.agent_cls.fallback_intent()
+            else:
+                logger.warning("Prediction contains no intent, and no fallback intent is set for Agent. Returned prediction will be empty")
+                return None
+
         intent_cls = self.agent_cls._intents_by_name.get(intent_name)
         if not intent_cls:
             raise ValueError(f"Snips returned intent with name '{intent_name}', but this was not found in the Agent "
@@ -47,6 +56,8 @@ class SnipsPredictionComponent:
         Turn SnipsNLU output into a Prediction object
         """
         intent = self.intent_from_parse_result(parse_result)
+        if not intent:
+            return SnipsPrediction(None, parse_result.intent.probability, intent_language.IntentResponseDict())
         language_data = intent_language.intent_language_data(self.agent_cls, intent.__class__, lang)
         language_data = language_data[lang]
         fulfillment_messages, fulfillment_text = intent_language.render_responses(intent, language_data)
@@ -68,6 +79,8 @@ class SnipsPredictionComponent:
         Note that intent relations are not implemented yet. In the future, they must
         be solved as well.
         """
+        if intent.name not in self.agent_cls._intents_by_name:
+            logger.warning("Prediction returned an Intent that is not registered in Agent. This may lead to unexpected behavior. Intent: %s", intent)
         language_data = intent_language.intent_language_data(self.agent_cls, intent.__class__, lang)
         language_data = language_data[lang]
         fulfillment_messages, fulfillment_text = intent_language.render_responses(intent, language_data)

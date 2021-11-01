@@ -183,3 +183,77 @@ def test_register_module(mock_language):
             call(MyAgent, smalltalk.UserLikesMusic),
             call(MyAgent, smalltalk.GreetFriends),
         ])
+
+@patch('intents.model.agent.language')
+def test_fallback_intent_with_required_parameters(mock_language):
+    @dataclass
+    class RequiredNluParamIntent(Intent):
+        name = "RequiredNluParam"
+        foo: Sys.Integer
+
+        __intent_language_data__ = {}
+
+    @dataclass
+    class RequiredSessionParamIntent(Intent):
+        name = "RequiredSessionParam"
+        foo: str
+
+        __intent_language_data__ = {}
+
+    with pytest.raises(ValueError):
+        class MyAgentNlu(Agent):
+            fallback_intent = RequiredNluParamIntent
+
+    with pytest.raises(ValueError):
+        class MyAgentSession(Agent):
+            fallback_intent = RequiredSessionParamIntent
+
+    @dataclass
+    class OptionalParamsIntent(Intent):
+        name = "OptionalParams"
+        foo: Sys.Integer = 42
+        bar: int = 43
+
+        __intent_language_data__ = {}
+
+    class MyAgent(Agent):
+        fallback_intent = OptionalParamsIntent
+
+    assert MyAgent
+
+@patch('intents.model.agent.language')
+def test_welcome_intent_with_required_parameters(mock_language):
+    @dataclass
+    class RequiredNluParamIntent(Intent):
+        name = "RequiredNluParam"
+        foo: Sys.Integer
+
+        __intent_language_data__ = {}
+
+    @dataclass
+    class RequiredSessionParamIntent(Intent):
+        name = "RequiredSessionParam"
+        foo: str
+
+        __intent_language_data__ = {}
+
+    with pytest.raises(ValueError):
+        class MyAgentNlu(Agent):
+            welcome_intent = RequiredNluParamIntent
+
+    with pytest.raises(ValueError):
+        class MyAgentSession(Agent):
+            welcome_intent = RequiredSessionParamIntent
+
+    @dataclass
+    class OptionalParamsIntent(Intent):
+        name = "OptionalParams"
+        foo: Sys.Integer = 42
+        bar: int = 43
+
+        __intent_language_data__ = {}
+
+    class MyAgent(Agent):
+        welcome_intent = OptionalParamsIntent
+
+    assert MyAgent

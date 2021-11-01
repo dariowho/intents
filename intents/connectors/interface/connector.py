@@ -6,7 +6,7 @@ This is the client-facing part of the interface. you will subclass the
 import logging
 from uuid import uuid1
 from abc import ABC, abstractmethod
-from typing import Union
+from typing import Type, Union
 
 from intents import Intent, Agent, LanguageCode
 from intents.language import agent_supported_languages
@@ -26,13 +26,13 @@ class Connector(ABC):
         default_language: A default language for predictions. If None, Connector
             will use the Agent's firs defined language.
     """
-    agent_cls: type(Agent)
+    agent_cls: Type[Agent]
     default_session: str
     default_language: str
 
     def __init__(
         self,
-        agent_cls: type(Agent),
+        agent_cls: Type[Agent],
         default_session: str=None,
         default_language: Union[LanguageCode, str]=None
     ):

@@ -120,7 +120,7 @@ class Entity(str, EntityMixin):
         """
         regex_entity: bool = False
         automated_expansion: bool = False
-        fuzzy_matching: bool = False
+        fuzzy_matching: bool = True
 
     meta: Meta = None
 
