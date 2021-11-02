@@ -5,8 +5,9 @@ Here we implement :class:`DialogflowEsConnector`, an implementation of
 import os
 import logging
 import tempfile
+from collections import defaultdict
 from dataclasses import dataclass, field
-from typing import Set, Dict, Union, Iterable, Type
+from typing import DefaultDict, List, Set, Dict, Union, Iterable, Type
 
 import google.auth.credentials
 from google.cloud.dialogflow_v2.types import TextInput, QueryInput, EventInput
@@ -15,9 +16,10 @@ from google.cloud.dialogflow_v2.services.agents import AgentsClient
 from google.cloud.dialogflow_v2 import types as pb
 
 from intents import Agent, Intent, LanguageCode, FulfillmentContext, FulfillmentResult
+import intents
 from intents.model.intent import FulfillmentSession
 from intents.model.relations import intent_relations
-from intents.connectors.interface import Connector, Prediction, FulfillmentRequest, WebhookConfiguration, serialize_intent_parameters, deserialize_intent_parameters
+from intents.connectors.interface import Connector, Prediction, FulfillmentRequest, WebhookConfiguration, serialize_intent_parameters, deserialize_intent_parameters, TestableConnector, RecordedFulfillmentCall
 from intents.connectors.dialogflow_es.auth import resolve_credentials
 from intents.connectors.dialogflow_es.util import dict_to_protobuf
 from intents.connectors.dialogflow_es import webhook
@@ -61,7 +63,7 @@ class DialogflowPrediction(Prediction):
     """
     df_response: DetectIntentBody = field(default=False, repr=False)
 
-class DialogflowEsConnector(Connector):
+class DialogflowEsConnector(TestableConnector):
     """
     This is an implementation of :class:`~intents.connectors.interface.Connector`
     that enables Agents to work as Dialogflow projects.
@@ -101,6 +103,8 @@ class DialogflowEsConnector(Connector):
     _need_context_set: Set[Type[Intent]]
     _intents_by_context: Dict[str, Type[Intent]]
 
+    recorded_fulfillment_calls: DefaultDict[str, List[RecordedFulfillmentCall]]
+
     def __init__(
         self,
         google_credentials: Union[str, google.auth.credentials.Credentials],
@@ -119,6 +123,7 @@ class DialogflowEsConnector(Connector):
         self.webhook_configuration = webhook_configuration
         self._need_context_set = _build_need_context_set(agent_cls)
         self._intents_by_context = _build_intents_by_context(agent_cls)
+        self.recorded_fulfillment_calls = defaultdict(list)
 
     @property
     def gcp_project_id(self) -> str:
@@ -200,6 +205,13 @@ class DialogflowEsConnector(Connector):
             logger.warning("Received slot filling fulfillment call (intent=None). This is not supported yet")
             return {} # TODO: remove when partial predictions are implemented
         fulfillment_result = FulfillmentResult.ensure(intent.fulfill(context))
+        
+        # TestableConnector
+        if self.is_recording_enabled:
+            self.recorded_fulfillment_calls[context.session.id].append(
+                RecordedFulfillmentCall(intent, context, fulfillment_result)
+            )
+
         logger.debug("Returning fulfillment result: %s", fulfillment_result)
         if fulfillment_result:
             return webhook.fulfillment_result_to_response(fulfillment_result, context)

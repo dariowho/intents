@@ -22,3 +22,4 @@ from intents.connectors.interface.entity_mappings import EntityMapping, \
     deserialize_intent_parameters, serialize_intent_parameters
 from intents.connectors.interface.fulfillment import FulfillmentRequest, WebhookConfiguration
 from intents.connectors.interface.prediction import Prediction
+from intents.connectors.interface.testing import RecordedFulfillmentCall, TestableConnector
