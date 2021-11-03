@@ -10,6 +10,7 @@
 * (#24) Add `Agent.welcome_intent` property
 * Add session information (id) to `FulfillmentContext`
 * Use deterministic UUIDs for Intent and Entities in Dialogflow Export
+* (#31) Implement Agent Testing framework
 
 **Change**
 

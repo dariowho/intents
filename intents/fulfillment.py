@@ -109,10 +109,10 @@ def run_dev_server(connector: Connector, token: str=None, host: str='', port: st
         from intents.connectors import DialogflowEsConnector, WebhookConfiguration
         from example_agent import ExampleAgent
 
-        webhook = WebhookConfiguration('https://<MY-ADDRESS>.ngrok.io', {"X-Foo": "bar"})
+        webhook = WebhookConfiguration('https://<MY-ADDRESS>.ngrok.io', {"X-Intents-Token": "my-secret-t0ken"})
         df = DialogflowEsConnector(..., ExampleAgent, webhook_configuration=webhook)
         df.upload()  # Will set webhook address in Dialogflow
-        run_dev_server(df)
+        run_dev_server(df, token="my-secret-t0ken")
 
     After running the example above, prediction calls (either from
     :meth:`df.predict` or from the Dialogflow UI) will result in Dialogflow
@@ -136,6 +136,8 @@ def run_dev_server(connector: Connector, token: str=None, host: str='', port: st
         connector: A Connector to direct incoming requests to
         host: Optional custom host
         port: Optional custom port
+        token: An optional token to validate incoming requests. This is supposed
+            to match the content of a `X-Intents-Token` header
     """
     server_address = (host, port)
 

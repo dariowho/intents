@@ -3,10 +3,12 @@ This is an example Agent that has a number of Intent categories. Each category
 **demonstrates** a specific set of features of the *Intents* library, and
 particularly:
 
-* :mod:`smalltalk` shows the fundamentals of Intents and their Parameters
-* :mod:`shop` demonstrates how to use Intent Relations to control the conversation flow
-* :mod:`restaurant` shows how to define Custom Entities
-* :mod:`travels` demonstrates the use of rich responses, such as Images, Cards
+* :mod:`~example_agent.smalltalk` shows the **fundamentals** of Intents and their Parameters
+* :mod:`~example_agent.shop` demonstrates how to use intent **relations** to control the conversation flow
+* :mod:`~example_agent.restaurant` shows how to define **custom entities**
+* :mod:`~example_agent.calculator` demonstrates the use of **fulfillments** to include custom logic
+  in the Agent's bejavior
+* :mod:`~example_agent.travels` demonstrates the use of **rich responses**, such as Images, Cards
   and Quick Replies
 
 .. tip::

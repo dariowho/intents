@@ -27,13 +27,28 @@ class SolveMathOperation(Intent):
     second_operand: Sys.Integer
     operator: CalculatorOperator
 
-    def fulfill(self, context: FulfillmentContext):
+    def fulfill(self, context: FulfillmentContext) -> Intent:
+        """
+        Compute the requested operation and sends the response back by
+        triggering :class:`SolveMathOperationResponse`. If an error occurs while
+        solving the operation (e.g. a division by zero),
+        :class:`SolveMathOperationError` will be returned instead.
+
+        See :meth:`intents.model.intent.Intent.fulfill` for more details about
+        this method. 
+
+        Args:
+            context (FulfillmentContext): The fulfillment context, as it is
+            passed by the Connector
+
+        Returns:
+            Intent: The Intent to trigger in response to the fulfillment
+        """
         try:
             result = do_calculation(self.first_operand, self.second_operand, self.operator)
-            response_intent = SolveMathOperationResponse(operation_result=result)
-            return FulfillmentResult(trigger=response_intent)
-        except ValueError:
-            return FulfillmentResult(trigger=SolveMathOperationError)
+            return SolveMathOperationResponse(operation_result=result)
+        except (ValueError, ZeroDivisionError):
+            return SolveMathOperationError()
 
 @dataclass
 class SolveMathOperationResponse(Intent):

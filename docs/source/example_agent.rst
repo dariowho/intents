@@ -26,6 +26,13 @@ Custom Entities: Restaurant
    :members:
    :member-order: bysource
 
+Fulfillment: Calculator
+-------------------------------
+
+.. automodule:: example_agent.calculator
+   :members:
+   :member-order: bysource
+
 Rich Responses: Travels
 ---------------------------
 
