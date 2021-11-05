@@ -93,7 +93,7 @@ import http.server
 
 import intents
 from intents.helpers.logging import jsondict
-from intents.connectors.interface import Connector, FulfillmentRequest
+from intents.connectors.interface import Connector, FulfillmentRequest, TOKEN_HEADER
 
 logger = logging.getLogger(__name__)
 
@@ -109,7 +109,7 @@ def run_dev_server(connector: Connector, token: str=None, host: str='', port: st
         from intents.connectors import DialogflowEsConnector, WebhookConfiguration
         from example_agent import ExampleAgent
 
-        webhook = WebhookConfiguration('https://<MY-ADDRESS>.ngrok.io', {"X-Intents-Token": "my-secret-t0ken"})
+        webhook = WebhookConfiguration('https://<MY-ADDRESS>.ngrok.io', token="my-secret-t0ken")
         df = DialogflowEsConnector(..., ExampleAgent, webhook_configuration=webhook)
         df.upload()  # Will set webhook address in Dialogflow
         run_dev_server(df, token="my-secret-t0ken")
@@ -151,7 +151,7 @@ def run_dev_server(connector: Connector, token: str=None, host: str='', port: st
 
             post_body = self.rfile.read(content_len)
             if token:
-                token_header = str(self.headers.get('X-Intents-Token'))
+                token_header = str(self.headers.get(TOKEN_HEADER))
                 if token_header != token:
                     logger.warning("Unauthorized request: %s", post_body)
                     self.send_response(http.server.HTTPStatus.UNAUTHORIZED)

@@ -19,7 +19,7 @@ from intents import Agent, Intent, LanguageCode, FulfillmentContext, Fulfillment
 import intents
 from intents.model.intent import FulfillmentSession
 from intents.model.relations import intent_relations
-from intents.connectors.interface import Connector, Prediction, FulfillmentRequest, WebhookConfiguration, serialize_intent_parameters, deserialize_intent_parameters, TestableConnector, RecordedFulfillmentCall
+from intents.connectors.interface import Prediction, FulfillmentRequest, WebhookConfiguration, serialize_intent_parameters, deserialize_intent_parameters, TestableConnector, RecordedFulfillmentCall
 from intents.connectors.dialogflow_es.auth import resolve_credentials
 from intents.connectors.dialogflow_es.util import dict_to_protobuf
 from intents.connectors.dialogflow_es import webhook

@@ -254,6 +254,18 @@ version = "0.3"
 
 [[package]]
 category = "main"
+description = "A library for automatically generating command line interfaces."
+name = "fire"
+optional = false
+python-versions = "*"
+version = "0.4.0"
+
+[package.dependencies]
+six = "*"
+termcolor = "*"
+
+[[package]]
+category = "main"
 description = "Clean single-source support for Python 3 and 2"
 name = "future"
 optional = true
@@ -1009,7 +1021,7 @@ version = "2.8.2"
 six = ">=1.5"
 
 [[package]]
-category = "dev"
+category = "main"
 description = "Read key-value pairs from a .env file and set them as environment variables"
 name = "python-dotenv"
 optional = false
@@ -1401,6 +1413,14 @@ version = "0.8.9"
 widechars = ["wcwidth"]
 
 [[package]]
+category = "main"
+description = "ANSII Color formatting for output in terminal."
+name = "termcolor"
+optional = false
+python-versions = "*"
+version = "1.1.0"
+
+[[package]]
 category = "dev"
 description = "Tornado websocket backend for the Xterm.js Javascript terminal emulator library."
 name = "terminado"
@@ -1514,7 +1534,7 @@ version = "1.12.1"
 snips = ["snips-nlu"]
 
 [metadata]
-content-hash = "12fa368fa8e80e4127d0c76ee102a602e81b768c276db06c7d84d4923cd709f6"
+content-hash = "60c7497f5d0d20d451e104fb5c56e3c5802faf44d65b1fbfba2854054b171640"
 python-versions = "^3.8"
 
 [metadata.files]
@@ -1725,6 +1745,9 @@ docutils = [
 entrypoints = [
     {file = "entrypoints-0.3-py2.py3-none-any.whl", hash = "sha256:589f874b313739ad35be6e0cd7efde2a4e9b6fea91edcc34e58ecbb8dbe56d19"},
     {file = "entrypoints-0.3.tar.gz", hash = "sha256:c70dd71abe5a8c85e55e12c19bd91ccfeec11a6e99044204511f9ed547d48451"},
+]
+fire = [
+    {file = "fire-0.4.0.tar.gz", hash = "sha256:c5e2b8763699d1142393a46d0e3e790c5eb2f0706082df8f647878842c216a62"},
 ]
 future = [
     {file = "future-0.17.1.tar.gz", hash = "sha256:67045236dcfd6816dc439556d009594abf643e5eb48992e36beac09c2ca659b8"},
@@ -2426,6 +2449,9 @@ sphinxcontrib-serializinghtml = [
 tabulate = [
     {file = "tabulate-0.8.9-py3-none-any.whl", hash = "sha256:d7c013fe7abbc5e491394e10fa845f8f32fe54f8dc60c6622c6cf482d25d47e4"},
     {file = "tabulate-0.8.9.tar.gz", hash = "sha256:eb1d13f25760052e8931f2ef80aaf6045a6cceb47514db8beab24cded16f13a7"},
+]
+termcolor = [
+    {file = "termcolor-1.1.0.tar.gz", hash = "sha256:1d6d69ce66211143803fbc56652b41d73b4a400a2891d7bf7a1cdf4c02de613b"},
 ]
 terminado = [
     {file = "terminado-0.10.1-py3-none-any.whl", hash = "sha256:c89ace5bffd0e7268bdcf22526830eb787fd146ff9d78691a0528386f92b9ae3"},

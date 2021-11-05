@@ -14,6 +14,8 @@ pyyaml = "^5.4.1"
 google-cloud-dialogflow = "^2.0.0"
 dacite = "^1.6.0"
 snips-nlu = {version = "^0.20.2", optional = true, extras = ["snips"]}
+fire = "^0.4.0"
+python-dotenv = "^0.19.1"
 
 [tool.poetry.extras]
 snips = ["snips-nlu"]
@@ -34,6 +36,9 @@ pytest-cov = "^2.12.0"
 sphinx-autodoc-typehints = "^1.12.0"
 rope = "^0.19.0"
 python-dotenv = "^0.19.1"
+
+[tool.poetry.scripts]
+agentctl = "intents.cli.agentctl:agentctl"
 
 [build-system]
 requires = ["poetry>=0.12"]

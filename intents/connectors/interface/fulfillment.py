@@ -1,11 +1,14 @@
+"""
+The :class:`FulfillmentRequest` and :class:`WebhookConfiguration` classes are
+used in fulfillment resolution.
+"""
 import logging
-from typing import Union, Dict
+from typing import Dict
 from dataclasses import dataclass, field
 
-from intents import Intent
-from intents.model.intent import FulfillmentResult
-
 logger = logging.getLogger(__name__)
+
+TOKEN_HEADER = "X-Intents-Token"
 
 @dataclass
 class FulfillmentRequest:
@@ -37,8 +40,19 @@ class WebhookConfiguration:
     Args:
         url: An URL to call for fulfillments. Services may require it to be
             HTTPS
+        token: An auth token that should be used to validate incoming requests.
+            If set, it will be included in `headers` as `X-Intents-Token`
         headers: Headers to include in fulfillment requests. Not all services
             may support this
     """
     url: str
+    token: str = None
     headers: Dict[str, str] = field(default_factory=dict)
+
+    def __post_init__(self):
+        if self.token:
+            if self.headers.get(TOKEN_HEADER):
+                logger.warning("Token set in WebhookConfiguration. However, a "
+                               "'%s' header is also set: it will be "
+                               "overwritten with the specified token value", TOKEN_HEADER)
+            self.headers[TOKEN_HEADER] = self.token

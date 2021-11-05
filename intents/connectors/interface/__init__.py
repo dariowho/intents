@@ -20,6 +20,6 @@ from intents.connectors.interface.connector import Connector
 from intents.connectors.interface.entity_mappings import EntityMapping, \
     StringEntityMapping, PatchedEntityMapping, ServiceEntityMappings, \
     deserialize_intent_parameters, serialize_intent_parameters
-from intents.connectors.interface.fulfillment import FulfillmentRequest, WebhookConfiguration
+from intents.connectors.interface.fulfillment import FulfillmentRequest, WebhookConfiguration, TOKEN_HEADER
 from intents.connectors.interface.prediction import Prediction
 from intents.connectors.interface.testing import RecordedFulfillmentCall, TestableConnector
