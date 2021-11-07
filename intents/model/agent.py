@@ -14,6 +14,7 @@ from inspect import isclass, getmembers
 from typing import List, Dict, Union, Set, Type
 
 from intents import LanguageCode
+from intents.geolocation import Location
 from intents.model.intent import Intent
 from intents.model.parameter import IntentParameter, NluIntentParameter, SessionIntentParameter
 from intents.model.entity import EntityMixin, SystemEntityMixin
@@ -163,6 +164,37 @@ class Agent(metaclass=AgentType):
             for member_name, member in getmembers(resource, isclass):
                 if member.__module__ == resource.__name__ and issubclass(member, Intent):
                     cls._register_intent(member)
+
+    @classmethod
+    def handle_location(cls, location: Location) -> Intent:
+        """
+        This class method can be overridden to implement custom logic when a user shares a
+        location with the Agent. This can happen in two ways:
+
+        * Through an Assistant. Both Google and Alexa have facilities to request
+          a User's location and send it to the Agent (e.g.
+          https://developers.google.com/assistant/df-asdk/helpers#user_information).
+          In this case the Connector will receive a fulfillment request with
+          location info, and will call this method to understand how to react.
+
+        * Through explicit location sharing in a messaging platform such as
+          Whatsapp and Telegram. In this case a message gateway service should
+          be responsible for routing messages and predicted responses from the
+          platform to the Connector and vice versa. Upon receiving a shared
+          location, the gateway service is supposed to call a special method on
+          the connector, and from there the flow is similar to the one described
+          above.
+
+        By default, this will just return the Agent's fallback intent (if defined).
+
+        Args:
+            location (Location): A Location payload
+
+        Returns:
+            Intent: The Intent to trigger in response of the shared location
+        """
+        if cls.fallback_intent:
+            return cls.fallback_intent() # TODO: pylint is wrong and complains that fallback intent is not callable
 
     @classmethod
     def _register_intent(cls, intent_cls: Type[Intent]):

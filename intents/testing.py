@@ -16,18 +16,27 @@ from intents.fulfillment import run_dev_server
 
 logger = logging.getLogger(__name__)
 
-class StaticSentinel:
+class StaticSentinelMeta(type):
+    def __format__(self, fmt):
+        return f"<INTENTS:{self.__name__}>"
+
+class StaticSentinel(metaclass=StaticSentinelMeta):
 
     def __init__(self):
         raise ValueError("Do not instantiate sentinels. Use it like {..., 'foo': IsNone, ...}")
 
-class IsNone:
+class Anything(StaticSentinel):
     pass
 
-class IsNotNone:
+class IsNone(StaticSentinel):
+    pass
+
+class IsNotNone(StaticSentinel):
     pass
 
 def _assert_value(value: Any, expected: Any):
+    if expected is Anything:
+        return
     if expected is IsNone:
         assert value is None
     elif expected is IsNone:

@@ -8,6 +8,7 @@ from google.protobuf.json_format import MessageToDict
 from google.cloud.dialogflow_v2 import types as pb
 
 from intents.connectors.dialogflow_es import prediction_format as df
+from intents.geolocation import Location
 from intents.language import IntentResponseGroup, IntentResponseDict, IntentResponse, TextIntentResponse, QuickRepliesIntentResponse, ImageIntentResponse, CardIntentResponse
 
 logger = logging.getLogger(__name__)
@@ -124,6 +125,41 @@ class WebhookRequestBody(PredictionBody):
     @property
     def session_id(self) -> str:
         return self.webhook_request.session.split('/')[-1]
+
+    def has_location(self) -> Location:
+        """
+        Dialogflow Fulfillment requests may bear extra information such as the
+        user's current position. This happens when the user is asked to share it
+        via Google Assistant and he explicitly agrees. In this case Google will
+        populate the `originalDetectIntentRequest` field of the webhook call
+        with the location that was retrieved from user.
+
+        Returns:
+            A Location object, if included in fulfillment data. 'None'
+            otherwise.
+        """
+        original_request = self.webhook_request.originalDetectIntentRequest
+        if original_request.get("source") != "google":
+            return
+
+        if (version := original_request.get("version")) != "2":
+            logger.warning("Found version '%s' for originalDetectIntentRequest information. "
+                           "Expected version is '2', unexpected behavior may occur", version)
+
+        location: dict
+        if location := original_request.get("payload", {}).get("device", {}).get("location"):
+            result = Location(
+                lat=location.get("coordinates", {}).get("latitude"),
+                lng=location.get("coordinates", {}).get("longitude"),
+                formatted_address=location.get("formattedAddress"),
+                zip_code=location.get("zipCode"),
+                city=location.get("city"),
+            )
+            if result.lat and result.lng:
+                return result
+            else:
+                logger.warning("Google sent 'originalDetectIntentRequest.payload.device.location' data "
+                               "without both latitude and logitude: %s", location)
 
 def _build_global_context_parameters(
     contexts: Dict[str, DfResponseContext]
@@ -252,6 +288,8 @@ def intent_responses(df_body: PredictionBody) -> IntentResponseDict:
     for message in df_body.queryResult.fulfillmentMessages:
         if message.platform == df.QueryResultMessagePlatform.PLATFORM_UNSPECIFIED:
             group = IntentResponseGroup.DEFAULT
+        elif message.platform == df.QueryResultMessagePlatform.ACTIONS_ON_GOOGLE:
+            logger.info("Ignoring custom Google Assistant responses in DF body")
         else:
             group = IntentResponseGroup.RICH
 

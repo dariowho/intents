@@ -60,10 +60,13 @@ class AgentController:
 
         if connector_name == ConnectorName.DIALOGFLOW:
             parameters = {}
-            if credentials := os.getenv("I_DIALOGFLOW_CREDENTIALS"):
+            if credentials := os.getenv("I_DF_CREDENTIALS"):
                 parameters["google_credentials"] = credentials
             else:
-                raise ValueError("Dialogflow connector is set, but no credentials are provided. Please provide them like 'I_DIALOGFLOW_CREDENTIALS=/path/to/service-account.json'")
+                raise ValueError("Dialogflow connector is set, but no credentials are provided. Please provide them like 'I_DF_CREDENTIALS=/path/to/service-account.json'")
+
+            if custom_intents := os.getenv("I_DF_CUSTOM_INTENTS"):
+                parameters["custom_intents"] = custom_intents
         else:
             parameters = {}
 

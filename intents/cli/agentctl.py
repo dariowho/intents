@@ -11,6 +11,12 @@ logger = logging.getLogger(__name__)
 
 class Agentctl:
 
+    def export(self, path: str):
+        controller = AgentController.from_env()
+        print(f"Exporting Agent '{controller.agent_class_import}' to '{path}' using connector: {controller.connector}")
+        connector = controller.load_connector()
+        connector.export(path)
+
     def upload(self):
         controller = AgentController.from_env()
         print(f"Uploading Agent '{controller.agent_class_import}' using connector: {controller.connector}")

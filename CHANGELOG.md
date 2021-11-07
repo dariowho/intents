@@ -11,6 +11,9 @@
 * Add session information (id) to `FulfillmentContext`
 * Use deterministic UUIDs for Intent and Entities in Dialogflow Export
 * (#31) Implement Agent Testing framework
+* (#31) Add experimental `agentctl` CLI
+* Add experimental `custom_intents` parameter to Dialogflow ES Connector
+* Add experimental location sharing support
 
 **Change**
 

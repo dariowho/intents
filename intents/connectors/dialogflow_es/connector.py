@@ -3,8 +3,10 @@ Here we implement :class:`DialogflowEsConnector`, an implementation of
 :class:`Connector` that allows Agents to operate on Dialogflow ES.
 """
 import os
+import json
 import logging
 import tempfile
+from glob import glob
 from collections import defaultdict
 from dataclasses import dataclass, field
 from typing import DefaultDict, List, Set, Dict, Union, Iterable, Type
@@ -63,6 +65,13 @@ class DialogflowPrediction(Prediction):
     """
     df_response: DetectIntentBody = field(default=False, repr=False)
 
+class CustomDialogflowEsIntent(str):
+    """
+    This just gives a name to the content of custom intent files. These intents
+    can be optionally imported in the Agent, but cannot be used within the
+    *Intents* framework
+    """
+
 class DialogflowEsConnector(TestableConnector):
     """
     This is an implementation of :class:`~intents.connectors.interface.Connector`
@@ -84,6 +93,14 @@ class DialogflowEsConnector(TestableConnector):
     * Predict an utterance with :meth:`DialogflowEsConnector.predict`
     * Trigger an Intent with :meth:`DialogflowEsConnector.trigger`
 
+    A notable init parameter is `custom_intents`. This is a path to a folder
+    that contains raw Dialogflow JSON intent files. They will uploaded, but
+    their fulfillment will be ignored, and won't return an Intent class when
+    predicted. They are useful to include placeholders for features that are not
+    yet modelled in *Intents*, such as Location entities, or Google Assistant
+    helper intent triggers. Note that this is **experimental** and may be changed in
+    the future.
+
     Args:
         google_credentials: Path to service account JSON credentials, or a Credentials object
         agent_cls: The Agent to connect
@@ -93,6 +110,8 @@ class DialogflowEsConnector(TestableConnector):
             will use the Agent's firs defined language.
         rich_platforms: Platforms to include when exporting Rich response messages
         webhook_configuration: Webhook connection parameters
+        custom_intents: Path to a folder containing custom Dialogflow intents
+            JSON files.
     """
     entity_mappings = df_entities.MAPPINGS
     rich_platforms: Iterable[str]
@@ -102,6 +121,7 @@ class DialogflowEsConnector(TestableConnector):
     _session_client: SessionsClient
     _need_context_set: Set[Type[Intent]]
     _intents_by_context: Dict[str, Type[Intent]]
+    _custom_intents_by_name: str
 
     recorded_fulfillment_calls: DefaultDict[str, List[RecordedFulfillmentCall]]
 
@@ -112,7 +132,8 @@ class DialogflowEsConnector(TestableConnector):
         default_session: str=None,
         default_language: Union[LanguageCode, str]=None,
         rich_platforms: Iterable[str]=("telegram",),
-        webhook_configuration: WebhookConfiguration=None
+        webhook_configuration: WebhookConfiguration=None,
+        custom_intents: str=None
     ):
         super().__init__(agent_cls, default_session=default_session,
                          default_language=default_language)
@@ -123,6 +144,7 @@ class DialogflowEsConnector(TestableConnector):
         self.webhook_configuration = webhook_configuration
         self._need_context_set = _build_need_context_set(agent_cls)
         self._intents_by_context = _build_intents_by_context(agent_cls)
+        self._custom_intents_by_name = _load_custom_intents(custom_intents)
         self.recorded_fulfillment_calls = defaultdict(list)
 
     @property
@@ -199,12 +221,21 @@ class DialogflowEsConnector(TestableConnector):
 
     def fulfill(self, fulfillment_request: FulfillmentRequest) -> dict:
         webhook_body = WebhookRequestBody(fulfillment_request.body)
-        intent = self._df_body_to_intent(webhook_body)
         context = self._df_body_to_fulfillment_context(webhook_body)
-        if not intent:
-            logger.warning("Received slot filling fulfillment call (intent=None). This is not supported yet")
-            return {} # TODO: remove when partial predictions are implemented
-        fulfillment_result = FulfillmentResult.ensure(intent.fulfill(context))
+
+        # TODO: check
+        if (webhook_body.queryResult.queryText == "actions_intent_PERMISSION") and (location := webhook_body.has_location()):
+            logger.info("Google returned location data. Fulfilling with 'Agent.handle_location()'")
+            fulfillment_result = FulfillmentResult.ensure(self.agent_cls.handle_location(location))
+        else:
+            intent = self._df_body_to_intent(webhook_body)
+            if not intent:
+                if webhook_body.queryResult.intent.name in self._custom_intents_by_name:
+                    logger.info("Skipping fulfillment for custom intent %s", webhook_body.queryResult.intent.name)
+                else:
+                    logger.warning("Received slot filling fulfillment call (intent=None). This is not supported yet")
+                return {} # TODO: remove when partial predictions are implemented
+            fulfillment_result = FulfillmentResult.ensure(intent.fulfill(context))
         
         # TestableConnector
         if self.is_recording_enabled:
@@ -214,7 +245,9 @@ class DialogflowEsConnector(TestableConnector):
 
         logger.debug("Returning fulfillment result: %s", fulfillment_result)
         if fulfillment_result:
-            return webhook.fulfillment_result_to_response(fulfillment_result, context)
+            result = webhook.fulfillment_result_to_response(fulfillment_result, context)
+            logger.debug("fulfillment result: %s", result)
+            return result
         return {}
 
     def _df_body_to_fulfillment_context(self, df_body: WebhookRequestBody) -> FulfillmentContext:
@@ -260,6 +293,10 @@ class DialogflowEsConnector(TestableConnector):
         """
         if not visited_intents:
             visited_intents = set()
+
+        if df_body.queryResult.intent.name in self._custom_intents_by_name:
+            logger.info("DF body references a custom intent. Returning 'None'")
+            return
 
         contexts, context_parameters = df_body.contexts()
 
@@ -331,4 +368,24 @@ def _build_intents_by_context(agent_cls: Type[Agent]) -> Dict[str, Type[Intent]]
                 "have ambiguous context name. This is a bug: please file an issue on the " +
                 "Intents repo. Quick fix: change the name of one of the two intents.")
         result[context_name] = intent_cls
+    return result
+
+def _load_custom_intents(path: str) -> Dict[str, CustomDialogflowEsIntent]:
+    """
+    Scan a folder (non-recursively) for JSON files and return their content,
+    assuming they are Dialogflow custom intents.
+
+    Args:
+        path: Path to the folder containig JSON files
+
+    Returns:
+        A map where the key is an intent name, and its value is the dict content
+        of the intent
+    """
+    result = {}
+    if path:
+        for filename in glob(os.path.join(path, "*.json")):
+            with open(filename, 'r') as f:
+                intent_dict = json.load(f)
+                result[intent_dict['name']] = CustomDialogflowEsIntent(json.dumps(intent_dict, indent=2))
     return result

@@ -59,6 +59,13 @@ def export(connector: "intents.DialogflowEsConnector", output_path: str, agent_n
                 usersays_data = [asdict(x) for x in rendered_intent_usersays]
                 json.dump(usersays_data, f, indent=2)
 
+    for intent_name, json_file_content in connector._custom_intents_by_name.items():
+        intent_output_path = os.path.join(intents_dir, f"{intent_name}.json")
+        if os.path.exists(intent_output_path):
+            raise ValueError("Custom Dialogflow intent name '%s' is already in use by a regular intent, must be renamed.")
+        with open(intent_output_path, "w") as f:
+            print(json_file_content, file=f)
+
     for entity_cls in agent_cls._entities_by_name.values():
         language_data = language.entity_language_data(agent_cls, entity_cls)
         rendered_entity = render_entity(entity_cls)
