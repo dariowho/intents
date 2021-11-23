@@ -290,8 +290,9 @@ def intent_responses(df_body: PredictionBody) -> IntentResponseDict:
             group = IntentResponseGroup.DEFAULT
         elif message.platform == df.QueryResultMessagePlatform.ACTIONS_ON_GOOGLE:
             logger.info("Ignoring custom Google Assistant responses in DF body")
+            continue
         else:
             group = IntentResponseGroup.RICH
 
         result[group].append(build_response_message(message))
-    return dict(result)
+    return IntentResponseDict(result)

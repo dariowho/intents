@@ -230,8 +230,8 @@ class DialogflowEsConnector(TestableConnector):
         else:
             intent = self._df_body_to_intent(webhook_body)
             if not intent:
-                if webhook_body.queryResult.intent.name in self._custom_intents_by_name:
-                    logger.info("Skipping fulfillment for custom intent %s", webhook_body.queryResult.intent.name)
+                if webhook_body.intent_name in self._custom_intents_by_name:
+                    logger.info("Skipping fulfillment for custom intent %s", webhook_body.intent_name)
                 else:
                     logger.warning("Received slot filling fulfillment call (intent=None). This is not supported yet")
                 return {} # TODO: remove when partial predictions are implemented
@@ -294,7 +294,7 @@ class DialogflowEsConnector(TestableConnector):
         if not visited_intents:
             visited_intents = set()
 
-        if df_body.queryResult.intent.name in self._custom_intents_by_name:
+        if df_body.intent_name in self._custom_intents_by_name:
             logger.info("DF body references a custom intent. Returning 'None'")
             return
 

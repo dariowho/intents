@@ -51,10 +51,6 @@ class QueryResultMessageCard:
     imageUri: str = ""
     buttons: List[QueryResultMessageCardButtons] = field(default_factory=list)
 
-@dataclass
-class QueryResultMessagePayload:
-    payload: Dict[str, Any]
-
 class QueryResultMessagePlatform(Enum):
     """
     Ref:
@@ -82,7 +78,7 @@ class QueryResultMessage:
     image: QueryResultMessageImage = None
     quickReplies: QueryResultMessageQuickReplies = None
     card: QueryResultMessageCard = None
-    payload: QueryResultMessagePayload = None
+    payload: dict = None
 
 @dataclass
 class QueryResultContext:
