@@ -1,3 +1,63 @@
+"""
+While unit tests for your :class:`intents.Agent` and :class:`intents.Intent` classes can be defined as in any other Python project, testing conversation flows may require simulating **multi-turn interactions** within a session, and check the Agent understanding as the interaction proceeds.
+
+This ``testing`` module provides the following abstractions to facilitate Agent testing through conversational stories:
+
+* :class:`AgentTester` runs in the background and keeps a dev fulfillment service running.
+* :class:`TestingStory` wraps a single conversation and models its steps and their assertions.
+
+Setup
+=====
+
+Testing frameworks can be configured to automatically instantiate these two objects in the context of a test run. In **pytest** this can be done by defining fixtures in ``conftest.py`` (in the example we use the internal CLI controller to read the Agent configuration from env)
+
+.. code-block:: python
+
+    import pytest
+
+    from intents.cli.agent_controller import AgentController
+    from intents.testing import AgentTester
+
+    @pytest.fixture(scope="session")
+    def agent_tester() -> AgentTester:
+        controller = AgentController.from_env()
+        return controller.load_agent_tester()
+
+    @pytest.fixture(scope="function")
+    def story(agent_tester):
+        return agent_tester.story()
+
+This will instruct *pytest* to inject a :class:`TestingStory` instance in each test function, that can be used to easily assert on single conversation steps:
+
+.. code-block:: python
+
+    def test_order_fish_kipper_followup(story: TestingStory):
+        story.step("I want a fish", OrderFish())
+        story.step("kipper", OrderFishAnswerKipper())
+        story.step("make it three", ChangeAmount(3))
+
+        
+Running a test campaign
+=======================
+
+An example of this setup can be found in ``/example_agent/test_stories/``. From there, tests can be launched as follows:
+
+#. Spawn a *ngrok* (https://ngrok.com/) process to expose the fulfillment server globally (Dialogflow wil call it as an ``https://...`` endpoint):
+
+   >>> ngrok start 8000
+
+#. Create a ``.env`` configuration from ``.env.template``. Make sure use the same address and port as your *ngrok* tunnel
+#. Upload your agent to make sure that the cloud prediction service (e.g. Dialogflow) is aligned with your code.
+
+   >>> dotenv run agentctl upload
+
+#. Wait until the cloud agent completes its training after the upload, and then run the test campaign as any other *pytest* suite:
+
+   >>> poetry shell
+   >>> dotenv run pytest -vvv
+
+"""
+
 from __future__ import annotations
 
 import sys
@@ -87,6 +147,16 @@ class TestingStoryStep:
 
 @dataclass
 class TestingStory:
+    """
+    This class models a test conversation, where each step bears the context of the prevous ones, and can define intent assertions.
+    
+    Each testing story runs in an isolated session, to prevent contexts to alter predictions across different tests.
+
+    Args:
+        connector: A Connector object that will be used for predictions
+        steps_wait: Waiting time (seconds) in between steps
+        session_id: An id for the session. If unset, a random one will be generated as ``intents-test-<UUID>``
+    """
     connector: Connector
     steps_wait: float
     session_id: str = field(default_factory=lambda: f"intents-test-{uuid.uuid1()}")
@@ -100,6 +170,14 @@ class TestingStory:
         fulfill_asserts: Union[FulfillmentAssert, Intent, Iterable[Union[FulfillmentAssert, Intent]]]=None,
         # callable_asserts: List[Callable]=None 
     ):
+        """
+        Adds a step to the story. This will run the utterance prediction and, if set, perform assertions on the result as well as on its fulfillment call.
+
+        Args:
+            utterance_or_step: Typically, this is the message we send to the Agent
+            prediction_assert: An assertion on the prediction result. This can simply be the expected Intent; in this case, an assertion will be built to check that the result matches the expectation.
+            fulfill_asserts: An utterance may require one or more fulfillment calls to get to the result. These are assertions on the sequence of fulfillment calls.
+        """
         if isinstance(utterance_or_step, str):
             if isinstance(prediction_assert, Intent):
                 prediction_assert = PredictionAssert.from_intent(prediction_assert)
@@ -139,6 +217,19 @@ class TestingStory:
 
 @dataclass
 class AgentTester:
+    """
+    This is meant to be instantiated at the beginning of a test campaign run.
+    
+    It will automatically spawn a dev server in the background and will serve as a factory for :class:`TestingStory` objects throughout the campaign. It also checks that the specified connector implements the :class:`intents.connectors.interface.testing.TestableConnector` interface (which is required to make assertions on fulfillment internals)
+
+    Args:
+        connector: The connector that will be used to spawn the fulfillment server
+        steps_wait: Waiting time (seconds) in between steps
+        dev_server: Set to ``false`` if you want to spawn your dev server manually
+        dev_server_port: Dev server will run on this port
+        dev_server_token: Dev server will check this for authentication
+    """
+
     connector: Connector
     steps_wait: float = 0.5
     # parrallel_n: int = 1
@@ -156,6 +247,10 @@ class AgentTester:
         self.ensure_server()
 
     def ensure_server(self):
+        """
+        Spawn a background thread running a development fulfillment server with :func:`intents.fulfillment.run_dev_server`.
+        """
+
         if not self.dev_server:
             return
 
@@ -184,4 +279,7 @@ class AgentTester:
             raise ValueError("Dev server thread died")
 
     def story(self):
+        """
+        Returns a :class:`TestingStory` object that is configured to run on the same connector as ``self``.
+        """
         return TestingStory(self.connector, self.steps_wait)

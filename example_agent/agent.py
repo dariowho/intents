@@ -27,6 +27,7 @@ class ExampleAgent(Agent):
     """
     An example agent that greets its users, and not much more...
     """
+    languages = ["en", "it"]
 
 ExampleAgent.register(smalltalk)
 ExampleAgent.register(restaurant)

@@ -44,6 +44,7 @@ class PredictionBody:
 
     @property
     def intent_name(self):
+        # print(self.queryResult)
         return self.queryResult.intent.displayName
 
     @property

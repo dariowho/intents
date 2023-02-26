@@ -43,7 +43,9 @@ Documentation Content
    api/index
    connectors/index
    builtin_entities
+   cli
    example_agent
+   testing
 
 .. toctree::
    :maxdepth: 2
