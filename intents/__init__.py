@@ -2,7 +2,7 @@ from abc import ABC, abstractmethod
 from dataclasses import dataclass
 from typing import List
 
-__version__ = "0.4.dev1"
+__version__ = "0.4a1"
 
 from intents.language_codes import LanguageCode
 from intents.geolocation import Location
